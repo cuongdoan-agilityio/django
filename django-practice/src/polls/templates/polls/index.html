@@ -1,0 +1,25 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'polls/style.css' %}">
+<h2>Poll List</h2>
+{% if latest_poll_list %}
+    {% for poll in latest_poll_list %}
+        <h3>
+            <a href="{% url 'polls:detail' poll.uuid %}">Poll Name: {{ poll.name }}</a>
+        </h3>
+        <p>Description: {{ poll.description }}</p>
+        <p>Questions:</p>
+        <ul>
+            {% for question in poll.question_set.all %}
+                <li>
+                    <p>Question: {{ question.question_text }}</p>
+                    <p>Choices:</p>
+                    <ol>
+                        {% for choice in question.choice_set.all %}<li>{{ choice.choice_text }}</li>{% endfor %}
+                    </ol>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endfor %}
+{% else %}
+    <p>No polls are available.</p>
+{% endif %}

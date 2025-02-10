@@ -1,0 +1,120 @@
+[
+    {
+        "name": "Django Overview",
+        "description": "Test your knowledge of Django basics.",
+        "questions": [
+            {
+                "question_text": "What is Django?",
+                "choices": [
+                    "A Python web framework",
+                    "A JavaScript library",
+                    "A CSS framework",
+                    "A database management system"
+                ],
+                "correct_answer": "A Python web framework"
+            },
+            {
+                "question_text": "What is the primary purpose of the `models.py` file in a Django app?",
+                "choices": [
+                    "Define the database schema",
+                    "Handle HTTP requests",
+                    "Manage application settings",
+                    "Create static files"
+                ],
+                "correct_answer": "Define the database schema"
+            }
+        ]
+    },
+    {
+        "name": "Django Settings",
+        "description": "Test your knowledge of Django settings and configuration.",
+        "questions": [
+            {
+                "question_text": "Which file is used to define settings for a Django project?",
+                "choices": [
+                    "settings.json",
+                    "config.py",
+                    "settings.py",
+                    "django.conf"
+                ],
+                "correct_answer": "settings.py"
+            },
+            {
+                "question_text": "Which of the following is the default database used by Django?",
+                "choices": [
+                    "MySQL",
+                    "PostgreSQL",
+                    "SQLite",
+                    "MongoDB"
+                ],
+                "correct_answer": "SQLite"
+            },
+            {
+                "question_text": "What is the function of the `urls.py` file in Django?",
+                "choices": [
+                    "Handle static files",
+                    "Map URLs to views",
+                    "Configure database settings",
+                    "Render templates"
+                ],
+                "correct_answer": "Map URLs to views"
+            }
+        ]
+    },
+    {
+        "name": "Django CLI",
+        "description": "Test your knowledge of Django command-line interface (CLI) commands.",
+        "questions": [
+            {
+                "question_text": "Which command is used to apply migrations in Django?",
+                "choices": [
+                    "python manage.py migrate",
+                    "python manage.py makemigrations",
+                    "python manage.py runserver",
+                    "python manage.py syncdb"
+                ],
+                "correct_answer": "python manage.py migrate"
+            },
+            {
+                "question_text": "What is the purpose of the `django-admin` command?",
+                "choices": [
+                    "Run the development server",
+                    "Create and manage Django projects and apps",
+                    "Apply database migrations",
+                    "Install Django"
+                ],
+                "correct_answer": "Create and manage Django projects and apps"
+            },
+            {
+                "question_text": "What is the command to start a new Django project?",
+                "choices": [
+                    "django-admin startproject",
+                    "django-admin createproject",
+                    "django startproject",
+                    "django createproject"
+                ],
+                "correct_answer": "django-admin startproject"
+            },
+            {
+                "question_text": "How do you define a Django app inside a project?",
+                "choices": [
+                    "Using `django startapp <app_name>`",
+                    "Using `django-admin startapp <app_name>`",
+                    "Using `django createapp <app_name>`",
+                    "Using `django-admin createapp <app_name>`"
+                ],
+                "correct_answer": "Using `django-admin startapp <app_name>`"
+            },
+            {
+                "question_text": "Which of the following is the correct way to start the Django development server?",
+                "choices": [
+                    "python manage.py runserver",
+                    "django runserver",
+                    "django-admin runserver",
+                    "django startserver"
+                ],
+                "correct_answer": "python manage.py runserver"
+            }
+        ]
+    }
+]

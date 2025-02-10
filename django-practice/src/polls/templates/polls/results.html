@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en-US">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="keywords" content="pool, results" />
+        <meta name="description" content="Poll Results" />
+        <title>Poll Results Page</title>
+    </head>
+    <body>
+        <h1>{{ poll.name }}</h1>
+        <p>{{ poll.description }}</p>
+        <p>Questions:</p>
+        <ul>
+            {% for question in poll.question_set.all %}
+                <li>
+                    <p>Question: {{ question.question_text }}</p>
+                    <p>Choices:</p>
+                    <ul>
+                        {% for choice in question.choice_set.all %}
+                            <li>{{ choice.choice_text }} -- {{ choice.votes }} vote{{ choice.votes|pluralize }}</li>
+                        {% endfor %}
+                    </ul>
+                    <a href="{% url 'polls:detail' poll.uuid %}">Vote again?</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </body>
+</html>

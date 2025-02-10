@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en-US">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="keywords" content="pool, detail" />
+        <meta name="description" content="Poll Detail" />
+        <title>Poll Detail Page</title>
+    </head>
+    <body>
+        <h1>Poll Name: {{ poll.name }}</h1>
+        <p>Description: {{ poll.description }}</p>
+        <p>Questions:</p>
+        <ul>
+            {% for question in poll.question_set.all %}
+                <lo>
+                <form action="{% url 'polls:question-vote' question.uuid %}" method="post">
+                    {% csrf_token %}
+                    <fieldset>
+                        <legend>
+                            <h3>{{ question.question_text }}</h3>
+                        </legend>
+                        {% if error_message %}
+                            <p>
+                                <strong>{{ error_message }}</strong>
+                            </p>
+                        {% endif %}
+                        {% for choice in question.choice_set.all %}
+                            <input type="radio"
+                                   name="choice"
+                                   id="choice{{ forloop.counter }}"
+                                   value="{{ choice.uuid }}">
+                            <label for="choice{{ forloop.counter }}">{{ choice.choice_text }}</label>
+                            <br>
+                        {% endfor %}
+                    </fieldset>
+                    <br>
+                    <input type="submit" value="Vote">
+                </form>
+                </lo>
+            {% endfor %}
+        </ul>
+    </body>
+</html>
