@@ -1,3 +1,6 @@
 .venv
 db.sqlite3
 .ruff_cache
+
+### django-tutorial ###
+__pycache__/

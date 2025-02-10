@@ -6,7 +6,7 @@
 
 ## Run this project
 1. Create env: `uv venv`
-2. Install: `uv pip install -r pyproject.yml`
+2. Install: `uv pip install -r pyproject.toml`
 
 ## Extensions:
 - [SQLite Viewer](https://marketplace.visualstudio.com/items?itemName=qwtel.sqlite-viewer) - help view db sqlite in VSCode
