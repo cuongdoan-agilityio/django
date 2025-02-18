@@ -8,11 +8,7 @@ class Category(AbstractBaseModel):
     Category model
     """
 
-    user = models.OneToOneField(
-        "users.User",
-        on_delete=models.CASCADE,
-        related_name="student",
-    )
+    name = models.TextField(help_text="Category name")
 
     def __str__(self):
         return self.user.username
