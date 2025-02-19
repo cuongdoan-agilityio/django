@@ -8,6 +8,7 @@ class Status(Enum):
     """
     Status class representing different status for courses
     """
+
     ACTIVATE = "activate"
     INACTIVE = "inactive"
 
@@ -38,6 +39,8 @@ class Course(AbstractBaseModel):
     status = models.CharField(
         choices=Status.choices(),
         help_text="Status of the course.",
+        max_length=8,
+        default=Status.ACTIVATE.value,
     )
 
     def __str__(self):

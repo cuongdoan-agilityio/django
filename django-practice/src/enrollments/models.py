@@ -7,13 +7,10 @@ class Enrollment(AbstractBaseModel):
     """
     Enrollment model
     """
+
     course = models.ForeignKey(
-        "courses.Course",
-        on_delete=models.CASCADE,
-        related_name="enrollments"
+        "courses.Course", on_delete=models.CASCADE, related_name="enrollments"
     )
     student = models.ForeignKey(
-        "students.Student",
-        on_delete=models.CASCADE,
-        related_name="enrollments"
+        "students.Student", on_delete=models.CASCADE, related_name="enrollments"
     )
