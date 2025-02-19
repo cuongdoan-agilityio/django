@@ -1,53 +1,58 @@
-# Django Practice Boilerplate
-This is a boilerplate for Django practice, providing a basic setup for Django project with pre-commit hooks.
+# Student Course Management System
 
-### Techstack
+## Overview
+Develop a functional “Student Course Management System” by building, testing, and documenting REST APIs using Django Rest Framework (DRF). This phase will focus on RESTful API design and providing endpoints for the system’s mobile application (e.g., a React Native app).
+
+## Timeline
+- Estimate: 12.5 days
+
+## Technical Stack
 - Python
 - Django
-- Django Rest Framework
-- SQLite
+- Django REST Framework
+- SQlite
 
-### Prerequisites
-Install the following tools to your machine:
-- [uv](https://docs.astral.sh/uv): python package manager
-- [pre-commit](https://pre-commit.com/): framework for managing and maintaining multi-language pre-commit hooks
+## Code structure
+    ├── src/
+    │   ├── accounts
+    │   │
+    │   ├── categories
+    │   │
+    │   ├── config
+    │   │
+    │   ├── courses
+    │   │
+    │   ├── enrollments
+    │   │
+    │   ├── instructors
+    │   │
+    │   ├── students
+    │
+    ├── .gitignore
+    ├── README.md
+    ├── .env.sample.py
+    ├── .env.sample
+    ├── .pre-commit-config.yaml
 
-## Run this project
-0. Stand in `django-practice` directory
-1. Setup environments: create `.env` follow `.env.example` with your own settings
+## How to run
+1. Clone the repository
+```
+git@gitlab.asoft-python.com:cuong.doan/django-training.git
+cd django-practice/
+git checkout feat/student-course-management-system
+```
+
+2. Create a virtual environment:
+Setup environments: create `.env` follow `.env.example` with your own settings
+
 2. Create env: `uv venv` and activate it: `source .venv/bin/activate`
+
 3. Install packages: `uv sync`
-   - Install all packages: `uv sync`
-   - Install except dev packages: `uv sync --no-group dev`
+
 4. Install hook scripts: `pre-commit install`
-5. Run project:
+
+5. Run project
+    - Make migrations: `uv run ./src/manage.py makemigrations`
     - Migrate: `uv run ./src/manage.py migrate`
-    - Init data: `uv run ./src/manage.py init_polls`
+    - Create superuser: `uv ./src/manage.py createsuperuser --phone_number='0935245782`
     - Run server: `uv run ./src/manage.py runserver`
-    - Go http://localhost:8000/polls/ to see the page (app)
-    - Go http://localhost:8000/api/v1/polls/ to see list poll questions (api)
-
-## Boilerplate Information
-- Use [uv](https://docs.astral.sh/uv) for python package manager
-- Use [pre-commit](https://pre-commit.com/) for managing and maintaining multi-language pre-commit hooks
-- Use [SQLite](https://www.sqlite.org/index.html) for database by default
-- Use [django-environ](https://github.com/joke2k/django-environ) for environment variables
-- Hooks applied:
-  - [pre-commit-hooks](https://github.com/pre-commit/pre-commit-hooks) - basic hooks
-  - [ruff-pre-commit](https://github.com/astral-sh/ruff-pre-commit)
-  - [djLint](https://github.com/Riverside-Healthcare/djLint) - HTML Template Linter and Formatter for Django
-
-## Commands:
-### uv
-- Add package
-  - Add to project: `uv add <package-name>`
-  - Add to `dev` group: `uv add --dev <dev-package-name>`
-- Install packages:
-   - Install all packages: `uv sync`
-   - Install except dev packages: `uv sync --no-group dev`
-- Run command in virtual environment: `uv run <command>`
-- Ruff check: `ruff check`
-
-### pre-commit
-- Install hook scripts: `pre-commit install`
-- Run pre-commit: `pre-commit run --all-files`
