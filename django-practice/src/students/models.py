@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.conf import settings
 from core.models import AbstractBaseModel
 
 
@@ -9,7 +9,7 @@ class Student(AbstractBaseModel):
     """
 
     user = models.OneToOneField(
-        "users.User",
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="student",
     )

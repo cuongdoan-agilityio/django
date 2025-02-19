@@ -64,6 +64,7 @@ DJANGO_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.admin",
+    "accounts",
 ]
 THIRD_PARTY_APPS = [
     "rest_framework",
@@ -83,6 +84,8 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 # AUTHENTICATION_BACKENDS
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 # AUTH_USER_MODEL
+AUTH_USER_MODEL = 'accounts.User'
+
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
 # LOGIN_REDIRECT_URL
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
