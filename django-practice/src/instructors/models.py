@@ -12,7 +12,7 @@ class Instructor(AbstractBaseModel):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="instructor",
+        related_name="instructor_profile",
     )
 
     def __str__(self):

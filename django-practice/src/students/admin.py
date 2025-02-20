@@ -95,9 +95,9 @@ class StudentAdmin(admin.ModelAdmin):
                 "gender": form.cleaned_data["gender"],
                 "password": form.cleaned_data["password"],
             }
-            user_form = StudentCreationForm(user_data)
-            if user_form.is_valid():
-                user = user_form.save()
+            student_form = StudentCreationForm(user_data)
+            if student_form.is_valid():
+                user = student_form.create_user()
                 obj.user = user
 
         super().save_model(request, obj, form, change)

@@ -44,9 +44,9 @@ class StudentCreationForm(forms.ModelForm):
             "password",
         )
 
-    def save(self, commit=True):
+    def create_user(self):
         """
-        Saves the student and creates a new user with the provided data.
+        Creates a new user with the provided data.
 
         Args:
             commit (bool): Whether to save the student instance. Defaults to True.
@@ -66,8 +66,5 @@ class StudentCreationForm(forms.ModelForm):
             role=Role.STUDENT.value,
             password=self.cleaned_data["password"],
         )
-        student = super().save(commit=False)
-        student.user = user
-        if commit:
-            student.save()
-        return student
+
+        return user
