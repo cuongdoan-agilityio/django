@@ -19,7 +19,7 @@ class UserManager(BaseUserManager):
         first_name,
         last_name,
         email,
-        password=None,
+        password,
         phone_number=None,
         date_of_birth=None,
         gender=Gender.MALE.value,
@@ -44,6 +44,10 @@ class UserManager(BaseUserManager):
         """
         if not email:
             raise ValueError("The Email must be set")
+
+        if not password:
+            raise ValueError("The Password must be set")
+
         email = self.normalize_email(email)
         user = self.model(
             username=username,
@@ -65,7 +69,7 @@ class UserManager(BaseUserManager):
         first_name,
         last_name,
         email,
-        password=None,
+        password,
         phone_number=None,
         date_of_birth=None,
         gender=Gender.MALE.value,
@@ -132,3 +136,11 @@ class User(AbstractUser):
     )
 
     objects = UserManager()
+    REQUIRED_FIELDS = [
+        "email",
+        "first_name",
+        "last_name",
+        "phone_number",
+        "date_of_birth",
+        "gender",
+    ]
