@@ -55,18 +55,17 @@ class StudentCreationForm(forms.ModelForm):
             Student: The created student instance.
         """
 
-        user_data = {
-            "username": self.cleaned_data["username"],
-            "first_name": self.cleaned_data["first_name"],
-            "last_name": self.cleaned_data["last_name"],
-            "email": self.cleaned_data["email"],
-            "phone_number": self.cleaned_data["phone_number"],
-            "date_of_birth": self.cleaned_data["date_of_birth"],
-            "gender": self.cleaned_data["gender"],
-            "role": Role.STUDENT.value,
-            "password": self.cleaned_data["password"],
-        }
-        user = User.objects.create_user(**user_data)
+        user = User.objects.create_user(
+            username=self.cleaned_data["username"],
+            first_name=self.cleaned_data["first_name"],
+            last_name=self.cleaned_data["last_name"],
+            email=self.cleaned_data["email"],
+            phone_number=self.cleaned_data["phone_number"],
+            date_of_birth=self.cleaned_data["date_of_birth"],
+            gender=self.cleaned_data["gender"],
+            role=Role.STUDENT.value,
+            password=self.cleaned_data["password"],
+        )
         student = super().save(commit=False)
         student.user = user
         if commit:
