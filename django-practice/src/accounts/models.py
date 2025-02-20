@@ -1,52 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
-from enum import Enum
 
-
-class Gender(Enum):
-    """
-    Gender class representing different genders for users.
-
-    Attributes:
-        MALE (str): Represents male gender.
-        FEMALE (str): Represents female gender.
-    """
-
-    MALE = "male"
-    FEMALE = "female"
-
-    @classmethod
-    def choices(cls):
-        """
-        Returns a list of tuples containing the gender values and names.
-
-        Returns:
-            list: A list of tuples with gender values and names.
-        """
-        return [(key.value, key.name) for key in cls]
-
-
-class Role(Enum):
-    """
-    Role class representing different roles for users.
-
-    Attributes:
-        STUDENT (str): Represents the student role.
-        INSTRUCTOR (str): Represents the instructor role.
-    """
-
-    STUDENT = "student"
-    INSTRUCTOR = "instructor"
-
-    @classmethod
-    def choices(cls):
-        """
-        Returns a list of tuples containing the role values and names.
-
-        Returns:
-            list: A list of tuples with role values and names.
-        """
-        return [(key.value, key.name) for key in cls]
+from core.constants import Gender, Role
 
 
 class UserManager(BaseUserManager):
@@ -61,10 +16,12 @@ class UserManager(BaseUserManager):
     def create_user(
         self,
         username,
+        first_name,
+        last_name,
         email,
         password=None,
         phone_number=None,
-        birth_date=None,
+        date_of_birth=None,
         gender=Gender.MALE.value,
         **extra_fields,
     ):
@@ -73,10 +30,12 @@ class UserManager(BaseUserManager):
 
         Args:
             username (str): The username of the user.
+            first_name (str): The first name of the user.
+            last_name (str): The last name of the user.
             email (str): The email of the user.
             password (str, optional): The password of the user. Defaults to None.
             phone_number (str, optional): The phone number of the user. Defaults to None.
-            birth_date (date, optional): The birth date of the user. Defaults to None.
+            date_of_birth (date, optional): The birth date of the user. Defaults to None.
             gender (str, optional): The gender of the user. Defaults to Gender.MALE.value.
             **extra_fields: Additional fields for the user.
 
@@ -88,9 +47,11 @@ class UserManager(BaseUserManager):
         email = self.normalize_email(email)
         user = self.model(
             username=username,
+            first_name=first_name,
+            last_name=last_name,
             email=email,
             phone_number=phone_number,
-            birth_date=birth_date,
+            date_of_birth=date_of_birth,
             gender=gender,
             **extra_fields,
         )
@@ -101,10 +62,12 @@ class UserManager(BaseUserManager):
     def create_superuser(
         self,
         username,
+        first_name,
+        last_name,
         email,
         password=None,
         phone_number=None,
-        birth_date=None,
+        date_of_birth=None,
         gender=Gender.MALE.value,
         **extra_fields,
     ):
@@ -113,10 +76,12 @@ class UserManager(BaseUserManager):
 
         Args:
             username (str): The username of the superuser.
+            first_name (str): The first name of the superuser.
+            last_name (str): The last name of the superuser.
             email (str): The email of the superuser.
             password (str, optional): The password of the superuser. Defaults to None.
             phone_number (str, optional): The phone number of the superuser. Defaults to None.
-            birth_date (date, optional): The birth date of the superuser. Defaults to None.
+            date_of_birth (date, optional): The birth date of the superuser. Defaults to None.
             gender (str, optional): The gender of the superuser. Defaults to Gender.MALE.value.
             **extra_fields: Additional fields for the superuser.
 
@@ -124,11 +89,13 @@ class UserManager(BaseUserManager):
             User: The created superuser.
         """
         user = self.create_user(
-            username,
-            email,
-            password,
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            password=password,
             phone_number=phone_number,
-            birth_date=birth_date,
+            date_of_birth=date_of_birth,
             gender=gender,
             **extra_fields,
         )
@@ -139,8 +106,18 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractUser):
+    """
+    Custom user model.
+
+    Attributes:
+        phone_number (CharField): The phone number of the user.
+        date_of_birth (DateField): The birth date of the user.
+        gender (CharField): The gender of the user.
+        role (CharField): The role of the user (Instructor or Student).
+    """
+
     phone_number = models.CharField(max_length=20, blank=True, null=True)
-    birth_date = models.DateField(blank=True, null=True)
+    date_of_birth = models.DateField(blank=True, null=True)
     gender = models.CharField(
         choices=Gender.choices(),
         help_text="Male or Female",
