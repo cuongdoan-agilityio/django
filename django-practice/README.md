@@ -54,5 +54,5 @@ Setup environments: create `.env` follow `.env.example` with your own settings
 5. Run project
     - Make migrations: `uv run ./src/manage.py makemigrations`
     - Migrate: `uv run ./src/manage.py migrate`
-    - Create superuser: `uv run ./src/manage.py createsuperuser --phone_number='0935245782`
+    - Create superuser: `uv run ./src/manage.py createsuperuser --username admin --email admin@example.com --first_name Admin --last_name User --phone_number 0937986154 --date_of_birth 1990-01-01 --gender male`
     - Run server: `uv run ./src/manage.py runserver`
