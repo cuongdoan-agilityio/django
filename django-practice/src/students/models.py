@@ -27,7 +27,7 @@ class Student(AbstractBaseModel):
         related_name="student_profile",
         help_text="The user associated with the student profile.",
     )
-    scholarship = models.CharField(
+    scholarship = models.IntegerField(
         max_length=3,
         choices=SCHOLARSHIP_CHOICES,
         default=0,
