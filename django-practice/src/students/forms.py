@@ -20,6 +20,7 @@ class StudentBaseForm(forms.ModelForm):
         date_of_birth (DateField): The birth date of the user.
         gender (ChoiceField): The gender of the user.
         password (CharField): The password of the user.
+        scholarship (ChoiceField): The scholarship amount for the student.
     """
 
     username = forms.CharField()
@@ -30,6 +31,9 @@ class StudentBaseForm(forms.ModelForm):
     date_of_birth = forms.DateField()
     gender = forms.ChoiceField(choices=Gender.choices())
     password = forms.CharField(widget=forms.PasswordInput)
+    scholarship = forms.ChoiceField(
+        choices=Student.SCHOLARSHIP_CHOICES,
+    )
 
     class Meta:
         model = Student
@@ -42,6 +46,7 @@ class StudentBaseForm(forms.ModelForm):
             "date_of_birth",
             "gender",
             "password",
+            "scholarship",
         )
 
 
@@ -76,6 +81,7 @@ class StudentCreationForm(StudentBaseForm):
             password=self.cleaned_data["password"],
         )
         student = super().save(commit=False)
+        student.scholarship = self.cleaned_data["scholarship"]
         student.user = user
         if commit:
             student.save()
@@ -136,6 +142,8 @@ class StudentEditForm(StudentBaseForm):
         user.phone_number = self.cleaned_data["phone_number"]
         user.date_of_birth = self.cleaned_data["date_of_birth"]
         user.gender = self.cleaned_data["gender"]
+
+        student.scholarship = self.cleaned_data["scholarship"]
 
         password = self.cleaned_data.get("password")
         if password:

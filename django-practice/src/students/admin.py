@@ -20,6 +20,7 @@ class StudentAdmin(admin.ModelAdmin):
         "phone_number",
         "date_of_birth",
         "gender",
+        "scholarship",
     ]
 
     def get_form(self, request, obj=None, **kwargs):
