@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .forms import StudentCreationForm
+from .forms import StudentCreationForm, StudentEditForm
 from .models import Student
 
 
@@ -22,7 +22,24 @@ class StudentAdmin(admin.ModelAdmin):
         "gender",
     ]
 
-    form = StudentCreationForm
+    def get_form(self, request, obj=None, **kwargs):
+        """
+        Returns the appropriate form for creating or editing a student.
+
+        Args:
+            request (HttpRequest): The current request object.
+            obj (Student, optional): The student instance being edited. Defaults to None.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            ModelForm: The form instance to be used in the admin interface.
+        """
+
+        if obj is None:
+            kwargs["form"] = StudentCreationForm
+        else:
+            kwargs["form"] = StudentEditForm
+        return super().get_form(request, obj, **kwargs)
 
     def username(self, obj):
         """
@@ -72,32 +89,3 @@ class StudentAdmin(admin.ModelAdmin):
         """
 
         return obj.user.gender
-
-    def save_model(self, request, obj, form, change):
-        """
-        Override the save_model method to create a new user when creating a new student.
-
-        Args:
-            request (HttpRequest): The current request object.
-            obj (Student): The student instance being saved.
-            form (ModelForm): The form instance used to save the student.
-            change (bool): Whether this is an update or a new instance.
-        """
-
-        if not change:
-            user_data = {
-                "username": form.cleaned_data["username"],
-                "first_name": form.cleaned_data["first_name"],
-                "last_name": form.cleaned_data["last_name"],
-                "email": form.cleaned_data["email"],
-                "phone_number": form.cleaned_data["phone_number"],
-                "date_of_birth": form.cleaned_data["date_of_birth"],
-                "gender": form.cleaned_data["gender"],
-                "password": form.cleaned_data["password"],
-            }
-            student_form = StudentCreationForm(user_data)
-            if student_form.is_valid():
-                user = student_form.create_user()
-                obj.user = user
-
-        super().save_model(request, obj, form, change)

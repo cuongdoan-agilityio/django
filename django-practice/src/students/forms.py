@@ -7,9 +7,9 @@ from .models import Student
 User = get_user_model()
 
 
-class StudentCreationForm(forms.ModelForm):
+class StudentBaseForm(forms.ModelForm):
     """
-    A form for creating new students, including fields for creating a new user.
+    Base form for student-related forms, including fields for creating or editing a user.
 
     Fields:
         username (CharField): The username of the user.
@@ -44,9 +44,18 @@ class StudentCreationForm(forms.ModelForm):
             "password",
         )
 
-    def create_user(self):
+
+class StudentCreationForm(StudentBaseForm):
+    """
+    A form for creating new students, including fields for creating a new user.
+
+    Methods:
+        save: Saves the student and creates a new user with the provided data.
+    """
+
+    def save(self, commit=True):
         """
-        Creates a new user with the provided data.
+        Saves the student and creates a new user with the provided data.
 
         Args:
             commit (bool): Whether to save the student instance. Defaults to True.
@@ -66,5 +75,74 @@ class StudentCreationForm(forms.ModelForm):
             role=Role.STUDENT.value,
             password=self.cleaned_data["password"],
         )
+        student = super().save(commit=False)
+        student.user = user
+        if commit:
+            student.save()
+        return student
 
-        return user
+
+class StudentEditForm(StudentBaseForm):
+    """
+    A form for editing existing students, including fields for editing the associated user.
+
+    Fields:
+        username (CharField): The username of the user.
+        first_name (CharField): The first name of the user.
+        last_name (CharField): The last name of the user.
+        email (EmailField): The email of the user.
+        phone_number (CharField): The phone number of the user.
+        date_of_birth (DateField): The birth date of the user.
+        gender (ChoiceField): The gender of the user.
+        password (CharField): The password of the user.
+    """
+
+    username = forms.CharField(disabled=True)
+    password = forms.CharField(widget=forms.PasswordInput, required=False)
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the form with the instance data.
+        """
+
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.user:
+            self.fields["username"].initial = self.instance.user.username
+            self.fields["first_name"].initial = self.instance.user.first_name
+            self.fields["last_name"].initial = self.instance.user.last_name
+            self.fields["email"].initial = self.instance.user.email
+            self.fields["phone_number"].initial = self.instance.user.phone_number
+            self.fields["date_of_birth"].initial = self.instance.user.date_of_birth
+            self.fields["gender"].initial = self.instance.user.gender
+            self.fields["password"].initial = self.instance.user.password
+
+    def save(self, commit=True):
+        """
+        Save the student and update the associated user with the provided data.
+
+        Args:
+            commit (bool): Whether to save the student instance. Defaults to True.
+
+        Returns:
+            Student: The updated student instance.
+        """
+
+        student = super().save(commit=False)
+        user = student.user
+
+        user.first_name = self.cleaned_data["first_name"]
+        user.last_name = self.cleaned_data["last_name"]
+        user.email = self.cleaned_data["email"]
+        user.phone_number = self.cleaned_data["phone_number"]
+        user.date_of_birth = self.cleaned_data["date_of_birth"]
+        user.gender = self.cleaned_data["gender"]
+
+        password = self.cleaned_data.get("password")
+        if password:
+            user.set_password(password)
+
+        user.save()
+
+        if commit:
+            student.save()
+        return student
