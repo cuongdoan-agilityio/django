@@ -75,3 +75,20 @@ class Role(BaseChoiceEnum):
 
     STUDENT = "student"
     INSTRUCTOR = "instructor"
+
+
+class Degree(BaseChoiceEnum):
+    """
+    Degree class representing different academic degrees for users.
+
+    Attributes:
+        NO_DEGREE (str): Represents no degree.
+        MASTER (str): Represents a bachelor's degree.
+        MASTER (str): Represents a master's degree.
+        DOCTORATE (str): Represents a doctorate degree.
+    """
+
+    NO = "no"
+    BACHELOR = "bachelor"
+    MASTER = "master"
+    DOCTORATE = "doctorate"

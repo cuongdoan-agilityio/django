@@ -4,22 +4,22 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from core.constants import Gender, Role, ScholarshipChoices
+from core.constants import Gender, Role, Degree
 from core.validators import (
     validate_password,
     validate_email,
     validate_username,
     validate_phone_number,
 )
-from .models import Student
+from .models import Instructor, Subject
 
 
 User = get_user_model()
 
 
-class StudentBaseForm(forms.ModelForm):
+class InstructorBaseForm(forms.ModelForm):
     """
-    Base form for student-related forms, including fields for creating or editing a user.
+    Base form for instructor-related forms, including fields for creating or editing a user.
 
     Fields:
         username (CharField): The username of the user.
@@ -30,7 +30,9 @@ class StudentBaseForm(forms.ModelForm):
         date_of_birth (DateField): The birth date of the user.
         gender (ChoiceField): The gender of the user.
         password (CharField): The password of the user.
-        scholarship (ChoiceField): The scholarship amount for the student.
+        salary (DecimalField): The salary of the instructor.
+        subjects (ModelMultipleChoiceField): The subjects that the instructor specializes in.
+        degree (ChoiceField): The degree of the instructor.
     """
 
     username = forms.CharField(max_length=100)
@@ -41,12 +43,15 @@ class StudentBaseForm(forms.ModelForm):
     date_of_birth = forms.DateField()
     gender = forms.ChoiceField(choices=Gender.choices())
     password = forms.CharField(widget=forms.PasswordInput, min_length=8, max_length=128)
-    scholarship = forms.ChoiceField(
-        choices=ScholarshipChoices.choices(),
+    salary = forms.DecimalField(max_digits=10, decimal_places=3)
+    subjects = forms.ModelMultipleChoiceField(
+        queryset=Subject.objects.all(),
+        widget=forms.SelectMultiple,
     )
+    degree = forms.ChoiceField(choices=Degree.choices())
 
     class Meta:
-        model = Student
+        model = Instructor
         fields = (
             "username",
             "first_name",
@@ -56,7 +61,9 @@ class StudentBaseForm(forms.ModelForm):
             "date_of_birth",
             "gender",
             "password",
-            "scholarship",
+            "salary",
+            "subjects",
+            "degree",
         )
 
     def clean_phone_number(self):
@@ -77,7 +84,9 @@ class StudentBaseForm(forms.ModelForm):
 
         today = datetime.date.today()
         age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-        if age < 6 or age > 100:
+
+        # From 18 years of age and older, individuals are fully responsible for the content posted on the internet.
+        if age < 18 or age > 100:
             raise ValidationError("Invalid date of birth.")
         return dob
 
@@ -91,23 +100,23 @@ class StudentBaseForm(forms.ModelForm):
         return validate_password(password)
 
 
-class StudentCreationForm(StudentBaseForm):
+class InstructorCreationForm(InstructorBaseForm):
     """
-    A form for creating new students, including fields for creating a new user.
+    A form for creating new instructors, including fields for creating a new user.
 
     Methods:
-        save: Saves the student and creates a new user with the provided data.
+        save: Saves the instructor and creates a new user with the provided data.
     """
 
     def save(self, commit=True):
         """
-        Saves the student and creates a new user with the provided data.
+        Saves the instructor and creates a new user with the provided data.
 
         Args:
-            commit (bool): Whether to save the student instance. Defaults to True.
+            commit (bool): Whether to save the instructor instance. Defaults to True.
 
         Returns:
-            Student: The created student instance.
+            Instructor: The created instructor instance.
         """
 
         user = User.objects.create_user(
@@ -118,14 +127,15 @@ class StudentCreationForm(StudentBaseForm):
             phone_number=self.cleaned_data["phone_number"],
             date_of_birth=self.cleaned_data["date_of_birth"],
             gender=self.cleaned_data["gender"],
-            role=Role.STUDENT.value,
+            role=Role.INSTRUCTOR.value,
             password=self.cleaned_data["password"],
         )
-        student = super().save(commit=False)
-        student.user = user
+        instructor = super().save(commit=False)
+        instructor.user = user
+
         if commit:
-            student.save()
-        return student
+            instructor.save()
+        return instructor
 
     def clean_username(self):
         """
@@ -146,9 +156,9 @@ class StudentCreationForm(StudentBaseForm):
         return validate_email(email)
 
 
-class StudentEditForm(StudentBaseForm):
+class InstructorEditForm(InstructorBaseForm):
     """
-    A form for editing existing students, including fields for editing the associated user.
+    A form for editing existing instructors, including fields for editing the associated user.
 
     Fields:
         username (CharField): The username of the user.
@@ -159,6 +169,9 @@ class StudentEditForm(StudentBaseForm):
         date_of_birth (DateField): The birth date of the user.
         gender (ChoiceField): The gender of the user.
         password (CharField): The password of the user.
+        salary (DecimalField): The salary of the instructor.
+        subjects (ModelMultipleChoiceField): The subjects that the instructor specializes in.
+        degree (ChoiceField): The degree of the instructor.
     """
 
     username = forms.CharField(disabled=True)
@@ -191,17 +204,17 @@ class StudentEditForm(StudentBaseForm):
 
     def save(self, commit=True):
         """
-        Save the student and update the associated user with the provided data.
+        Save the instructor and update the associated user with the provided data.
 
         Args:
-            commit (bool): Whether to save the student instance. Defaults to True.
+            commit (bool): Whether to save the instructor instance. Defaults to True.
 
         Returns:
-            Student: The updated student instance.
+            Instructor: The updated instructor instance.
         """
 
-        student = super().save(commit=False)
-        user = student.user
+        instructor = super().save(commit=False)
+        user = instructor.user
 
         user.first_name = self.cleaned_data["first_name"]
         user.last_name = self.cleaned_data["last_name"]
@@ -216,5 +229,6 @@ class StudentEditForm(StudentBaseForm):
         user.save()
 
         if commit:
-            student.save()
-        return student
+            instructor.save()
+
+        return instructor
