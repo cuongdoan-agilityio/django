@@ -1,0 +1,243 @@
+import datetime
+
+from django import forms
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+
+from core.constants import Gender, Role, SPECIAL_CHARACTER, ScholarshipChoices
+from .models import Student
+
+
+User = get_user_model()
+
+
+class StudentBaseForm(forms.ModelForm):
+    """
+    Base form for student-related forms, including fields for creating or editing a user.
+
+    Fields:
+        username (CharField): The username of the user.
+        first_name (CharField): The first name of the user.
+        last_name (CharField): The last name of the user.
+        email (EmailField): The email of the user.
+        phone_number (CharField): The phone number of the user.
+        date_of_birth (DateField): The birth date of the user.
+        gender (ChoiceField): The gender of the user.
+        password (CharField): The password of the user.
+        scholarship (ChoiceField): The scholarship amount for the student.
+    """
+
+    username = forms.CharField(max_length=100)
+    first_name = forms.CharField(max_length=50)
+    last_name = forms.CharField(max_length=50)
+    email = forms.EmailField()
+    phone_number = forms.CharField()
+    date_of_birth = forms.DateField()
+    gender = forms.ChoiceField(choices=Gender.choices())
+    password = forms.CharField(widget=forms.PasswordInput, min_length=8, max_length=128)
+    scholarship = forms.ChoiceField(
+        choices=ScholarshipChoices.choices(),
+    )
+
+    class Meta:
+        model = Student
+        fields = (
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "phone_number",
+            "date_of_birth",
+            "gender",
+            "password",
+            "scholarship",
+        )
+
+    def clean_phone_number(self):
+        """
+        Validate the phone number to ensure it contains only digits and is of valid length.
+        """
+
+        phone = self.cleaned_data.get("phone_number")
+
+        if not phone.isdigit():
+            raise ValidationError("Phone numbers must contain numbers only.")
+        if len(phone) < 10 or len(phone) > 11:
+            raise ValidationError("Phone number must be 10 to 11 digits.")
+        return phone
+
+    def clean_date_of_birth(self):
+        """
+        Validate the date of birth to ensure it represents a valid age.
+        """
+
+        dob = self.cleaned_data.get("date_of_birth")
+
+        today = datetime.date.today()
+        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        if age < 6 or age > 100:
+            raise ValidationError("Invalid date of birth.")
+        return dob
+
+    def clean_password(self):
+        """
+        Validate the password to ensure it meets complexity requirements.
+        """
+
+        password = self.cleaned_data.get("password")
+
+        if not password:
+            return
+
+        if not any(char.islower() for char in password):
+            raise ValidationError(
+                "Password must contain at least one lowercase letter."
+            )
+        if not any(char.isupper() for char in password):
+            raise ValidationError(
+                "Password must contain at least one uppercase letter."
+            )
+        if not any(char.isdigit() for char in password):
+            raise ValidationError("Password must contain at least one number.")
+        if not any(char in SPECIAL_CHARACTER for char in password):
+            raise ValidationError(
+                "Password must contain at least one special character."
+            )
+        return password
+
+
+class StudentCreationForm(StudentBaseForm):
+    """
+    A form for creating new students, including fields for creating a new user.
+
+    Methods:
+        save: Saves the student and creates a new user with the provided data.
+    """
+
+    def save(self, commit=True):
+        """
+        Saves the student and creates a new user with the provided data.
+
+        Args:
+            commit (bool): Whether to save the student instance. Defaults to True.
+
+        Returns:
+            Student: The created student instance.
+        """
+
+        user = User.objects.create_user(
+            username=self.cleaned_data["username"],
+            first_name=self.cleaned_data["first_name"],
+            last_name=self.cleaned_data["last_name"],
+            email=self.cleaned_data["email"],
+            phone_number=self.cleaned_data["phone_number"],
+            date_of_birth=self.cleaned_data["date_of_birth"],
+            gender=self.cleaned_data["gender"],
+            role=Role.STUDENT.value,
+            password=self.cleaned_data["password"],
+        )
+        student = super().save(commit=False)
+        student.scholarship = self.cleaned_data["scholarship"]
+        student.user = user
+        if commit:
+            student.save()
+        return student
+
+    def clean_username(self):
+        """
+        Validate that the username is unique.
+        """
+
+        username = self.cleaned_data.get("username")
+
+        if User.objects.filter(username=username).exists():
+            raise ValidationError("Username already exists. Please choose another one.")
+        return username
+
+    def clean_email(self):
+        """
+        Validate that the email is unique.
+        """
+
+        email = self.cleaned_data.get("email")
+
+        if User.objects.filter(email=email).exists():
+            raise ValidationError("Email already exists. Please choose another one.")
+        return email
+
+
+class StudentEditForm(StudentBaseForm):
+    """
+    A form for editing existing students, including fields for editing the associated user.
+
+    Fields:
+        username (CharField): The username of the user.
+        first_name (CharField): The first name of the user.
+        last_name (CharField): The last name of the user.
+        email (EmailField): The email of the user.
+        phone_number (CharField): The phone number of the user.
+        date_of_birth (DateField): The birth date of the user.
+        gender (ChoiceField): The gender of the user.
+        password (CharField): The password of the user.
+    """
+
+    username = forms.CharField(disabled=True)
+    email = forms.EmailField(
+        disabled=True,
+        required=False,
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(render_value=True),
+        min_length=8,
+        max_length=128,
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the form with the instance data.
+        """
+
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.user:
+            self.fields["username"].initial = self.instance.user.username
+            self.fields["first_name"].initial = self.instance.user.first_name
+            self.fields["last_name"].initial = self.instance.user.last_name
+            self.fields["email"].initial = self.instance.user.email
+            self.fields["phone_number"].initial = self.instance.user.phone_number
+            self.fields["date_of_birth"].initial = self.instance.user.date_of_birth
+            self.fields["gender"].initial = self.instance.user.gender
+            self.fields["password"].initial = self.instance.user.password
+
+    def save(self, commit=True):
+        """
+        Save the student and update the associated user with the provided data.
+
+        Args:
+            commit (bool): Whether to save the student instance. Defaults to True.
+
+        Returns:
+            Student: The updated student instance.
+        """
+
+        student = super().save(commit=False)
+        user = student.user
+
+        user.first_name = self.cleaned_data["first_name"]
+        user.last_name = self.cleaned_data["last_name"]
+        user.email = self.cleaned_data["email"]
+        user.phone_number = self.cleaned_data["phone_number"]
+        user.date_of_birth = self.cleaned_data["date_of_birth"]
+        user.gender = self.cleaned_data["gender"]
+
+        student.scholarship = self.cleaned_data["scholarship"]
+
+        password = self.cleaned_data.get("password")
+        if password:
+            user.set_password(password)
+
+        user.save()
+
+        if commit:
+            student.save()
+        return student
