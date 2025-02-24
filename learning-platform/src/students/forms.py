@@ -4,7 +4,13 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from core.constants import Gender, Role, SPECIAL_CHARACTER, ScholarshipChoices
+from core.constants import Gender, Role, ScholarshipChoices
+from core.validators import (
+    validate_password,
+    validate_email,
+    validate_username,
+    validate_phone_number,
+)
 from .models import Student
 
 
@@ -60,11 +66,7 @@ class StudentBaseForm(forms.ModelForm):
 
         phone = self.cleaned_data.get("phone_number")
 
-        if not phone.isdigit():
-            raise ValidationError("Phone numbers must contain numbers only.")
-        if len(phone) < 10 or len(phone) > 11:
-            raise ValidationError("Phone number must be 10 to 11 digits.")
-        return phone
+        return validate_phone_number(phone)
 
     def clean_date_of_birth(self):
         """
@@ -86,24 +88,7 @@ class StudentBaseForm(forms.ModelForm):
 
         password = self.cleaned_data.get("password")
 
-        if not password:
-            return
-
-        if not any(char.islower() for char in password):
-            raise ValidationError(
-                "Password must contain at least one lowercase letter."
-            )
-        if not any(char.isupper() for char in password):
-            raise ValidationError(
-                "Password must contain at least one uppercase letter."
-            )
-        if not any(char.isdigit() for char in password):
-            raise ValidationError("Password must contain at least one number.")
-        if not any(char in SPECIAL_CHARACTER for char in password):
-            raise ValidationError(
-                "Password must contain at least one special character."
-            )
-        return password
+        return validate_password(password)
 
 
 class StudentCreationForm(StudentBaseForm):
@@ -149,9 +134,7 @@ class StudentCreationForm(StudentBaseForm):
 
         username = self.cleaned_data.get("username")
 
-        if User.objects.filter(username=username).exists():
-            raise ValidationError("Username already exists. Please choose another one.")
-        return username
+        return validate_username(username)
 
     def clean_email(self):
         """
@@ -160,9 +143,7 @@ class StudentCreationForm(StudentBaseForm):
 
         email = self.cleaned_data.get("email")
 
-        if User.objects.filter(email=email).exists():
-            raise ValidationError("Email already exists. Please choose another one.")
-        return email
+        return validate_email(email)
 
 
 class StudentEditForm(StudentBaseForm):
