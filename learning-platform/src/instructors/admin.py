@@ -32,11 +32,11 @@ class InstructorAdmin(admin.ModelAdmin):
         "date_of_birth",
         "gender",
         "salary",
-        "get_specializations",
+        "get_subjects",
         "degree",
     ]
 
-    list_filter = ["user__gender", "degree", "specialization"]
+    list_filter = ["user__gender", "degree", "subjects"]
     search_fields = [
         "user__username",
         "user__first_name",
@@ -78,7 +78,7 @@ class InstructorAdmin(admin.ModelAdmin):
         Returns the email of the user associated with the instructor.
         """
 
-        return obj.user.username
+        return obj.user.email
 
     def phone_number(self, obj):
         """

@@ -25,7 +25,7 @@ class Instructor(AbstractBaseModel):
 
     Attributes:
         user (OneToOneField): The user associated with the instructor profile.
-        specialization (ManyToManyField): The subjects that the instructor specializes in.
+        subjects (ManyToManyField): The subjects that the instructor specializes in.
         salary (DecimalField): The salary of the instructor.
     """
 
@@ -35,7 +35,7 @@ class Instructor(AbstractBaseModel):
         related_name="instructor_profile",
         help_text="The user associated with the instructor profile.",
     )
-    specialization = models.ManyToManyField(
+    subjects = models.ManyToManyField(
         Subject,
         related_name="instructors",
         help_text="The subjects that the instructor specializes in.",
@@ -53,8 +53,8 @@ class Instructor(AbstractBaseModel):
         max_length=9,
     )
 
-    def get_specializations(self):
-        return ", ".join([spec.name for spec in self.specialization.all()])
+    def get_subjects(self):
+        return ", ".join([spec.name for spec in self.subjects.all()])
 
     def __str__(self):
         return self.user.username
