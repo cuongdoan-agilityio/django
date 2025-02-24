@@ -38,20 +38,18 @@ Develop a functional “Student Course Management System” by building, testing
 1. Clone the repository
 ```
 git@gitlab.asoft-python.com:cuong.doan/django-training.git
-cd django-practice/
+cd learning-platform/
 git checkout feat/student-course-management-system
 ```
 
 2. Create a virtual environment:
 Setup environments: create `.env` follow `.env.example` with your own settings
 
-2. Create env: `uv venv` and activate it: `source .venv/bin/activate`
+2. Create env: `uv sync` and activate it: `source .venv/bin/activate`
 
-3. Install packages: `uv sync`
+3. Install hook scripts: `pre-commit install`
 
-4. Install hook scripts: `pre-commit install`
-
-5. Run project
+4. Run project
     - Make migrations: `uv run ./src/manage.py makemigrations`
     - Migrate: `uv run ./src/manage.py migrate`
     - Create superuser: `uv run ./src/manage.py createsuperuser --username admin --email admin@example.com --first_name Admin --last_name User --phone_number 0937986154 --date_of_birth 1990-01-01 --gender male`
