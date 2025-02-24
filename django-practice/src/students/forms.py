@@ -1,6 +1,10 @@
+import datetime
+
 from django import forms
 from django.contrib.auth import get_user_model
-from core.constants import Gender, Role
+from django.core.exceptions import ValidationError
+
+from core.constants import Gender, Role, SPECIAL_CHARACTER, ScholarshipChoices
 from .models import Student
 
 
@@ -23,16 +27,16 @@ class StudentBaseForm(forms.ModelForm):
         scholarship (ChoiceField): The scholarship amount for the student.
     """
 
-    username = forms.CharField()
-    first_name = forms.CharField()
-    last_name = forms.CharField()
+    username = forms.CharField(max_length=100)
+    first_name = forms.CharField(max_length=50)
+    last_name = forms.CharField(max_length=50)
     email = forms.EmailField()
     phone_number = forms.CharField()
     date_of_birth = forms.DateField()
     gender = forms.ChoiceField(choices=Gender.choices())
-    password = forms.CharField(widget=forms.PasswordInput)
+    password = forms.CharField(widget=forms.PasswordInput, min_length=8, max_length=128)
     scholarship = forms.ChoiceField(
-        choices=Student.SCHOLARSHIP_CHOICES,
+        choices=ScholarshipChoices.choices(),
     )
 
     class Meta:
@@ -48,6 +52,58 @@ class StudentBaseForm(forms.ModelForm):
             "password",
             "scholarship",
         )
+
+    def clean_phone_number(self):
+        """
+        Validate the phone number to ensure it contains only digits and is of valid length.
+        """
+
+        phone = self.cleaned_data.get("phone_number")
+
+        if not phone.isdigit():
+            raise ValidationError("Phone numbers must contain numbers only.")
+        if len(phone) < 10 or len(phone) > 11:
+            raise ValidationError("Phone number must be 10 to 11 digits.")
+        return phone
+
+    def clean_date_of_birth(self):
+        """
+        Validate the date of birth to ensure it represents a valid age.
+        """
+
+        dob = self.cleaned_data.get("date_of_birth")
+
+        today = datetime.date.today()
+        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        if age < 6 or age > 100:
+            raise ValidationError("Invalid date of birth.")
+        return dob
+
+    def clean_password(self):
+        """
+        Validate the password to ensure it meets complexity requirements.
+        """
+
+        password = self.cleaned_data.get("password")
+
+        if not password:
+            return
+
+        if not any(char.islower() for char in password):
+            raise ValidationError(
+                "Password must contain at least one lowercase letter."
+            )
+        if not any(char.isupper() for char in password):
+            raise ValidationError(
+                "Password must contain at least one uppercase letter."
+            )
+        if not any(char.isdigit() for char in password):
+            raise ValidationError("Password must contain at least one number.")
+        if not any(char in SPECIAL_CHARACTER for char in password):
+            raise ValidationError(
+                "Password must contain at least one special character."
+            )
+        return password
 
 
 class StudentCreationForm(StudentBaseForm):
@@ -87,6 +143,28 @@ class StudentCreationForm(StudentBaseForm):
             student.save()
         return student
 
+    def clean_username(self):
+        """
+        Validate that the username is unique.
+        """
+
+        username = self.cleaned_data.get("username")
+
+        if User.objects.filter(username=username).exists():
+            raise ValidationError("Username already exists. Please choose another one.")
+        return username
+
+    def clean_email(self):
+        """
+        Validate that the email is unique.
+        """
+
+        email = self.cleaned_data.get("email")
+
+        if User.objects.filter(email=email).exists():
+            raise ValidationError("Email already exists. Please choose another one.")
+        return email
+
 
 class StudentEditForm(StudentBaseForm):
     """
@@ -104,7 +182,16 @@ class StudentEditForm(StudentBaseForm):
     """
 
     username = forms.CharField(disabled=True)
-    password = forms.CharField(widget=forms.PasswordInput, required=False)
+    email = forms.EmailField(
+        disabled=True,
+        required=False,
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(render_value=True),
+        min_length=8,
+        max_length=128,
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         """

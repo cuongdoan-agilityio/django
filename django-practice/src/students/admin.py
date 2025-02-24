@@ -80,6 +80,7 @@ class StudentAdmin(admin.ModelAdmin):
     ]
 
     list_filter = ["user__username", "user__gender", ScholarshipFilter]
+    search_fields = ["user__username", "user__phone_number", "user__email"]
 
     def get_form(self, request, obj=None, **kwargs):
         """

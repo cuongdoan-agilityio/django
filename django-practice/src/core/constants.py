@@ -1,6 +1,9 @@
 from enum import Enum
 
 
+SPECIAL_CHARACTER = "!@#$%^&*()_+=-"
+
+
 class BaseChoiceEnum(Enum):
     """
     The base class for choices enumeration.
@@ -27,6 +30,25 @@ class BaseChoiceEnum(Enum):
             List[Tuple]: List of choice.
         """
         return [(data.value, data.name) for data in cls]
+
+
+class ScholarshipChoices(BaseChoiceEnum):
+    """
+    Scholarship choices enumeration.
+
+    Attributes:
+        ZERO (int): Zero scholarship.
+        TWENTY_FIVE (int): 25% scholarship.
+        FIFTY (int): 50% scholarship.
+        SEVENTY_FIVE (int): 75% scholarship.
+        FULL (int): 100% scholarship.
+    """
+
+    ZERO = 0
+    TWENTY_FIVE = 25
+    FIFTY = 50
+    SEVENTY_FIVE = 75
+    FULL = 100
 
 
 class Gender(BaseChoiceEnum):

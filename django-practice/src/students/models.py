@@ -1,6 +1,9 @@
 from django.db import models
 from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
+
 from core.models import AbstractBaseModel
+from core.constants import ScholarshipChoices
 
 
 class Student(AbstractBaseModel):
@@ -8,18 +11,9 @@ class Student(AbstractBaseModel):
     Student model representing a student.
 
     Attributes:
-        SCHOLARSHIP_CHOICES (list): The scholarship choices available for the student.
         user (OneToOneField): The user associated with the student profile.
         scholarship (CharField): The scholarship amount for the student.
     """
-
-    SCHOLARSHIP_CHOICES = [
-        (0, "0%"),
-        (25, "25%"),
-        (50, "50%"),
-        (75, "75%"),
-        (100, "100%"),
-    ]
 
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -28,9 +22,9 @@ class Student(AbstractBaseModel):
         help_text="The user associated with the student profile.",
     )
     scholarship = models.IntegerField(
-        max_length=3,
-        choices=SCHOLARSHIP_CHOICES,
+        choices=ScholarshipChoices.choices(),
         default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="The scholarship amount for the student.",
     )
 
