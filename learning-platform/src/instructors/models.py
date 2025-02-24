@@ -47,8 +47,8 @@ class Instructor(AbstractBaseModel):
         default=0.00,
     )
     degree = models.CharField(
-        null=True,
         choices=Degree.choices(),
+        default=Degree.NO.value,
         help_text="The degree of the instructor.",
         max_length=9,
     )

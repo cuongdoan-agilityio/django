@@ -133,7 +133,7 @@ class StudentAdmin(admin.ModelAdmin):
         Returns the email of the user associated with the student.
         """
 
-        return obj.user.username
+        return obj.user.email
 
     def phone_number(self, obj):
         """
