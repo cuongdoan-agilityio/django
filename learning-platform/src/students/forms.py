@@ -137,7 +137,6 @@ class StudentCreationForm(StudentBaseForm):
             password=self.cleaned_data["password"],
         )
         student = super().save(commit=False)
-        student.scholarship = self.cleaned_data["scholarship"]
         student.user = user
         if commit:
             student.save()
@@ -225,12 +224,9 @@ class StudentEditForm(StudentBaseForm):
 
         user.first_name = self.cleaned_data["first_name"]
         user.last_name = self.cleaned_data["last_name"]
-        user.email = self.cleaned_data["email"]
         user.phone_number = self.cleaned_data["phone_number"]
         user.date_of_birth = self.cleaned_data["date_of_birth"]
         user.gender = self.cleaned_data["gender"]
-
-        student.scholarship = self.cleaned_data["scholarship"]
 
         password = self.cleaned_data.get("password")
         if password:
