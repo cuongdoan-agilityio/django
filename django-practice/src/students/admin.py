@@ -79,8 +79,14 @@ class StudentAdmin(admin.ModelAdmin):
         "scholarship",
     ]
 
-    list_filter = ["user__username", "user__gender", ScholarshipFilter]
-    search_fields = ["user__username", "user__phone_number", "user__email"]
+    list_filter = ["user__gender", ScholarshipFilter]
+    search_fields = [
+        "user__username",
+        "user__first_name",
+        "user__last_name",
+        "user__phone_number",
+        "user__email",
+    ]
 
     def get_form(self, request, obj=None, **kwargs):
         """
