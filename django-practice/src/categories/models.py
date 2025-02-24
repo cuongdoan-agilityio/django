@@ -11,4 +11,4 @@ class Category(AbstractBaseModel):
     name = models.TextField(help_text="Category name")
 
     def __str__(self):
-        return self.user.username
+        return self.name
