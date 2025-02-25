@@ -1,6 +1,9 @@
 from django import forms
 from .models import Enrollment
 
+from core.constants import Status
+from courses.models import Course
+
 
 class EnrollmentForm(forms.ModelForm):
     """
@@ -24,6 +27,10 @@ class EnrollmentForm(forms.ModelForm):
             self.fields["course"].disabled = True
             self.fields["student"].disabled = True
             self.fields["enrolled_at"].disabled = True
+        else:
+            self.fields["course"].queryset = Course.objects.filter(
+                status=Status.ACTIVATE.value, instructor__isnull=False
+            )
 
     def clean(self):
         """
