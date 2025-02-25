@@ -92,3 +92,16 @@ class Degree(BaseChoiceEnum):
     BACHELOR = "bachelor"
     MASTER = "master"
     DOCTORATE = "doctorate"
+
+
+class Status(BaseChoiceEnum):
+    """
+    Status class representing different status for courses.
+
+    Attributes:
+        ACTIVATE (str): Represents activate.
+        INACTIVE (str): Represents inactive.
+    """
+
+    ACTIVATE = "activate"
+    INACTIVE = "inactive"

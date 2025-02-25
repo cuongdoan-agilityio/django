@@ -1,20 +1,7 @@
 from django.db import models
-from enum import Enum
 
 from core.models import AbstractBaseModel
-
-
-class Status(Enum):
-    """
-    Status class representing different status for courses
-    """
-
-    ACTIVATE = "activate"
-    INACTIVE = "inactive"
-
-    @classmethod
-    def choices(cls):
-        return [(key.value, key.name) for key in cls]
+from core.constants import Status
 
 
 class Course(AbstractBaseModel):
@@ -32,9 +19,11 @@ class Course(AbstractBaseModel):
     )
     instructor = models.ForeignKey(
         "instructors.Instructor",
-        on_delete=models.CASCADE,
         help_text="Course Instructor.",
         related_name="courses",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
     )
     status = models.CharField(
         choices=Status.choices(),
