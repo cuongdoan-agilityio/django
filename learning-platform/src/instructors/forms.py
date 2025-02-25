@@ -45,7 +45,7 @@ class InstructorBaseForm(forms.ModelForm):
     date_of_birth = forms.DateField()
     gender = forms.ChoiceField(choices=Gender.choices())
     password = forms.CharField(widget=forms.PasswordInput, min_length=8, max_length=128)
-    salary = forms.DecimalField(max_digits=10, decimal_places=3)
+    salary = forms.DecimalField(max_digits=12, decimal_places=3)
     subjects = forms.ModelMultipleChoiceField(
         queryset=Subject.objects.all(),
         widget=forms.CheckboxSelectMultiple,
