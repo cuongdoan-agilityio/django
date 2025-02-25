@@ -33,6 +33,7 @@ class InstructorAdmin(admin.ModelAdmin):
         "gender",
         "salary",
         "get_subjects",
+        "get_courses",
         "degree",
     ]
 

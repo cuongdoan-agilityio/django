@@ -1,10 +1,12 @@
 import datetime
 
 from django import forms
+from django.db.models import Q
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from core.constants import Gender, Role, Degree
+from courses.models import Course
+from core.constants import Gender, Role, Degree, Status
 from core.validators import (
     validate_password,
     validate_email,
@@ -46,7 +48,7 @@ class InstructorBaseForm(forms.ModelForm):
     salary = forms.DecimalField(max_digits=10, decimal_places=3)
     subjects = forms.ModelMultipleChoiceField(
         queryset=Subject.objects.all(),
-        widget=forms.SelectMultiple,
+        widget=forms.CheckboxSelectMultiple,
     )
     degree = forms.ChoiceField(choices=Degree.choices())
 
@@ -108,6 +110,15 @@ class InstructorCreationForm(InstructorBaseForm):
         save: Saves the instructor and creates a new user with the provided data.
     """
 
+    courses = forms.ModelMultipleChoiceField(
+        queryset=Course.objects.filter(
+            instructor__isnull=True, status=Status.ACTIVATE.value
+        ),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Select courses to assign to this instructor.",
+    )
+
     def save(self, commit=True):
         """
         Saves the instructor and creates a new user with the provided data.
@@ -132,6 +143,7 @@ class InstructorCreationForm(InstructorBaseForm):
         )
         instructor = super().save(commit=False)
         instructor.user = user
+        instructor.courses.set(self.cleaned_data["courses"])
 
         if commit:
             instructor.save()
@@ -174,6 +186,12 @@ class InstructorEditForm(InstructorBaseForm):
         degree (ChoiceField): The degree of the instructor.
     """
 
+    courses = forms.ModelMultipleChoiceField(
+        queryset=Course.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Select courses to assign to this instructor.",
+    )
     username = forms.CharField(disabled=True)
     email = forms.EmailField(
         disabled=True,
@@ -201,6 +219,11 @@ class InstructorEditForm(InstructorBaseForm):
             self.fields["date_of_birth"].initial = self.instance.user.date_of_birth
             self.fields["gender"].initial = self.instance.user.gender
             self.fields["password"].initial = self.instance.user.password
+            self.fields["courses"].queryset = Course.objects.filter(
+                Q(instructor=self.instance)
+                | (Q(status=Status.ACTIVATE.value) and Q(instructor__isnull=True))
+            )
+            self.fields["courses"].initial = self.instance.courses.all
 
     def save(self, commit=True):
         """
@@ -227,6 +250,7 @@ class InstructorEditForm(InstructorBaseForm):
             user.set_password(password)
 
         user.save()
+        instructor.courses.set(self.cleaned_data["courses"])
 
         if commit:
             instructor.save()
