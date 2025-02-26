@@ -20,8 +20,9 @@ class EnrollmentForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         """
-        Initialize the form and disable the course and student fields if editing an existing instance.
+        Initialize the form.
         """
+
         super().__init__(*args, **kwargs)
         if kwargs.get("instance"):
             self.fields["course"].disabled = True

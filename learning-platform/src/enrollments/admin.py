@@ -7,11 +7,21 @@ from .forms import EnrollmentForm
 @admin.register(Enrollment)
 class EnrollmentAdmin(admin.ModelAdmin):
     """
-    Admin interface options for the Enrollment model.
+    Admin configuration for the Enrollment model.
 
-    Displays the course title, student first name, and enrollment date in the list view.
-        Allows filtering by course title.
-        Allows searching by course title, student first name, and enrollment date.
+    This class defines how the Enrollment model is displayed and managed
+    within the Django admin interface. It provides features for listing,
+    filtering, searching, and using a custom form for Enrollment instances.
+
+    Attributes:
+        list_display (list): A list of model fields to be displayed in the
+            admin list view.
+        list_filter (list): A list of model fields that can be used to filter
+            the admin list view.
+        search_fields (list): A list of model fields that can be searched
+            through the admin search functionality.
+        form (Form): A custom form class used for creating and updating
+            Enrollment instances.
     """
 
     list_display = [

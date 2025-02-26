@@ -96,7 +96,7 @@ class Degree(BaseChoiceEnum):
 
 class Status(BaseChoiceEnum):
     """
-    Status class representing different status for courses.
+    Status class representing different status.
 
     Attributes:
         ACTIVATE (str): Represents activate.

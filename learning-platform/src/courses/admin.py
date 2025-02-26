@@ -15,10 +15,7 @@ def activate_all(self, request, queryset):
         queryset (QuerySet): The queryset of selected courses.
     """
 
-    for course in queryset:
-        course.status = Status.ACTIVATE.value
-        course.save()
-
+    queryset.update(status=Status.ACTIVATE.value)
     message = "Activated all courses"
     self.message_user(request, message)
 
@@ -36,10 +33,7 @@ def deactivate_all(self, request, queryset):
         queryset (QuerySet): The queryset of selected courses.
     """
 
-    for course in queryset:
-        course.status = Status.INACTIVE.value
-        course.save()
-
+    queryset.update(status=Status.INACTIVE.value)
     message = "Disabled all courses."
     self.message_user(request, message)
 
@@ -50,11 +44,20 @@ deactivate_all.short_description = "Disable all courses."
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
     """
-    Admin interface options for the Course model.
+    Admin configuration for the Course model.
 
-    Displays the title, description, category, instructor, and status of the course in the list view.
-    Allows filtering by title, category, instructor, and status.
-    Allows searching by title, category, and instructor.
+    This class defines how the Course model is displayed and managed
+    within the Django admin interface. It provides features for listing,
+    filtering, searching, and performing bulk actions on Course instances.
+
+    Attributes:
+        list_display (list): A list of fields to be displayed in the
+            admin list view.
+        list_filter (list): A list of fields that can be used to filter
+            the admin list view.
+        search_fields (list): A list of fields that can be searched.
+        actions (list): A list of functions that can be executed as bulk
+            actions on selected Course instances.
     """
 
     list_display = [
