@@ -48,7 +48,7 @@ deactivate_all.short_description = "Disable all courses."
 
 
 @admin.register(Course)
-class InstructorAdmin(admin.ModelAdmin):
+class CourseAdmin(admin.ModelAdmin):
     """
     Admin interface options for the Course model.
 
