@@ -5,7 +5,8 @@ from core.constants import Status
 from .models import Course
 
 
-def activate_all(self, request, queryset):
+@admin.action(description="Activate all selected courses.")
+def activate_all(modeladmin, request, queryset):
     """
     Admin action to activate all selected courses.
 
@@ -16,14 +17,11 @@ def activate_all(self, request, queryset):
     """
 
     queryset.update(status=Status.ACTIVATE.value)
-    message = "Activated all courses"
-    self.message_user(request, message)
+    modeladmin.message_user(request, "Activate all selected courses.")
 
 
-activate_all.short_description = "Activate all courses"
-
-
-def deactivate_all(self, request, queryset):
+@admin.action(description="Deactivate all selected courses.")
+def deactivate_all(modeladmin, request, queryset):
     """
     Admin action to deactivate all selected courses.
 
@@ -34,11 +32,7 @@ def deactivate_all(self, request, queryset):
     """
 
     queryset.update(status=Status.INACTIVE.value)
-    message = "Disabled all courses."
-    self.message_user(request, message)
-
-
-deactivate_all.short_description = "Disable all courses."
+    modeladmin.message_user(request, "Deactivate all selected courses.")
 
 
 @admin.register(Course)

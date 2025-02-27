@@ -27,13 +27,28 @@ class EnrollmentAdmin(admin.ModelAdmin):
     list_display = [
         "course__title",
         "student__user__first_name",
-        "enrolled_at",
+        "created",
     ]
     list_filter = ["course__title"]
     search_fields = [
         "course__title",
         "student__user__first_name",
-        "enrolled_at",
+        "created",
     ]
 
     form = EnrollmentForm
+
+    def get_readonly_fields(self, request, obj=None):
+        """
+        Returns a list of fields to be set as read-only in the admin form.
+        """
+
+        return ["course", "student", "created"] if obj else []
+
+    def get_queryset(self, request):
+        """
+        Returns the queryset of Enrollment instances to be displayed in the admin list view.
+        """
+
+        queryset = super().get_queryset(request)
+        return queryset.select_related("course", "student__user")

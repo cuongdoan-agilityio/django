@@ -16,7 +16,7 @@ class EnrollmentForm(forms.ModelForm):
 
     class Meta:
         model = Enrollment
-        fields = ["course", "student", "enrolled_at"]
+        fields = ["course", "student"]
 
     def __init__(self, *args, **kwargs):
         """
@@ -24,11 +24,7 @@ class EnrollmentForm(forms.ModelForm):
         """
 
         super().__init__(*args, **kwargs)
-        if kwargs.get("instance"):
-            self.fields["course"].disabled = True
-            self.fields["student"].disabled = True
-            self.fields["enrolled_at"].disabled = True
-        else:
+        if not kwargs.get("instance"):
             self.fields["course"].queryset = Course.objects.filter(
                 status=Status.ACTIVATE.value, instructor__isnull=False
             )
