@@ -32,6 +32,9 @@ class EnrollmentForm(forms.ModelForm):
     def clean(self):
         """
         Custom validation to ensure that a student can only join a class that they have not joined yet.
+
+        Raises:
+            ValidationError: If the student is already enrolled in the selected course.
         """
         cleaned_data = super().clean()
         course = cleaned_data.get("course")
