@@ -1,16 +1,20 @@
 import datetime
 
+from django.utils import timezone
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from core.constants import Gender, Role, ScholarshipChoices
+from core.constants import Gender, Role, ScholarshipChoices, Status
 from core.validators import (
     validate_password,
     validate_email,
     validate_username,
     validate_phone_number,
 )
+from courses.models import Course
+from enrollments.models import Enrollment
+
 from .models import Student
 
 
@@ -43,6 +47,14 @@ class StudentBaseForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput, min_length=8, max_length=128)
     scholarship = forms.ChoiceField(
         choices=ScholarshipChoices.choices(),
+    )
+    courses = forms.ModelMultipleChoiceField(
+        queryset=Course.objects.filter(
+            instructor__isnull=False, status=Status.ACTIVATE.value
+        ),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Select courses to assign to this instructor.",
     )
 
     class Meta:
@@ -123,6 +135,13 @@ class StudentCreationForm(StudentBaseForm):
         )
         student = super().save(commit=False)
         student.user = user
+
+        if courses := self.cleaned_data.get("courses"):
+            for course in courses:
+                Enrollment.objects.create(
+                    student=student, course=course, enrolled_at=timezone.now().date()
+                )
+
         if commit:
             student.save()
         return student
@@ -172,6 +191,12 @@ class StudentEditForm(StudentBaseForm):
         max_length=128,
         required=False,
     )
+    courses = forms.ModelMultipleChoiceField(
+        queryset=Course.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Select courses to assign to this student.",
+    )
 
     def __init__(self, *args, **kwargs):
         """
@@ -188,6 +213,12 @@ class StudentEditForm(StudentBaseForm):
             self.fields["date_of_birth"].initial = self.instance.user.date_of_birth
             self.fields["gender"].initial = self.instance.user.gender
             self.fields["password"].initial = self.instance.user.password
+            self.fields["courses"].queryset = Course.objects.filter(
+                status=Status.ACTIVATE.value, instructor__isnull=False
+            )
+            self.fields["courses"].initial = Course.objects.filter(
+                enrollments__student=self.instance
+            ).distinct()
 
     def save(self, commit=True):
         """
@@ -214,6 +245,17 @@ class StudentEditForm(StudentBaseForm):
             user.set_password(password)
 
         user.save()
+        courses = self.cleaned_data.get("courses")
+        if courses:
+            for course in courses:
+                if not Enrollment.objects.filter(student=student, course=course):
+                    Enrollment.objects.create(
+                        student=student,
+                        course=course,
+                        enrolled_at=timezone.now().date(),
+                    )
+
+        Enrollment.objects.filter(student=student).exclude(course__in=courses).delete()
 
         if commit:
             student.save()

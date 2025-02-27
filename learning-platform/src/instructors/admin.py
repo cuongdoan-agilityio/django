@@ -7,22 +7,49 @@ from .forms import InstructorCreationForm, InstructorEditForm
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
     """
-    Admin interface options for the Subject model.
+    Admin configuration for the Subject model.
 
-    Displays the name of the subject in the list view and allows searching by name.
+    This class defines how the Subject model is displayed and managed
+    within the Django admin interface. It provides features for listing
+    and searching Subject instances.
+
+    Attributes:
+        list_display (list): A list of model fields to be displayed in the
+            admin list view.
+        search_fields (list): A list of model fields that can be searched
+            through the admin search functionality.
     """
 
-    list_display = [
-        "name",
-    ]
+    list_display = ["name"]
 
-    search_fields = [
-        "name",
-    ]
+    search_fields = ["name"]
 
 
 @admin.register(Instructor)
 class InstructorAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for the Instructor model.
+
+    This class defines how the Instructor model is displayed and managed
+    within the Django admin interface. It provides features for listing,
+    filtering, searching, and using different forms for creating and
+    editing Instructor instances.
+
+    Attributes:
+        list_display (list): A list of model fields to be displayed in the
+            admin list view.
+        list_filter (list): A list of model fields that can be used to filter
+            the admin list view.
+        search_fields (list): A list of model fields that can be searched
+            through the admin search functionality.
+
+    Methods:
+        get_form(request, obj=None, **kwargs):
+            Overrides the default get_form method to use different forms
+            (InstructorCreationForm or InstructorEditForm) based on whether
+            an Instructor instance is being created or edited.
+    """
+
     list_display = [
         "username",
         "first_name",
@@ -33,6 +60,7 @@ class InstructorAdmin(admin.ModelAdmin):
         "gender",
         "salary",
         "get_subjects",
+        "get_courses",
         "degree",
     ]
 
@@ -46,6 +74,10 @@ class InstructorAdmin(admin.ModelAdmin):
     ]
 
     def get_form(self, request, obj=None, **kwargs):
+        """
+        Overrides the default get_form method to dynamically select the appropriate form for the Instructor admin page.
+        """
+
         if obj is None:
             kwargs["form"] = InstructorCreationForm
         else:
