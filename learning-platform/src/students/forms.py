@@ -138,9 +138,7 @@ class StudentCreationForm(StudentBaseForm):
 
         if courses := self.cleaned_data.get("courses"):
             for course in courses:
-                Enrollment.objects.create(
-                    student=student, course=course, enrolled_at=timezone.now().date()
-                )
+                Enrollment.objects.create(student=student, course=course)
 
         if commit:
             student.save()
