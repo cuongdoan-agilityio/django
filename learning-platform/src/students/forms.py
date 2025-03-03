@@ -38,15 +38,15 @@ class StudentBaseForm(forms.ModelForm):
     """
 
     username = forms.CharField(max_length=100)
-    first_name = forms.CharField(max_length=50)
-    last_name = forms.CharField(max_length=50)
+    first_name = forms.CharField(max_length=50, required=False)
+    last_name = forms.CharField(max_length=50, required=False)
     email = forms.EmailField()
-    phone_number = forms.CharField()
-    date_of_birth = forms.DateField()
-    gender = forms.ChoiceField(choices=Gender.choices())
+    phone_number = forms.CharField(required=False)
+    date_of_birth = forms.DateField(required=False)
+    gender = forms.ChoiceField(choices=Gender.choices(), required=False)
     password = forms.CharField(widget=forms.PasswordInput, min_length=8, max_length=128)
     scholarship = forms.ChoiceField(
-        choices=ScholarshipChoices.choices(),
+        choices=ScholarshipChoices.choices(), required=False
     )
     courses = forms.ModelMultipleChoiceField(
         queryset=Course.objects.filter(
