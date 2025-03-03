@@ -7,12 +7,16 @@ from django.contrib.auth import authenticate, get_user_model
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
 from core.api_views import BaseViewSet
-from core.serializers import BaseUnauthorizedResponseSerializer
+from core.serializers import (
+    BaseUnauthorizedResponseSerializer,
+    BaseSuccessResponseSerializer,
+)
 from core.responses import base_responses
 
 from .serializers import (
     LoginRequestSerializer,
     LoginResponseSerializer,
+    RegisterSerializer,
 )
 
 
@@ -27,7 +31,12 @@ User = get_user_model()
             **base_responses,
             200: LoginResponseSerializer,
         },
-    )
+    ),
+    signup=extend_schema(
+        description="API to sign up a new user.",
+        request=RegisterSerializer,
+        responses={**base_responses, 201: BaseSuccessResponseSerializer},
+    ),
 )
 class AuthorViewSet(BaseViewSet):
     """
@@ -76,6 +85,26 @@ class AuthorViewSet(BaseViewSet):
                 ).data,
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+
+    @action(detail=False, methods=["post"], permission_classes=[AllowAny])
+    def signup(self, request):
+        """
+        Handles user sign-up user and returns a success message.
+
+        Args:
+            request (HttpRequest): The current request object.
+
+        Returns:
+            Response: The response indicating the sign-up status or an error message.
+        """
+
+        serializer = RegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        response_serializer = BaseSuccessResponseSerializer({"data": {"success": True}})
+
+        return self.created(response_serializer.data)
 
 
 apps = [AuthorViewSet]

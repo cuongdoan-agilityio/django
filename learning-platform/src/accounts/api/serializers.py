@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
 
+from core.constants import ScholarshipChoices
+from students.models import Student
 
 User = get_user_model()
 
@@ -38,3 +41,55 @@ class LoginResponseSerializer(serializers.Serializer):
     """
 
     data = LoginResponseDataSerializer()
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    """
+    Serializer for handling user registration requests.
+    """
+
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+
+    class Meta:
+        model = User
+        fields = [
+            "username",
+            "email",
+            "password",
+        ]
+        extra_kwargs = {"password": {"write_only": True}}
+
+    def validate_username(self, value):
+        """
+        Validates that the username is unique.
+        """
+
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError(
+                "A user with that username already exists."
+            )
+        return value
+
+    def validate_email(self, value):
+        """
+        Validates that the email is unique.
+        """
+
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with that email already exists.")
+        return value
+
+    def create(self, validated_data):
+        """
+        Creates a new user and associated student profile.
+
+        Args:
+            validated_data (dict): The validated data for creating the user and student profile.
+
+        Returns:
+            User: The created user instance.
+        """
+
+        user = User.objects.create_user(**validated_data)
+        Student.objects.create(user=user, scholarship=ScholarshipChoices.ZERO.value)
+        return user
