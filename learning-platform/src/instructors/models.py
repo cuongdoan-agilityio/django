@@ -27,7 +27,7 @@ class Instructor(AbstractBaseModel):
     Attributes:
         user (OneToOneField): The user associated with the instructor profile.
         subjects (ManyToManyField): The subjects that the instructor specializes in.
-        salary (DecimalField): The salary of the instructor.
+        degree (Degree): The instructor degree.
     """
 
     user = models.OneToOneField(
@@ -40,12 +40,6 @@ class Instructor(AbstractBaseModel):
         Subject,
         related_name="instructors",
         help_text="The subjects that the instructor specializes in.",
-    )
-    salary = models.DecimalField(
-        max_digits=12,
-        decimal_places=3,
-        help_text="The salary of the instructor.",
-        default=0.00,
     )
     degree = models.CharField(
         choices=Degree.choices(),

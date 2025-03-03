@@ -32,20 +32,18 @@ class InstructorBaseForm(forms.ModelForm):
         date_of_birth (DateField): The birth date of the user.
         gender (ChoiceField): The gender of the user.
         password (CharField): The password of the user.
-        salary (DecimalField): The salary of the instructor.
         subjects (ModelMultipleChoiceField): The subjects that the instructor specializes in.
         degree (ChoiceField): The degree of the instructor.
     """
 
     username = forms.CharField(max_length=100)
-    first_name = forms.CharField(max_length=50)
-    last_name = forms.CharField(max_length=50)
+    first_name = forms.CharField(max_length=50, required=False)
+    last_name = forms.CharField(max_length=50, required=False)
     email = forms.EmailField()
-    phone_number = forms.CharField()
-    date_of_birth = forms.DateField()
-    gender = forms.ChoiceField(choices=Gender.choices())
+    phone_number = forms.CharField(required=False)
+    date_of_birth = forms.DateField(required=False)
+    gender = forms.ChoiceField(choices=Gender.choices(), required=False)
     password = forms.CharField(widget=forms.PasswordInput, min_length=8, max_length=128)
-    salary = forms.DecimalField(max_digits=12, decimal_places=3)
     subjects = forms.ModelMultipleChoiceField(
         queryset=Subject.objects.all(),
         widget=forms.CheckboxSelectMultiple,
@@ -63,7 +61,6 @@ class InstructorBaseForm(forms.ModelForm):
             "date_of_birth",
             "gender",
             "password",
-            "salary",
             "subjects",
             "degree",
         )
@@ -83,6 +80,9 @@ class InstructorBaseForm(forms.ModelForm):
         """
 
         dob = self.cleaned_data.get("date_of_birth")
+
+        if not dob:
+            return
 
         today = datetime.date.today()
         age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
@@ -181,7 +181,6 @@ class InstructorEditForm(InstructorBaseForm):
         date_of_birth (DateField): The birth date of the user.
         gender (ChoiceField): The gender of the user.
         password (CharField): The password of the user.
-        salary (DecimalField): The salary of the instructor.
         subjects (ModelMultipleChoiceField): The subjects that the instructor specializes in.
         degree (ChoiceField): The degree of the instructor.
     """

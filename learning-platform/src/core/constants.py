@@ -58,10 +58,12 @@ class Gender(BaseChoiceEnum):
     Attributes:
         MALE (str): Represents male gender.
         FEMALE (str): Represents female gender.
+        OTHER (str): Represents other gender.
     """
 
     MALE = "male"
     FEMALE = "female"
+    OTHER = "other"
 
 
 class Role(BaseChoiceEnum):

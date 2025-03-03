@@ -58,7 +58,6 @@ class InstructorAdmin(admin.ModelAdmin):
         "phone_number",
         "date_of_birth",
         "gender",
-        "salary",
         "get_subjects",
         "get_courses",
         "degree",

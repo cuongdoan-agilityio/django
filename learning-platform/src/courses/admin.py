@@ -5,36 +5,6 @@ from core.constants import Status
 from .models import Course
 
 
-@admin.action(description="Activate all selected courses.")
-def activate_all(modeladmin, request, queryset):
-    """
-    Admin action to activate all selected courses.
-
-    Args:
-        self (ModelAdmin): The current ModelAdmin instance.
-        request (HttpRequest): The current request object.
-        queryset (QuerySet): The queryset of selected courses.
-    """
-
-    queryset.update(status=Status.ACTIVATE.value)
-    modeladmin.message_user(request, "Activate all selected courses.")
-
-
-@admin.action(description="Deactivate all selected courses.")
-def deactivate_all(modeladmin, request, queryset):
-    """
-    Admin action to deactivate all selected courses.
-
-    Args:
-        self (ModelAdmin): The current ModelAdmin instance.
-        request (HttpRequest): The current request object.
-        queryset (QuerySet): The queryset of selected courses.
-    """
-
-    queryset.update(status=Status.INACTIVE.value)
-    modeladmin.message_user(request, "Deactivate all selected courses.")
-
-
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
     """
@@ -53,6 +23,34 @@ class CourseAdmin(admin.ModelAdmin):
         actions (list): A list of functions that can be executed as bulk
             actions on selected Course instances.
     """
+
+    @admin.action(description="Activate all selected courses.")
+    def activate_all(self, request, queryset):
+        """
+        Admin action to activate all selected courses.
+
+        Args:
+            self (ModelAdmin): The current ModelAdmin instance.
+            request (HttpRequest): The current request object.
+            queryset (QuerySet): The queryset of selected courses.
+        """
+
+        queryset.update(status=Status.ACTIVATE.value)
+        self.message_user(request, "Activate all selected courses.")
+
+    @admin.action(description="Deactivate all selected courses.")
+    def deactivate_all(self, request, queryset):
+        """
+        Admin action to deactivate all selected courses.
+
+        Args:
+            self (ModelAdmin): The current ModelAdmin instance.
+            request (HttpRequest): The current request object.
+            queryset (QuerySet): The queryset of selected courses.
+        """
+
+        queryset.update(status=Status.INACTIVE.value)
+        self.message_user(request, "Deactivate all selected courses.")
 
     list_display = [
         "title",

@@ -70,6 +70,9 @@ def validate_phone_number(phone_number):
     Validate the phone number to ensure it contains only digits and is of valid length.
     """
 
+    if not phone_number:
+        return
+
     if not phone_number.isdigit():
         raise ValidationError("Phone numbers must contain numbers only.")
     if len(phone_number) < 10 or len(phone_number) > 11:
