@@ -4,6 +4,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+from rest_framework.authtoken.models import Token
 
 from core.constants import Gender, Role
 from core.models import AbstractBaseModel
@@ -67,6 +68,7 @@ class UserManager(BaseUserManager):
         )
         user.set_password(password)
         user.save(using=self._db)
+        Token.objects.get_or_create(user=user)
         return user
 
     def create_superuser(

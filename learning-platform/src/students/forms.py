@@ -87,6 +87,9 @@ class StudentBaseForm(forms.ModelForm):
 
         dob = self.cleaned_data.get("date_of_birth")
 
+        if not dob:
+            return
+
         today = datetime.date.today()
         age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
         if age < 6 or age > 100:
