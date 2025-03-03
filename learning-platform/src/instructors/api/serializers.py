@@ -10,4 +10,4 @@ class InstructorSerializer(serializers.ModelSerializer[Instructor]):
 
     class Meta:
         model = Instructor
-        fields = ["username", "firs_name", "last_name", "email"]
+        fields = ["user", "subjects", "degree"]
