@@ -104,7 +104,6 @@ class AuthorViewSet(BaseViewSet):
         serializer.is_valid(raise_exception=True)
         user_data = serializer.save()
 
-        response_serializer = BaseSuccessResponseSerializer({"data": {"success": True}})
         response_serializer = StudentProfileSerializer(user_data)
 
         return self.created(response_serializer.data)
