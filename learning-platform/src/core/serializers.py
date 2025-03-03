@@ -1,0 +1,80 @@
+from rest_framework import serializers
+
+
+class DataSuccessSerializer(serializers.Serializer):
+    """
+    Serializer for indicating a successful response.
+
+    Fields:
+        success (BooleanField): Indicates whether the operation was successful.
+    """
+
+    success = serializers.BooleanField(default=True)
+
+
+class ErrorSerializer(serializers.Serializer):
+    """
+    Serializer for representing an error.
+
+    Fields:
+        field (CharField): The field where the error occurred.
+        message (CharField): The error message.
+    """
+
+    field = serializers.CharField(help_text="The error field")
+    message = serializers.CharField(help_text="Default error message.")
+
+
+class BadRequestSerializer(serializers.Serializer):
+    """
+    Serializer for representing a bad request error.
+
+    Fields:
+        message (CharField): A user-friendly error message.
+    """
+
+    message = serializers.CharField(help_text="User friendly message")
+
+
+class BaseSuccessResponseSerializer(serializers.Serializer):
+    """
+    Base serializer for a successful response.
+
+    Fields:
+        data (DataSuccessSerializer): The data indicating success.
+    """
+
+    data = DataSuccessSerializer()
+
+
+class BaseBadRequestResponseSerializer(serializers.Serializer):
+    """
+    Base serializer for a bad request response.
+
+    Fields:
+        errors (BadRequestSerializer): The errors indicating the bad request.
+    """
+
+    errors = BadRequestSerializer()
+
+
+class BaseUnauthorizedResponseSerializer(serializers.Serializer):
+    """
+    Base serializer for an unauthorized response.
+
+    Fields:
+        errors (ErrorSerializer): The errors indicating the unauthorized request.
+    """
+
+    errors = ErrorSerializer(many=True)
+
+
+class BaseForbiddenResponseSerializer(serializers.Serializer):
+    """
+    Base serializer for a forbidden response.
+
+    Fields:
+        errors (ErrorSerializer): The errors indicating the forbidden request.
+    """
+
+    errors = ErrorSerializer(many=True)
