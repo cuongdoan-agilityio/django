@@ -13,6 +13,8 @@ from core.serializers import (
 )
 from core.responses import base_responses
 
+from students.api.serializers import StudentProfileSerializer
+
 from .serializers import (
     LoginRequestSerializer,
     LoginResponseSerializer,
@@ -100,9 +102,10 @@ class AuthorViewSet(BaseViewSet):
 
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        user_data = serializer.save()
 
         response_serializer = BaseSuccessResponseSerializer({"data": {"success": True}})
+        response_serializer = StudentProfileSerializer(user_data)
 
         return self.created(response_serializer.data)
 
