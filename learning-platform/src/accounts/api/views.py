@@ -7,8 +7,10 @@ from django.contrib.auth import authenticate, get_user_model
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
 from core.api_views import BaseViewSet
-from core.serializers import BaseUnauthorizedResponseSerializer
-from core.responses import base_responses
+from core.serializers import (
+    BaseUnauthorizedResponseSerializer,
+    BaseBadRequestResponseSerializer,
+)
 
 from students.api.serializers import StudentProfileSerializer
 
@@ -27,17 +29,20 @@ User = get_user_model()
         description="API to login and get token.",
         request=LoginRequestSerializer,
         responses={
-            **base_responses,
             200: LoginResponseSerializer,
+            401: BaseUnauthorizedResponseSerializer,
         },
     ),
     signup=extend_schema(
         description="API to sign up a new user.",
         request=RegisterSerializer,
-        responses={**base_responses, 201: StudentProfileSerializer},
+        responses={
+            201: StudentProfileSerializer,
+            400: BaseBadRequestResponseSerializer,
+        },
     ),
 )
-class AuthorViewSet(BaseViewSet):
+class AuthenticationViewSet(BaseViewSet):
     """
     A viewset for handling user authentication.
 
@@ -69,7 +74,7 @@ class AuthorViewSet(BaseViewSet):
         if user is not None:
             token, created = Token.objects.get_or_create(user=user)
             response_data = LoginResponseSerializer({"data": {"token": token.key}}).data
-            return Response(response_data, status=status.HTTP_200_OK)
+            return self.ok(response_data, status=status.HTTP_200_OK)
         else:
             return Response(
                 BaseUnauthorizedResponseSerializer(
@@ -77,7 +82,7 @@ class AuthorViewSet(BaseViewSet):
                         "errors": [
                             {
                                 "field": "email or password",
-                                "message": "Invalid email or password.",
+                                "message": "Invalid credentials.",
                             }
                         ]
                     }
@@ -98,12 +103,20 @@ class AuthorViewSet(BaseViewSet):
         """
 
         serializer = RegisterSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user_data = serializer.save()
 
-        response_serializer = StudentProfileSerializer(user_data)
+        if not serializer.is_valid():
+            error_details = {}
+            for field, errors in serializer.errors.items():
+                error_details[field] = errors[0] if isinstance(errors, list) else errors
+
+            return self.bad_request(error_details)
+
+        serializer.is_valid(raise_exception=True)
+        user_instance = serializer.save()
+
+        response_serializer = StudentProfileSerializer({"data": user_instance})
 
         return self.created(response_serializer.data)
 
 
-apps = [AuthorViewSet]
+apps = [AuthenticationViewSet]
