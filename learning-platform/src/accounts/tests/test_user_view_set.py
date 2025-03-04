@@ -1,6 +1,8 @@
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
+
+from accounts.factories import UserFactory
 from core.constants import Gender
 from students.models import Student
 from instructors.models import Instructor, Subject
@@ -25,29 +27,18 @@ class UserViewSetTests(APITestCase):
 
         self.subject = Subject.objects.create(name="Mathematics")
 
-        self.student_user = User.objects.create_user(
-            username="student_user",
-            first_name="Student",
-            last_name="User",
+        self.student_user = UserFactory(
             email=self.student_email,
             password=self.password,
-            phone_number="1234567890",
-            date_of_birth="1990-01-01",
             gender=Gender.MALE.value,
         )
         self.student_profile = Student.objects.create(
             user=self.student_user, scholarship=50
         )
 
-        self.instructor_user = User.objects.create_user(
-            username="instructor_user",
-            first_name="Instructor",
-            last_name="User",
+        self.instructor_user = UserFactory(
             email=self.instructor_email,
             password=self.password,
-            phone_number="0987654321",
-            date_of_birth="1980-01-01",
-            gender=Gender.FEMALE.value,
         )
         self.instructor_profile = Instructor.objects.create(
             user=self.instructor_user, degree="no"
@@ -133,3 +124,15 @@ class UserViewSetTests(APITestCase):
             f"/api/v1/users/{self.instructor_user.uuid}/", data, format="json"
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_partial_update_instructor_profile_forbidden(self):
+        """
+        Test the partial_update action for an instructor with forbidden.
+        """
+
+        self.client.login(email=self.instructor_email, password=self.password)
+        data = {"subjects": [str(uuid.uuid4())]}
+        response = self.client.patch(
+            f"/api/v1/users/{str(uuid.uuid4())}/", data, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

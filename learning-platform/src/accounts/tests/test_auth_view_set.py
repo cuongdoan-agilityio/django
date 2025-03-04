@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model
 from core.constants import Gender, Role
+from accounts.factories import UserFactory
 
 User = get_user_model()
 
@@ -20,15 +21,9 @@ class AuthorViewSetTests(APITestCase):
         self.gender = Gender.MALE.value
         self.role = Role.INSTRUCTOR.value
 
-        self.user = User.objects.create_user(
-            username=self.username,
-            first_name=self.first_name,
-            last_name=self.last_name,
+        self.user = UserFactory(
             email=self.email,
-            phone_number=self.phone_number,
-            date_of_birth=self.date_of_birth,
             password=self.password,
-            gender=self.gender,
         )
 
         self.token = Token.objects.filter(user=self.user).first()

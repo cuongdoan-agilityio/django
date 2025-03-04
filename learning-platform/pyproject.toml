@@ -14,6 +14,7 @@ dependencies = [
     "drf-spectacular>=0.28.0",
     "coverage>=7.6.12",
     "django-filter>=25.1",
+    "factory-boy>=3.3.3",
 ]
 
 [dependency-groups]
