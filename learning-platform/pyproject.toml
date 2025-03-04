@@ -13,6 +13,7 @@ dependencies = [
     "django-extensions>=3.2.3",
     "drf-spectacular>=0.28.0",
     "coverage>=7.6.12",
+    "django-filter>=25.1",
 ]
 
 [dependency-groups]
