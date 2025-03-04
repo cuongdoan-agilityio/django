@@ -43,9 +43,10 @@ class StudentProfileDataSerializer(serializers.ModelSerializer):
         Retrieves the student scholarship.
         """
 
-        return (
-            obj.student_profile.scholarship if hasattr(obj, "student_profile") else None
-        )
+        if not hasattr(obj, "student_profile"):
+            raise serializers.ValidationError("User is not a student.")
+
+        return obj.student_profile.scholarship
 
 
 class StudentProfileSerializer(serializers.Serializer):

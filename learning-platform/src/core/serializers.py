@@ -33,7 +33,9 @@ class BadRequestSerializer(serializers.Serializer):
         message (CharField): A user-friendly error message.
     """
 
-    message = serializers.CharField(help_text="User friendly message")
+    developerMessage = serializers.CharField(help_text="User friendly message")
+    message = serializers.ListField(help_text="User friendly message")
+    code = serializers.CharField(help_text="Code")
 
 
 class BaseSuccessResponseSerializer(serializers.Serializer):
