@@ -76,7 +76,7 @@ class BaseForbiddenResponseSerializer(serializers.Serializer):
     Base serializer for a forbidden response.
 
     Fields:
-        errors (ErrorSerializer): The errors indicating the forbidden request.
+        detail (CharField): The errors indicating the forbidden request.
     """
 
-    errors = ErrorSerializer(many=True)
+    detail = serializers.CharField(help_text="User friendly message")

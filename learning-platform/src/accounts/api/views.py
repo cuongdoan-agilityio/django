@@ -15,6 +15,7 @@ from core.api_views import BaseViewSet, BaseModelViewSet
 from core.serializers import (
     BaseUnauthorizedResponseSerializer,
     BaseBadRequestResponseSerializer,
+    BaseForbiddenResponseSerializer,
 )
 
 from students.api.serializers import StudentProfileSerializer
@@ -241,7 +242,8 @@ class UserViewSet(BaseModelViewSet):
                         response_only=True,
                     ),
                 ],
-            )
+            ),
+            403: BaseForbiddenResponseSerializer,
         },
     )
     def partial_update(self, request, *args, **kwargs):
@@ -255,6 +257,11 @@ class UserViewSet(BaseModelViewSet):
             Response: The response indicating the profile update status or an error message.
         """
         user = request.user
+
+        pk = kwargs.get("pk")
+        if pk != str(user.uuid):
+            return self.forbidden()
+
         serializer = UserProfileUpdateSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
