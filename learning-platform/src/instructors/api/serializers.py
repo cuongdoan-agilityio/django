@@ -18,9 +18,9 @@ class InstructorSerializer(serializers.ModelSerializer[Instructor]):
         fields = ["user", "subjects", "degree"]
 
 
-class InstructorProfileSerializer(serializers.ModelSerializer):
+class InstructorProfileDataSerializer(serializers.ModelSerializer):
     """
-    Serializer for user data, including related student and instructor profiles.
+    Serializer for instructor profiles data.
     """
 
     subjects = serializers.SerializerMethodField()
@@ -41,7 +41,7 @@ class InstructorProfileSerializer(serializers.ModelSerializer):
             "subjects",
         ]
 
-    def get_degree(self, obj):
+    def get_degree(self, obj) -> str | None:
         """
         Retrieves the instructor degree.
         """
@@ -52,7 +52,7 @@ class InstructorProfileSerializer(serializers.ModelSerializer):
             else None
         )
 
-    def get_subjects(self, obj):
+    def get_subjects(self, obj) -> list[str] | None:
         """
         Retrieves the instructor subjects.
         """
@@ -62,3 +62,11 @@ class InstructorProfileSerializer(serializers.ModelSerializer):
             if hasattr(obj, "instructor_profile")
             else None
         )
+
+
+class InstructorProfileSerializer(serializers.Serializer):
+    """
+    Serializer for instructor profiles.
+    """
+
+    data = InstructorProfileDataSerializer()

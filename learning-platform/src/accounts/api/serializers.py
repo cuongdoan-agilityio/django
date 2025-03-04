@@ -11,10 +11,6 @@ from datetime import date
 User = get_user_model()
 
 
-class DataWrapperSerializer(serializers.Serializer):
-    data = serializers.DictField()
-
-
 class LoginRequestSerializer(serializers.Serializer):
     """
     Serializer for handling login requests.

@@ -17,9 +17,9 @@ class StudentSerializer(serializers.ModelSerializer[Student]):
         fields = ["user", "scholarship"]
 
 
-class StudentProfileSerializer(serializers.ModelSerializer):
+class StudentProfileDataSerializer(serializers.ModelSerializer):
     """
-    Serializer for student data.
+    Serializer for student profile data.
     """
 
     scholarship = serializers.SerializerMethodField()
@@ -38,7 +38,7 @@ class StudentProfileSerializer(serializers.ModelSerializer):
             "scholarship",
         ]
 
-    def get_scholarship(self, obj):
+    def get_scholarship(self, obj) -> int:
         """
         Retrieves the student scholarship.
         """
@@ -46,3 +46,11 @@ class StudentProfileSerializer(serializers.ModelSerializer):
         return (
             obj.student_profile.scholarship if hasattr(obj, "student_profile") else None
         )
+
+
+class StudentProfileSerializer(serializers.Serializer):
+    """
+    Serializer for student profile.
+    """
+
+    data = StudentProfileDataSerializer()
