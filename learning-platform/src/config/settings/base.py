@@ -62,19 +62,21 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.admindocs",
     "django.contrib.admin",
+]
+THIRD_PARTY_APPS = [
+    "rest_framework",
+    "rest_framework.authtoken",
+    "drf_spectacular",
+]
+LOCAL_APPS = [
     "accounts",
     "categories",
     "courses",
     "instructors",
     "students",
     "enrollments",
-]
-THIRD_PARTY_APPS = [
-    "rest_framework",
-]
-LOCAL_APPS = [
-    "polls",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -182,7 +184,20 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
+
+
+# drf_spectacular
+# -------------------------------------------------------------------------------
+# drf_spectacular - https://drf-spectacular.readthedocs.io/en/latest/
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Learning platform web APIs",
+    "DESCRIPTION": "This API provides documentation for the learning platform.",
+    "VERSION": "0.0.1",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
+
 
 # Your stuff...
 # ------------------------------------------------------------------------------
