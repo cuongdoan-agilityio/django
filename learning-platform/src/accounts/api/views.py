@@ -7,10 +7,7 @@ from django.contrib.auth import authenticate, get_user_model
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
 from core.api_views import BaseViewSet, BaseModelViewSet
-from core.serializers import (
-    BaseUnauthorizedResponseSerializer,
-    BaseSuccessResponseSerializer,
-)
+from core.serializers import BaseUnauthorizedResponseSerializer
 from core.responses import base_responses
 
 from students.api.serializers import StudentProfileSerializer
@@ -40,7 +37,7 @@ User = get_user_model()
     signup=extend_schema(
         description="API to sign up a new user.",
         request=RegisterSerializer,
-        responses={**base_responses, 201: BaseSuccessResponseSerializer},
+        responses={**base_responses, 201: StudentProfileSerializer},
     ),
 )
 class AuthorViewSet(BaseViewSet):
@@ -94,7 +91,7 @@ class AuthorViewSet(BaseViewSet):
     @action(detail=False, methods=["post"], permission_classes=[AllowAny])
     def signup(self, request):
         """
-        Handles user sign-up user and returns a success message.
+        Handles sign-up user and returns a success message.
 
         Args:
             request (HttpRequest): The current request object.
