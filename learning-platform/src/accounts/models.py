@@ -175,3 +175,13 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
 
     def __str__(self):
         return self.email
+
+    @property
+    def is_instructor(self):
+        """
+        Checks if the user is an instructor.
+
+        Returns:
+            bool: True if the user is an instructor, False otherwise.
+        """
+        return hasattr(self, "instructor_profile")

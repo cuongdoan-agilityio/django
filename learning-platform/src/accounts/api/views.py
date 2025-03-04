@@ -1,4 +1,4 @@
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework import status
@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from django.contrib.auth import authenticate, get_user_model
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
-from core.api_views import BaseViewSet
+from core.api_views import BaseViewSet, BaseModelViewSet
 from core.serializers import (
     BaseUnauthorizedResponseSerializer,
     BaseSuccessResponseSerializer,
@@ -14,11 +14,14 @@ from core.serializers import (
 from core.responses import base_responses
 
 from students.api.serializers import StudentProfileSerializer
+from instructors.api.serializers import InstructorProfileSerializer
 
 from .serializers import (
     LoginRequestSerializer,
     LoginResponseSerializer,
     RegisterSerializer,
+    DataWrapperSerializer,
+    UserProfileUpdateSerializer,
 )
 
 
@@ -109,4 +112,53 @@ class AuthorViewSet(BaseViewSet):
         return self.created(response_serializer.data)
 
 
-apps = [AuthorViewSet]
+# TODO: need find another solution.
+@extend_schema(responses=DataWrapperSerializer)
+class UserViewSet(BaseModelViewSet):
+    queryset = User.objects.select_related("student_profile", "instructor_profile")
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "patch"]
+    resource_name = "users"
+
+    # TODO: need find another solution to hide the get list method.
+    @extend_schema(exclude=True)
+    def list(self, request, *args, **kwargs):
+        return self.not_allowed()
+
+    def retrieve(self, request, *args, **kwargs):
+        response_serializer = (
+            InstructorProfileSerializer(request.user)
+            if request.user.is_instructor
+            else StudentProfileSerializer(request.user)
+        )
+
+        return self.ok({"data": response_serializer.data})
+
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Updates the authenticated user's profile.
+
+        Args:
+            request (HttpRequest): The current request object.
+
+        Returns:
+            Response: The response indicating the profile update status or an error message.
+        """
+        user = request.user
+        serializer = UserProfileUpdateSerializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        updated_user = User.objects.select_related(
+            "student_profile", "instructor_profile"
+        ).get(uuid=user.uuid)
+        response_serializer = (
+            InstructorProfileSerializer(updated_user)
+            if updated_user.is_instructor
+            else StudentProfileSerializer(updated_user)
+        )
+
+        return self.ok({"data": response_serializer.data})
+
+
+apps = [AuthorViewSet, UserViewSet]
