@@ -74,7 +74,7 @@ class AuthenticationViewSet(BaseViewSet):
         if user is not None:
             token, created = Token.objects.get_or_create(user=user)
             response_data = LoginResponseSerializer({"data": {"token": token.key}}).data
-            return self.ok(response_data, status=status.HTTP_200_OK)
+            return self.ok(response_data)
         else:
             return Response(
                 BaseUnauthorizedResponseSerializer(

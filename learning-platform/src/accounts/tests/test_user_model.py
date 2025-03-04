@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from core.constants import Gender, Role
+from accounts.factories import UserFactory
 
 
 User = get_user_model()
@@ -25,7 +26,7 @@ class UserManagerTests(TestCase):
         Test create user.
         """
 
-        user = User.objects.create_user(
+        user = UserFactory(
             username=username,
             first_name=first_name,
             last_name=last_name,
@@ -35,6 +36,8 @@ class UserManagerTests(TestCase):
             date_of_birth=date_of_birth,
             gender=gender,
         )
+
+        # Create register token object.
         self.assertEqual(user.email, email)
         self.assertTrue(user.check_password(password))
         self.assertEqual(user.gender, gender)
@@ -45,7 +48,7 @@ class UserManagerTests(TestCase):
         """
 
         with self.assertRaises(ValueError):
-            User.objects.create_user(
+            UserFactory(
                 username=username,
                 first_name=first_name,
                 last_name=last_name,
@@ -59,7 +62,7 @@ class UserManagerTests(TestCase):
         """
 
         with self.assertRaises(ValueError):
-            User.objects.create_user(
+            UserFactory(
                 username=username,
                 first_name=first_name,
                 last_name=last_name,
@@ -99,7 +102,7 @@ class UserModelTests(TestCase):
         Test create a user with all fields.
         """
 
-        user = User.objects.create_user(
+        user = UserFactory(
             username=username,
             first_name=first_name,
             last_name=last_name,
