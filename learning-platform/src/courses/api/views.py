@@ -32,7 +32,7 @@ class CourseViewSet(BaseModelViewSet):
     serializer_class = CourseSerializer
     queryset = Course.objects.all()
     permission_classes = [AllowAny]
-    http_method_names = ["get"]
+    http_method_names = ["get", "post"]
     pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["category", "status"]
@@ -97,6 +97,7 @@ class CourseViewSet(BaseModelViewSet):
             request.user, "instructor_profile"
         ):
             return self.forbidden()
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return self.created({"data": serializer.data})
