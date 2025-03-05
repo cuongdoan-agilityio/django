@@ -80,3 +80,28 @@ class BaseForbiddenResponseSerializer(serializers.Serializer):
     """
 
     detail = serializers.CharField(help_text="User friendly message")
+
+
+class PaginationSerializer(serializers.Serializer):
+    """
+    Serializer for pagination.
+    """
+
+    total = serializers.IntegerField()
+    page_size = serializers.IntegerField()
+    page_number = serializers.IntegerField()
+
+    def to_representation(self, instance):
+        return {
+            "total": instance.total,
+            "page_size": instance.page_size,
+            "page_number": instance.page_number,
+        }
+
+
+class MetaSerializer(serializers.Serializer):
+    """
+    Serializer for meta data.
+    """
+
+    pagination = PaginationSerializer()
