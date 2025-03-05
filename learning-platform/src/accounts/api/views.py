@@ -210,11 +210,8 @@ class UserViewSet(BaseModelViewSet):
                         "Instructor Profile Example",
                         value={
                             "data": {
-                                "uuid": "1e80d4c5-f612-4ead-a165-811b1466f03d",
-                                "username": "instructor user name",
                                 "first_name": "instructor first name",
                                 "last_name": "instructor last name",
-                                "email": "instructor@example.com",
                                 "phone_number": "0652485157",
                                 "date_of_birth": "1990-01-01",
                                 "gender": "female",
@@ -228,11 +225,8 @@ class UserViewSet(BaseModelViewSet):
                         "Student Profile Example",
                         value={
                             "data": {
-                                "uuid": "1e80d4c5-f612-4ead-a165-811b1466f03d",
-                                "username": "instructor user name",
                                 "first_name": "instructor first name",
                                 "last_name": "instructor last name",
-                                "email": "instructor@example.com",
                                 "phone_number": "0652485157",
                                 "date_of_birth": "1990-01-01",
                                 "gender": "female",

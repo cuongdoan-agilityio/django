@@ -74,6 +74,12 @@ class CommonViewSet:
         """
         return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
 
+    def not_allowed(self) -> Response:
+        """
+        Default response not allowed. Status code is 405
+        """
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
     def get_resource_uri(self):
         """
         Get resource URI
