@@ -2,7 +2,7 @@ from rest_framework.permissions import AllowAny
 
 from core.api_views import BaseModelViewSet
 from ..models import Course
-from .serializers import CourseSerializer
+from .serializers import CourseSerializer, CourseCreateSerializer, CourseDataSerializer
 from students.models import Student
 
 from rest_framework import filters
@@ -29,7 +29,7 @@ class CourseViewSet(BaseModelViewSet):
     """
 
     resource_name = "courses"
-    serializer_class = CourseSerializer
+    serializer_class = CourseDataSerializer
     queryset = Course.objects.all()
     permission_classes = [AllowAny]
     http_method_names = ["get", "post"]
@@ -92,15 +92,20 @@ class CourseViewSet(BaseModelViewSet):
         Returns:
             Response: The created course data.
         """
-
         if not request.user.is_authenticated or not hasattr(
             request.user, "instructor_profile"
         ):
             return self.forbidden()
 
-        serializer = self.get_serializer(data=request.data)
+        serializer = CourseCreateSerializer(
+            data={**request.data, "instructor": request.user.instructor_profile.uuid}
+        )
+        # TODO: Need handle error when serializer is not valid
         serializer.is_valid(raise_exception=True)
-        return self.created({"data": serializer.data})
+
+        course = serializer.save()
+        course_serializer = CourseSerializer({"data": course})
+        return self.created(course_serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
         """

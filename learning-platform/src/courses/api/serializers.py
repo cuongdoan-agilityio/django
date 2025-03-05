@@ -1,10 +1,11 @@
 from rest_framework import serializers
 
 from core.serializers import MetaSerializer
+from core.constants import Status
 from courses.models import Course
 
 
-class CourseSerializer(serializers.ModelSerializer):
+class CourseDataSerializer(serializers.ModelSerializer):
     """
     Serializer for course data.
 
@@ -35,7 +36,7 @@ class CourseListSerializer(serializers.Serializer):
         status (CharField): The status of the course.
     """
 
-    data = CourseSerializer(many=True)
+    data = CourseDataSerializer(many=True)
     meta = MetaSerializer()
 
     def to_representation(self, instance):
@@ -49,3 +50,45 @@ class CourseListSerializer(serializers.Serializer):
         }
 
         return {"data": data, "meta": MetaSerializer(meta).data}
+
+
+class CourseSerializer(serializers.Serializer):
+    """
+    Serializer for course detail.
+    """
+
+    data = CourseDataSerializer()
+
+
+class CourseCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for handling create course requests.
+    """
+
+    status = serializers.ChoiceField(
+        choices=Status.choices(), default=Status.ACTIVATE.value
+    )
+
+    class Meta:
+        model = Course
+        fields = [
+            "title",
+            "description",
+            "category",
+            "instructor",
+            "status",
+        ]
+
+    def create(self, validated_data):
+        """
+        Creates a new course.
+
+        Args:
+            validated_data (dict): The validated data for creating the course.
+
+        Returns:
+            Course: The created course instance.
+        """
+
+        course = Course.objects.create(**validated_data)
+        return course
