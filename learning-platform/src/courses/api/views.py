@@ -108,10 +108,13 @@ class CourseViewSet(BaseModelViewSet):
         Returns:
             Response: The course data.
         """
+        pk = kwargs.get("pk")
 
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        return self.ok({"data": serializer.data})
+        if course := Course.objects.filter(uuid=pk).first():
+            serializer = self.get_serializer(course)
+            return self.ok({"data": serializer.data})
+        else:
+            return self.not_found()
 
     def partial_update(self, request, *args, **kwargs):
         """
