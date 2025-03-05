@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from instructors.models import Instructor
+from instructors.models import Instructor, Subject
 
 from django.contrib.auth import get_user_model
 
@@ -70,3 +70,13 @@ class InstructorProfileSerializer(serializers.Serializer):
     """
 
     data = InstructorProfileDataSerializer()
+
+
+class SubjectSerializer(serializers.ModelSerializer):
+    """
+    Subject serializer
+    """
+
+    class Meta:
+        model = Subject
+        fields = ["uuid", "name"]
