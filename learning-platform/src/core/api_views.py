@@ -1,7 +1,7 @@
 from django.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet, ViewSet
+from rest_framework.viewsets import ModelViewSet, ViewSet, GenericViewSet
 from rest_framework.permissions import IsAuthenticated
 
 
@@ -74,6 +74,12 @@ class CommonViewSet:
         """
         return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
 
+    def not_allowed(self) -> Response:
+        """
+        Default response not allowed. Status code is 405
+        """
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
     def get_resource_uri(self):
         """
         Get resource URI
@@ -94,6 +100,12 @@ class BaseViewSet(ViewSet, CommonViewSet):
 class BaseModelViewSet(ModelViewSet, CommonViewSet):
     """
     Base view set for Django model
+    """
+
+
+class BaseGenericViewSet(GenericViewSet, CommonViewSet):
+    """
+    Base generic view set.
     """
 
 

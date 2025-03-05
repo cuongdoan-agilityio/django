@@ -51,7 +51,7 @@ class StudentProfileDataSerializer(serializers.ModelSerializer):
 
 class StudentProfileSerializer(serializers.Serializer):
     """
-    Serializer for student data.
+    Serializer for student profile.
     """
 
     data = StudentProfileDataSerializer()

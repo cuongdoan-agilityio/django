@@ -1,23 +1,32 @@
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin
 from django.contrib.auth import authenticate, get_user_model
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import (
+    extend_schema,
+    extend_schema_view,
+    OpenApiResponse,
+    OpenApiExample,
+)
 
-from core.api_views import BaseViewSet
+from core.api_views import BaseViewSet, BaseGenericViewSet
 from core.serializers import (
     BaseUnauthorizedResponseSerializer,
     BaseBadRequestResponseSerializer,
+    BaseForbiddenResponseSerializer,
 )
 
 from students.api.serializers import StudentProfileSerializer
+from instructors.api.serializers import InstructorProfileSerializer
 
 from .serializers import (
     LoginRequestSerializer,
     LoginResponseSerializer,
     RegisterSerializer,
+    UserProfileUpdateSerializer,
 )
 
 
@@ -119,4 +128,157 @@ class AuthenticationViewSet(BaseViewSet):
         return self.created(response_serializer.data)
 
 
-apps = [AuthenticationViewSet]
+class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
+    """
+    A viewset for handling user profiles.
+
+    This viewset provides actions to retrieve and update user profiles for both students and instructors.
+    It includes custom Swagger documentation for the retrieve and partial_update actions.
+    """
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = InstructorProfileSerializer
+    http_method_names = ["get", "patch"]
+    resource_name = "users"
+    lookup_field = "uuid"
+
+    def get_serializer_class(self):
+        if self.action in ["retrieve", "partial_update"]:
+            user = self.request.user
+            if user and hasattr(user, "student_profile"):
+                return StudentProfileSerializer
+            return InstructorProfileSerializer
+        return self.serializer_class
+
+    def get_queryset(self):
+        return User.objects.select_related("student_profile", "instructor_profile")
+
+    @extend_schema(
+        description="Retrieve a user profile (Instructor or Student)",
+        responses={
+            200: OpenApiResponse(
+                response=InstructorProfileSerializer,
+                description="Returns either Instructor or Student profile",
+                examples=[
+                    OpenApiExample(
+                        "Instructor Profile Example",
+                        value={
+                            "data": {
+                                "uuid": "1e80d4c5-f612-4ead-a165-811b1466f03d",
+                                "username": "instructor user name",
+                                "first_name": "instructor first name",
+                                "last_name": "instructor last name",
+                                "email": "instructor@example.com",
+                                "phone_number": "0652485157",
+                                "date_of_birth": "1990-01-01",
+                                "gender": "female",
+                                "degree": "no",
+                                "subjects": [],
+                            }
+                        },
+                        response_only=True,
+                    ),
+                    OpenApiExample(
+                        "Student Profile Example",
+                        value={
+                            "data": {
+                                "uuid": "1e80d4c5-f612-4ead-a165-811b1466f03d",
+                                "username": "instructor user name",
+                                "first_name": "instructor first name",
+                                "last_name": "instructor last name",
+                                "email": "instructor@example.com",
+                                "phone_number": "0652485157",
+                                "date_of_birth": "1990-01-01",
+                                "gender": "female",
+                                "scholarship": 0,
+                            }
+                        },
+                        response_only=True,
+                    ),
+                ],
+            )
+        },
+    )
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Get the authenticated user's profile.
+        """
+
+        user = request.user
+        pk = kwargs.get("uuid")
+
+        if pk not in ["me", str(user.uuid)]:
+            return self.forbidden()
+
+        serializer = self.get_serializer({"data": user})
+
+        return self.ok(serializer.data)
+
+    @extend_schema(
+        description="Update the student or instructor profile",
+        request=UserProfileUpdateSerializer,
+        responses={
+            200: OpenApiResponse(
+                response=InstructorProfileSerializer,
+                description="Returns either Instructor or Student profile",
+                examples=[
+                    OpenApiExample(
+                        "Instructor Profile Example",
+                        value={
+                            "data": {
+                                "first_name": "instructor first name",
+                                "last_name": "instructor last name",
+                                "phone_number": "0652485157",
+                                "date_of_birth": "1990-01-01",
+                                "gender": "female",
+                                "degree": "no",
+                                "subjects": [],
+                            }
+                        },
+                        response_only=True,
+                    ),
+                    OpenApiExample(
+                        "Student Profile Example",
+                        value={
+                            "data": {
+                                "first_name": "instructor first name",
+                                "last_name": "instructor last name",
+                                "phone_number": "0652485157",
+                                "date_of_birth": "1990-01-01",
+                                "gender": "female",
+                                "scholarship": 0,
+                            }
+                        },
+                        response_only=True,
+                    ),
+                ],
+            ),
+            403: BaseForbiddenResponseSerializer,
+        },
+    )
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Updates the authenticated user's profile.
+
+        Args:
+            request (HttpRequest): The current request object.
+
+        Returns:
+            Response: The response indicating the profile update status or an error message.
+        """
+        user = request.user
+
+        pk = kwargs.get("pk")
+        if pk != str(user.uuid):
+            return self.forbidden()
+
+        serializer = UserProfileUpdateSerializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        updated_user = self.get_queryset().get(uuid=user.uuid)
+        response_serializer = self.get_serializer({"data": updated_user})
+        return self.ok(response_serializer.data)
+
+
+apps = [AuthenticationViewSet, UserViewSet]
