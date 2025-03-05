@@ -1,14 +1,17 @@
-from rest_framework.permissions import AllowAny
+from rest_framework import filters
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.decorators import action
+from drf_spectacular.utils import extend_schema
+from django_filters.rest_framework import DjangoFilterBackend
 
 from core.api_views import BaseModelViewSet
+from core.serializers import BaseSuccessResponseSerializer
+from core.pagination import CustomPagination
+from students.models import Student
+from enrollments.models import Enrollment
+
 from ..models import Course
 from .serializers import CourseSerializer, CourseCreateSerializer, CourseDataSerializer
-from students.models import Student
-
-from rest_framework import filters
-from django_filters.rest_framework import DjangoFilterBackend
-from core.pagination import CustomPagination
-from enrollments.models import Enrollment
 
 
 class CourseViewSet(BaseModelViewSet):
@@ -160,6 +163,45 @@ class CourseViewSet(BaseModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return self.ok({"data": serializer.data})
+
+    @extend_schema(
+        description="Enroll a student in a course.",
+        request=None,
+        responses={
+            200: BaseSuccessResponseSerializer,
+        },
+    )
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    def enroll(self, request, **kwargs):
+        """
+        Enroll a student in a course.
+
+        Args:
+            request (HttpRequest): The current request object.
+        """
+
+        if request.user.is_instructor:
+            return self.forbidden({"detail": "Instructors cannot enroll course."})
+
+        course = Course.objects.get(uuid=kwargs.get("pk"))
+
+        if course.status != "activate" or not course.instructor:
+            return self.bad_request(
+                {"detail": "This course is not available for enrollment."}
+            )
+
+        student = Student.objects.get(user=request.user)
+
+        if Enrollment.objects.filter(course=course, student=student).exists():
+            return self.bad_request(
+                {"detail": "You are already enrolled in this course."}
+            )
+
+        Enrollment.objects.create(course=course, student=student)
+        enrollment_serializer = BaseSuccessResponseSerializer(
+            {"data": {"success": True}}
+        )
+        return self.created(enrollment_serializer.data)
 
 
 apps = [CourseViewSet]
