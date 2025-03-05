@@ -3,6 +3,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin
 from django.contrib.auth import authenticate, get_user_model
 from drf_spectacular.utils import (
     extend_schema,
@@ -11,7 +12,7 @@ from drf_spectacular.utils import (
     OpenApiExample,
 )
 
-from core.api_views import BaseViewSet, BaseModelViewSet
+from core.api_views import BaseViewSet, BaseGenericViewSet
 from core.serializers import (
     BaseUnauthorizedResponseSerializer,
     BaseBadRequestResponseSerializer,
@@ -127,12 +128,19 @@ class AuthenticationViewSet(BaseViewSet):
         return self.created(response_serializer.data)
 
 
-class UserViewSet(BaseModelViewSet):
-    queryset = User.objects.select_related("student_profile", "instructor_profile")
+class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
+    """
+    A viewset for handling user profiles.
+
+    This viewset provides actions to retrieve and update user profiles for both students and instructors.
+    It includes custom Swagger documentation for the retrieve and partial_update actions.
+    """
+
     permission_classes = [IsAuthenticated]
     serializer_class = InstructorProfileSerializer
     http_method_names = ["get", "patch"]
     resource_name = "users"
+    lookup_field = "uuid"
 
     def get_serializer_class(self):
         if self.action in ["retrieve", "partial_update"]:
@@ -142,10 +150,8 @@ class UserViewSet(BaseModelViewSet):
             return InstructorProfileSerializer
         return self.serializer_class
 
-    # TODO: need find another solution to hide the get list method.
-    @extend_schema(exclude=True)
-    def list(self, request, *args, **kwargs):
-        return self.not_allowed()
+    def get_queryset(self):
+        return User.objects.select_related("student_profile", "instructor_profile")
 
     @extend_schema(
         description="Retrieve a user profile (Instructor or Student)",
@@ -194,7 +200,17 @@ class UserViewSet(BaseModelViewSet):
         },
     )
     def retrieve(self, request, *args, **kwargs):
-        serializer = self.get_serializer({"data": request.user})
+        """
+        Get the authenticated user's profile.
+        """
+
+        user = request.user
+        pk = kwargs.get("uuid")
+
+        if pk not in ["me", str(user.uuid)]:
+            return self.forbidden()
+
+        serializer = self.get_serializer({"data": user})
 
         return self.ok(serializer.data)
 
@@ -260,9 +276,7 @@ class UserViewSet(BaseModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        updated_user = User.objects.select_related(
-            "student_profile", "instructor_profile"
-        ).get(uuid=user.uuid)
+        updated_user = self.get_queryset().get(uuid=user.uuid)
         response_serializer = self.get_serializer({"data": updated_user})
         return self.ok(response_serializer.data)
 

@@ -1,7 +1,7 @@
 from django.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet, ViewSet
+from rest_framework.viewsets import ModelViewSet, ViewSet, GenericViewSet
 from rest_framework.permissions import IsAuthenticated
 
 
@@ -100,6 +100,12 @@ class BaseViewSet(ViewSet, CommonViewSet):
 class BaseModelViewSet(ModelViewSet, CommonViewSet):
     """
     Base view set for Django model
+    """
+
+
+class BaseGenericViewSet(GenericViewSet, CommonViewSet):
+    """
+    Base generic view set.
     """
 
 
