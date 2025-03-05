@@ -154,9 +154,7 @@ class CourseViewSet(BaseModelViewSet):
                 course=instance, status="in_progress"
             ).exists():
                 return self.bad_request(
-                    {
-                        "detail": "Cannot disable a course that is in progress and has students enrolled."
-                    }
+                    "Cannot disable a course that is in progress and has students enrolled."
                 )
 
         serializer = self.get_serializer(instance, data=request.data, partial=True)
@@ -186,22 +184,43 @@ class CourseViewSet(BaseModelViewSet):
         course = Course.objects.get(uuid=kwargs.get("pk"))
 
         if course.status != "activate" or not course.instructor:
-            return self.bad_request(
-                {"detail": "This course is not available for enrollment."}
-            )
+            return self.bad_request("This course is not available for enrollment.")
 
         student = Student.objects.get(user=request.user)
 
         if Enrollment.objects.filter(course=course, student=student).exists():
-            return self.bad_request(
-                {"detail": "You are already enrolled in this course."}
-            )
+            return self.bad_request("You are already enrolled in this course.")
 
         Enrollment.objects.create(course=course, student=student)
         enrollment_serializer = BaseSuccessResponseSerializer(
             {"data": {"success": True}}
         )
-        return self.created(enrollment_serializer.data)
+        return self.ok(enrollment_serializer.data)
+
+    @extend_schema(
+        description="Leave a course.",
+        request=None,
+        responses={
+            200: BaseSuccessResponseSerializer,
+        },
+    )
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    def leave(self, request, **kwargs):
+        if request.user.is_instructor:
+            return self.forbidden({"detail": "Instructors cannot leave course."})
+
+        course = Course.objects.get(uuid=kwargs.get("pk"))
+        student = Student.objects.get(user=request.user)
+        if enrollment := Enrollment.objects.filter(
+            course=course, student=student
+        ).first():
+            enrollment.delete()
+            response_serializer = BaseSuccessResponseSerializer(
+                {"data": {"success": True}}
+            )
+            return self.ok(response_serializer.data)
+        else:
+            return self.bad_request("You are not enrolled in this course.")
 
 
 apps = [CourseViewSet]
