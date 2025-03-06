@@ -12,7 +12,12 @@ from enrollments.models import Enrollment
 from students.api.serializers import StudentListSerializer
 
 from ..models import Course
-from .serializers import CourseSerializer, CourseCreateSerializer, CourseDataSerializer
+from .serializers import (
+    CourseSerializer,
+    CourseCreateSerializer,
+    CourseDataSerializer,
+    CourseUpdateSerializer,
+)
 
 
 class CourseViewSet(BaseModelViewSet):
@@ -161,9 +166,17 @@ class CourseViewSet(BaseModelViewSet):
         else:
             return self.not_found()
 
+    @extend_schema(
+        description="Enroll a student in a course.",
+        request=CourseUpdateSerializer,
+        responses={
+            200: CourseSerializer,
+        },
+    )
     def partial_update(self, request, *args, **kwargs):
         """
-        Partially update a course by an instructor. Instructors can only update their own courses.
+        Partially update a course by an instructor.
+        Instructors can only update their own courses.
         Instructors cannot disable a course if it is in progress and has students enrolled in it.
 
         Args:
@@ -188,10 +201,14 @@ class CourseViewSet(BaseModelViewSet):
                 {"detail": "You do not have permission to update this course."}
             )
 
+        serializer = CourseUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer_data = serializer.validated_data
+
         # Check if the course is in progress and has students enrolled
-        if "status" in request.data and request.data["status"] == "inactive":
+        if "status" in serializer_data and serializer_data["status"] == "inactive":
             if Enrollment.objects.filter(
-                course=instance, status="in_progress"
+                course=instance, course__status="activate"
             ).exists():
                 return self.bad_request(
                     "Cannot disable a course that is in progress and has students enrolled."

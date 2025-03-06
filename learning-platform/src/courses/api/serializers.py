@@ -3,6 +3,7 @@ from rest_framework import serializers
 from core.serializers import MetaSerializer
 from core.constants import Status
 from courses.models import Course
+from categories.models import Category
 
 
 class CourseDataSerializer(serializers.ModelSerializer):
@@ -21,6 +22,7 @@ class CourseDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = ["uuid", "title", "description", "category", "instructor", "status"]
+        read_only_fields = ["uuid", "instructor"]
 
 
 class CourseListSerializer(serializers.Serializer):
@@ -75,3 +77,24 @@ class CourseCreateSerializer(serializers.ModelSerializer):
             instructor=instructor,
         )
         return course
+
+
+class CourseUpdateSerializer(serializers.Serializer):
+    """
+    Serializer for updating course data.
+    """
+
+    status = serializers.ChoiceField(choices=Status.choices(), required=False)
+    title = serializers.CharField(required=False)
+    description = serializers.CharField(required=False)
+    category = serializers.CharField(required=False)
+
+    def validate_category(self, value):
+        """
+        Validates the category field.
+        """
+
+        if not Category.objects.filter(uuid=value).exists():
+            raise serializers.ValidationError(f"Category {value} does not exist.")
+
+        return value
