@@ -6,7 +6,6 @@ from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 
 from core.api_views import BaseModelViewSet
 from core.serializers import BaseSuccessResponseSerializer
-from core.pagination import CustomPagination
 from students.models import Student
 from enrollments.models import Enrollment
 from students.api.serializers import StudentListSerializer
@@ -25,8 +24,8 @@ class CourseViewSet(BaseModelViewSet):
     Course view set
 
     - People who do not need to log in can still see.
-    - Students can see the courses they are enrolled in (add filter with enrolled=true).
-    - Can filter courses with "course category" and "courses status".
+    - Students can see the courses they are enrolled in.
+    - Can filter courses with category, status, and instructor.
 
     Filters:
         - category: Filter courses by category.
@@ -42,7 +41,6 @@ class CourseViewSet(BaseModelViewSet):
     queryset = Course.objects.all()
     permission_classes = [AllowAny]
     http_method_names = ["get", "post", "patch"]
-    pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["category", "status", "instructor"]
     search_fields = ["title", "description"]
@@ -84,48 +82,13 @@ class CourseViewSet(BaseModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
 
         page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True)
-        return self.ok(
-            {
-                "data": serializer.data,
-                "meta": {
-                    "pagination": {
-                        "total": queryset.count(),
-                        "limit": self.paginator.get("limit"),
-                        "offset": self.paginator.get("offset"),
-                    }
-                },
-            }
-        )
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
 
     @extend_schema(
-        description="Retrieve a single course",
+        description="Create a course.",
         request=CourseCreateSerializer,
-        responses={
-            200: OpenApiResponse(
-                response=CourseSerializer,
-                examples=[
-                    OpenApiExample(
-                        "Example response",
-                        summary="Example response",
-                        value={
-                            "data": {
-                                "uuid": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                                "title": "string",
-                                "description": "string",
-                                "category": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                                "instructor": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                                "status": "activate",
-                            }
-                        },
-                    )
-                ],
-            )
-        },
+        responses={201: CourseSerializer},
     )
     def create(self, request, *args, **kwargs):
         """
@@ -151,6 +114,12 @@ class CourseViewSet(BaseModelViewSet):
         course_serializer = CourseSerializer({"data": course})
         return self.created(course_serializer.data)
 
+    @extend_schema(
+        description="Retrieve a single course",
+        responses={
+            200: CourseSerializer,
+        },
+    )
     def retrieve(self, request, *args, **kwargs):
         """
         Retrieve a single course with custom response format.
