@@ -26,13 +26,13 @@ class EnrollmentAdmin(admin.ModelAdmin):
 
     list_display = [
         "course__title",
-        "student__user__first_name",
+        "student__user__username",
         "created",
     ]
     list_filter = ["course__title"]
     search_fields = [
         "course__title",
-        "student__user__first_name",
+        "student__user__username",
         "created",
     ]
 
