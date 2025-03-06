@@ -1,20 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 
-from students.models import Student
+from core.serializers import MetaSerializer
 
 
 User = get_user_model()
-
-
-class StudentSerializer(serializers.ModelSerializer[Student]):
-    """
-    Student serializer
-    """
-
-    class Meta:
-        model = Student
-        fields = ["user", "scholarship"]
 
 
 class StudentProfileDataSerializer(serializers.ModelSerializer):
@@ -23,6 +13,7 @@ class StudentProfileDataSerializer(serializers.ModelSerializer):
     """
 
     scholarship = serializers.SerializerMethodField()
+    uuid = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -43,10 +34,24 @@ class StudentProfileDataSerializer(serializers.ModelSerializer):
         Retrieves the student scholarship.
         """
 
+        self.check_user(obj)
+        return obj.student_profile.scholarship
+
+    def get_uuid(self, obj) -> int:
+        """
+        Retrieves the student uuid.
+        """
+
+        self.check_user(obj)
+        return obj.student_profile.uuid
+
+    def check_user(self, obj) -> None:
+        """
+        Raise an error if the user is not a student.
+        """
+
         if not hasattr(obj, "student_profile"):
             raise serializers.ValidationError("User is not a student.")
-
-        return obj.student_profile.scholarship
 
 
 class StudentProfileSerializer(serializers.Serializer):
@@ -54,4 +59,13 @@ class StudentProfileSerializer(serializers.Serializer):
     Serializer for student profile.
     """
 
-    data = StudentProfileDataSerializer()
+    data = StudentProfileDataSerializer(many=True)
+
+
+class StudentListSerializer(serializers.Serializer):
+    """
+    Serializer for a list of student profiles with pagination metadata.
+    """
+
+    data = StudentProfileDataSerializer(many=True)
+    meta = MetaSerializer()
