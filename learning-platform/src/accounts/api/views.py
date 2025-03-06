@@ -19,8 +19,9 @@ from core.serializers import (
     BaseForbiddenResponseSerializer,
 )
 
-from students.api.serializers import StudentProfileSerializer
+
 from instructors.api.serializers import InstructorProfileSerializer
+from students.api.serializers import StudentProfileSerializer
 
 from .serializers import (
     LoginRequestSerializer,

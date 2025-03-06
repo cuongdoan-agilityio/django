@@ -7,16 +7,48 @@ from core.serializers import MetaSerializer
 User = get_user_model()
 
 
-class StudentProfileDataSerializer(serializers.ModelSerializer):
+class StudentBaseSerializer(serializers.ModelSerializer):
+    """
+    Base serializer for student data.
+    """
+
+    uuid = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            "uuid",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+        ]
+
+    def get_uuid(self, obj) -> str:
+        """
+        Retrieves the student uuid.
+        """
+
+        self.check_user(obj)
+        return obj.student_profile.uuid
+
+    def check_user(self, obj) -> None:
+        """
+        Raise an error if the user is not a student.
+        """
+
+        if not hasattr(obj, "student_profile"):
+            raise serializers.ValidationError("User is not a student.")
+
+
+class StudentProfileDataSerializer(StudentBaseSerializer):
     """
     Serializer for student profile data.
     """
 
     scholarship = serializers.SerializerMethodField()
-    uuid = serializers.SerializerMethodField()
 
-    class Meta:
-        model = User
+    class Meta(StudentBaseSerializer.Meta):
         fields = [
             "uuid",
             "username",
@@ -37,22 +69,6 @@ class StudentProfileDataSerializer(serializers.ModelSerializer):
         self.check_user(obj)
         return obj.student_profile.scholarship
 
-    def get_uuid(self, obj) -> int:
-        """
-        Retrieves the student uuid.
-        """
-
-        self.check_user(obj)
-        return obj.student_profile.uuid
-
-    def check_user(self, obj) -> None:
-        """
-        Raise an error if the user is not a student.
-        """
-
-        if not hasattr(obj, "student_profile"):
-            raise serializers.ValidationError("User is not a student.")
-
 
 class StudentProfileSerializer(serializers.Serializer):
     """
@@ -67,5 +83,5 @@ class StudentListSerializer(serializers.Serializer):
     Serializer for a list of student profiles with pagination metadata.
     """
 
-    data = StudentProfileDataSerializer(many=True)
+    data = StudentBaseSerializer(many=True)
     meta = MetaSerializer()

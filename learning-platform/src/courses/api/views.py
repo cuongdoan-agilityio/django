@@ -1,14 +1,15 @@
 from rest_framework import filters
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import action
-from drf_spectacular.utils import extend_schema
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 
 from core.api_views import BaseModelViewSet
 from core.serializers import BaseSuccessResponseSerializer
 from core.pagination import CustomPagination
 from students.models import Student
 from enrollments.models import Enrollment
+from students.api.serializers import StudentListSerializer
 
 from ..models import Course
 from .serializers import CourseSerializer, CourseCreateSerializer, CourseDataSerializer
@@ -35,20 +36,31 @@ class CourseViewSet(BaseModelViewSet):
     serializer_class = CourseDataSerializer
     queryset = Course.objects.all()
     permission_classes = [AllowAny]
-    http_method_names = ["get", "post"]
+    http_method_names = ["get", "post", "patch"]
     pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["category", "status"]
+    filterset_fields = ["category", "status", "instructor"]
     search_fields = ["title", "description"]
+
+    def get_permissions(self):
+        """
+        Get permissions for Course APIs.
+        """
+
+        if self.action in ["students"]:
+            return [IsAuthenticated()]
+
+        return super().get_permissions()
 
     def get_queryset(self):
         """
         Optionally restricts the returned courses to those enrolled by the student,
         by filtering against a `enrolled` query parameter in the URL.
         """
+
         queryset = super().get_queryset()
         enrolled = self.request.query_params.get("enrolled", None)
-        if enrolled is not None and self.request.user.is_authenticated:
+        if enrolled and not self.request.user.is_instructor:
             student = Student.objects.get(user=self.request.user)
             queryset = queryset.filter(enrollments__student=student)
         return queryset
@@ -78,8 +90,8 @@ class CourseViewSet(BaseModelViewSet):
                 "meta": {
                     "pagination": {
                         "total": queryset.count(),
-                        "limit": self.paginator.page_size,
-                        "page": self.paginator.page.start_index(),
+                        "limit": self.paginator.get("limit"),
+                        "offset": self.paginator.get("offset"),
                     }
                 },
             }
@@ -221,6 +233,67 @@ class CourseViewSet(BaseModelViewSet):
             return self.ok(response_serializer.data)
         else:
             return self.bad_request("You are not enrolled in this course.")
+
+    @extend_schema(
+        description="View all students enrolled in a course.",
+        responses={
+            200: OpenApiResponse(
+                response=StudentListSerializer,
+                examples=[
+                    OpenApiExample(
+                        "Example response",
+                        summary="Example response",
+                        value={
+                            "data": [
+                                {
+                                    "uuid": "string",
+                                    "username": "string",
+                                    "first_name": "string",
+                                    "last_name": "string",
+                                    "email": "user@example.com",
+                                }
+                            ],
+                            "meta": {
+                                "pagination": {"total": 1, "limit": 20, "offset": 0}
+                            },
+                        },
+                    )
+                ],
+            )
+        },
+    )
+    @action(detail=True, methods=["get"])
+    def students(self, request, **kwargs):
+        """
+        View all students enrolled in a course.
+
+        Args:
+            request (HttpRequest): The current request object.
+
+        Returns:
+            Response: A list of students enrolled in the course.
+        """
+
+        if not request.user.is_instructor:
+            return self.forbidden(
+                {"detail": "Only instructors can view enrolled students."}
+            )
+
+        course = Course.objects.get(uuid=kwargs.get("pk"))
+
+        if course.instructor != request.user.instructor_profile:
+            return self.forbidden(
+                {
+                    "detail": "You do not have permission to view the students of this course."
+                }
+            )
+
+        enrollments = Enrollment.objects.filter(course=course)
+        users = [enrollment.student.user for enrollment in enrollments]
+        paginator = self.paginator
+        page = paginator.paginate_queryset(users, request)
+        serializer = StudentListSerializer(paginator.get_paginated_response(page).data)
+        return self.ok(serializer.data)
 
 
 apps = [CourseViewSet]
