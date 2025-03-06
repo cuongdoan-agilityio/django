@@ -88,14 +88,14 @@ class PaginationSerializer(serializers.Serializer):
     """
 
     total = serializers.IntegerField()
-    page_size = serializers.IntegerField()
-    page_number = serializers.IntegerField()
+    limit = serializers.IntegerField()
+    offset = serializers.IntegerField()
 
     def to_representation(self, instance):
         return {
-            "total": instance.total,
-            "page_size": instance.page_size,
-            "page_number": instance.page_number,
+            "total": instance.get("total"),
+            "limit": instance.get("limit"),
+            "offset": instance.get("offset"),
         }
 
 
