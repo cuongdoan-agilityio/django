@@ -55,20 +55,23 @@ class CourseCreateSerializer(serializers.ModelSerializer):
             "title",
             "description",
             "category",
-            "instructor",
             "status",
         ]
 
-    def create(self, validated_data):
+    def create(self, validated_data, instructor):
         """
         Creates a new course.
 
         Args:
             validated_data (dict): The validated data for creating the course.
+            instructor (Instructor): The instructor instance.
 
         Returns:
             Course: The created course instance.
         """
 
-        course = Course.objects.create(**validated_data)
+        course = Course.objects.create(
+            **validated_data,
+            instructor=instructor,
+        )
         return course

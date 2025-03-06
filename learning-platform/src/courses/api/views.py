@@ -99,6 +99,7 @@ class CourseViewSet(BaseModelViewSet):
 
     @extend_schema(
         description="Retrieve a single course",
+        request=CourseCreateSerializer,
         responses={
             200: OpenApiResponse(
                 response=CourseSerializer,
@@ -135,12 +136,12 @@ class CourseViewSet(BaseModelViewSet):
         if not request.user.is_instructor:
             return self.forbidden()
 
-        serializer = CourseCreateSerializer(
-            data={**request.data, "instructor": request.user.instructor_profile.uuid}
-        )
+        serializer = CourseCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        course = serializer.save()
+        course = serializer.create(
+            serializer.validated_data, request.user.instructor_profile
+        )
         course_serializer = CourseSerializer({"data": course})
         return self.created(course_serializer.data)
 
