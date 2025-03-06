@@ -31,7 +31,7 @@ class CourseViewSet(BaseModelViewSet):
     Filters:
         - category: Filter courses by category.
         - status: Filter courses by status.
-        - enrolled: Filter courses by enrollment status (students only).
+        - instructor: Filter courses by enrollment status (students only).
 
     Returns:
         Response: A paginated list of courses with metadata.
@@ -144,9 +144,10 @@ class CourseViewSet(BaseModelViewSet):
         serializer = CourseCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        course = serializer.create(
-            serializer.validated_data, request.user.instructor_profile
+        course = serializer.save(
+            instructor=request.user.instructor_profile,
         )
+
         course_serializer = CourseSerializer({"data": course})
         return self.created(course_serializer.data)
 
@@ -159,10 +160,9 @@ class CourseViewSet(BaseModelViewSet):
         """
 
         pk = kwargs.get("pk")
-
         if course := Course.objects.filter(uuid=pk).first():
-            serializer = self.get_serializer(course)
-            return self.ok({"data": serializer.data})
+            serializer = CourseSerializer({"data": course})
+            return self.ok(serializer.data)
         else:
             return self.not_found()
 
@@ -216,8 +216,8 @@ class CourseViewSet(BaseModelViewSet):
 
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return self.ok({"data": serializer.data})
+        course = serializer.save()
+        return self.ok(CourseSerializer({"data": course}).data)
 
     @extend_schema(
         description="Enroll a student in a course.",

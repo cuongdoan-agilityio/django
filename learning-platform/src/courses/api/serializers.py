@@ -47,10 +47,6 @@ class CourseCreateSerializer(serializers.ModelSerializer):
     Serializer for handling create course requests.
     """
 
-    status = serializers.ChoiceField(
-        choices=Status.choices(), default=Status.ACTIVATE.value
-    )
-
     class Meta:
         model = Course
         fields = [
@@ -60,22 +56,18 @@ class CourseCreateSerializer(serializers.ModelSerializer):
             "status",
         ]
 
-    def create(self, validated_data, instructor):
+    def create(self, validated_data):
         """
         Creates a new course.
 
         Args:
             validated_data (dict): The validated data for creating the course.
-            instructor (Instructor): The instructor instance.
 
         Returns:
             Course: The created course instance.
         """
 
-        course = Course.objects.create(
-            **validated_data,
-            instructor=instructor,
-        )
+        course = Course.objects.create(**validated_data)
         return course
 
 
