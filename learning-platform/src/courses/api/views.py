@@ -47,7 +47,7 @@ class CourseViewSet(BaseModelViewSet):
         Get permissions for Course APIs.
         """
 
-        if self.action in ["students"]:
+        if self.action in ["create", "partial_update", "enroll", "leave", "students"]:
             return [IsAuthenticated()]
 
         return super().get_permissions()
@@ -97,6 +97,30 @@ class CourseViewSet(BaseModelViewSet):
             }
         )
 
+    @extend_schema(
+        description="Retrieve a single course",
+        responses={
+            200: OpenApiResponse(
+                response=CourseSerializer,
+                examples=[
+                    OpenApiExample(
+                        "Example response",
+                        summary="Example response",
+                        value={
+                            "data": {
+                                "uuid": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                "title": "string",
+                                "description": "string",
+                                "category": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                "instructor": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                "status": "activate",
+                            }
+                        },
+                    )
+                ],
+            )
+        },
+    )
     def create(self, request, *args, **kwargs):
         """
         Create a new course by an instructor.
@@ -107,15 +131,13 @@ class CourseViewSet(BaseModelViewSet):
         Returns:
             Response: The created course data.
         """
-        if not request.user.is_authenticated or not hasattr(
-            request.user, "instructor_profile"
-        ):
+
+        if not request.user.is_instructor:
             return self.forbidden()
 
         serializer = CourseCreateSerializer(
             data={**request.data, "instructor": request.user.instructor_profile.uuid}
         )
-        # TODO: Need handle error when serializer is not valid
         serializer.is_valid(raise_exception=True)
 
         course = serializer.save()
@@ -129,6 +151,7 @@ class CourseViewSet(BaseModelViewSet):
         Returns:
             Response: The course data.
         """
+
         pk = kwargs.get("pk")
 
         if course := Course.objects.filter(uuid=pk).first():
@@ -148,6 +171,10 @@ class CourseViewSet(BaseModelViewSet):
         Returns:
             Response: The updated course data.
         """
+
+        if not request.user.is_instructor:
+            return self.forbidden()
+
         instance = self.get_object()
 
         # Ensure the instructor can only update their own courses
@@ -181,7 +208,7 @@ class CourseViewSet(BaseModelViewSet):
             200: BaseSuccessResponseSerializer,
         },
     )
-    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=["post"])
     def enroll(self, request, **kwargs):
         """
         Enroll a student in a course.
@@ -216,7 +243,7 @@ class CourseViewSet(BaseModelViewSet):
             200: BaseSuccessResponseSerializer,
         },
     )
-    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=["post"])
     def leave(self, request, **kwargs):
         if request.user.is_instructor:
             return self.forbidden({"detail": "Instructors cannot leave course."})
