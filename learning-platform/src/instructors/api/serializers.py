@@ -1,21 +1,11 @@
 from rest_framework import serializers
 
-from instructors.models import Instructor, Subject
+from instructors.models import Subject
 
 from django.contrib.auth import get_user_model
 
 
 User = get_user_model()
-
-
-class InstructorSerializer(serializers.ModelSerializer[Instructor]):
-    """
-    Student serializer
-    """
-
-    class Meta:
-        model = Instructor
-        fields = ["user", "subjects", "degree"]
 
 
 class InstructorProfileDataSerializer(serializers.ModelSerializer):
@@ -25,6 +15,7 @@ class InstructorProfileDataSerializer(serializers.ModelSerializer):
 
     subjects = serializers.SerializerMethodField()
     degree = serializers.SerializerMethodField()
+    uuid = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -46,22 +37,34 @@ class InstructorProfileDataSerializer(serializers.ModelSerializer):
         Retrieves the instructor degree.
         """
 
-        return (
-            obj.instructor_profile.degree
-            if hasattr(obj, "instructor_profile")
-            else None
-        )
+        self.check_user(obj)
+
+        return obj.instructor_profile.degree
 
     def get_subjects(self, obj) -> list[str] | None:
         """
         Retrieves the instructor subjects.
         """
 
-        return (
-            [subject.uuid for subject in obj.instructor_profile.subjects.all()]
-            if hasattr(obj, "instructor_profile")
-            else None
-        )
+        self.check_user(obj)
+        return [subject.uuid for subject in obj.instructor_profile.subjects.all()]
+
+    def get_uuid(self, obj) -> int:
+        """
+        Retrieves the instructor uuid.
+        """
+
+        self.check_user(obj)
+
+        return obj.instructor_profile.uuid
+
+    def check_user(self, obj) -> None:
+        """
+        Raise an error if the user is not an instructor.
+        """
+
+        if not hasattr(obj, "instructor_profile"):
+            raise serializers.ValidationError("User is not a instructor.")
 
 
 class InstructorProfileSerializer(serializers.Serializer):
