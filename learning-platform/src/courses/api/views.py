@@ -246,6 +246,13 @@ class CourseViewSet(BaseModelViewSet):
     )
     @action(detail=True, methods=["post"])
     def leave(self, request, **kwargs):
+        """
+        Allows a student to leave a course.
+
+        This method allows a student to leave a course they are enrolled in.
+        Instructors are not allowed to leave courses.
+        """
+
         if request.user.is_instructor:
             return self.forbidden({"detail": "Instructors cannot leave course."})
 
