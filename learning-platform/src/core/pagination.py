@@ -5,9 +5,6 @@ from rest_framework.response import Response
 class CustomPagination(LimitOffsetPagination):
     """
     Custom pagination class to include pagination metadata in the response.
-
-    Methods:
-        get_paginated_response: Returns a paginated response with metadata.
     """
 
     def get_paginated_response(self, data):
