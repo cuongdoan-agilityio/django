@@ -1,8 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 
-from core.serializers import MetaSerializer
-
 
 User = get_user_model()
 
@@ -57,12 +55,3 @@ class StudentProfileSerializer(serializers.Serializer):
     """
 
     data = StudentProfileDataSerializer()
-
-
-class StudentListSerializer(serializers.Serializer):
-    """
-    Serializer for a list of student profiles with pagination metadata.
-    """
-
-    data = StudentBaseSerializer(many=True)
-    meta = MetaSerializer()

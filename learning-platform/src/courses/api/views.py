@@ -9,7 +9,7 @@ from core.serializers import BaseSuccessResponseSerializer, BaseListSerializer
 from core.permissions import IsInstructorAndOwner, IsStudent
 from students.models import Student
 from enrollments.models import Enrollment
-from students.api.serializers import StudentListSerializer
+from students.api.serializers import StudentBaseSerializer
 
 from ..models import Course
 from .serializers import (
@@ -240,7 +240,7 @@ class CourseViewSet(BaseModelViewSet):
         description="View all students enrolled in a course.",
         responses={
             200: OpenApiResponse(
-                response=StudentListSerializer,
+                response=BaseListSerializer,
                 examples=[
                     OpenApiExample(
                         "Example response",
@@ -283,7 +283,10 @@ class CourseViewSet(BaseModelViewSet):
 
         paginator = self.paginator
         page = paginator.paginate_queryset(users, request)
-        serializer = StudentListSerializer(paginator.get_paginated_response(page).data)
+        serializer = BaseListSerializer(
+            paginator.get_paginated_response(page).data,
+            context={"serializer_class": StudentBaseSerializer},
+        )
         return self.ok(serializer.data)
 
 

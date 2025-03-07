@@ -114,7 +114,7 @@ class BaseListSerializer(serializers.Serializer):
 
     data = serializers.SerializerMethodField()
 
-    def get_data(self, obj_list):
+    def get_data(self, obj_list) -> list:
         """
         Get the data from the list of objects.
         """
