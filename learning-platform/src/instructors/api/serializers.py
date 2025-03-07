@@ -46,14 +46,6 @@ class InstructorProfileDataSerializer(serializers.ModelSerializer):
         return [subject.uuid for subject in obj.instructor_profile.subjects.all()]
 
 
-class InstructorProfileSerializer(serializers.Serializer):
-    """
-    Serializer for instructor profiles.
-    """
-
-    data = InstructorProfileDataSerializer()
-
-
 class InstructorBaseSerializer(serializers.ModelSerializer):
     """
     Serializer for Instructor serializer.

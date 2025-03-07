@@ -198,11 +198,3 @@ class UserSerializer(serializers.ModelSerializer):
             "date_of_birth",
             "gender",
         ]
-
-
-class UserProfileSerializer(serializers.Serializer):
-    """
-    Serializer for user profile data.
-    """
-
-    data = UserSerializer()

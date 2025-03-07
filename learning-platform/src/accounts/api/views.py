@@ -8,8 +8,6 @@ from django.contrib.auth import authenticate, get_user_model
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
-    OpenApiResponse,
-    OpenApiExample,
 )
 
 from core.api_views import BaseViewSet, BaseGenericViewSet
@@ -17,18 +15,23 @@ from core.serializers import (
     BaseUnauthorizedResponseSerializer,
     BaseBadRequestResponseSerializer,
     BaseForbiddenResponseSerializer,
+    BaseDetailSerializer,
 )
 
 
-from instructors.api.serializers import InstructorProfileSerializer
-from students.api.serializers import StudentProfileSerializer
+from instructors.api.serializers import InstructorProfileDataSerializer
+from students.api.serializers import StudentProfileDataSerializer
 
+from .response_schema import (
+    user_profile_response_schema,
+    student_profile_response_schema,
+)
 from .serializers import (
     LoginRequestSerializer,
     LoginResponseSerializer,
     RegisterSerializer,
     UserProfileUpdateSerializer,
-    UserProfileSerializer,
+    UserSerializer,
 )
 
 
@@ -48,7 +51,7 @@ User = get_user_model()
         description="API to sign up a new user.",
         request=RegisterSerializer,
         responses={
-            201: StudentProfileSerializer,
+            201: student_profile_response_schema,
             400: BaseBadRequestResponseSerializer,
         },
     ),
@@ -125,7 +128,9 @@ class AuthenticationViewSet(BaseViewSet):
         serializer.is_valid(raise_exception=True)
         user_instance = serializer.save()
 
-        response_serializer = StudentProfileSerializer({"data": user_instance})
+        response_serializer = BaseDetailSerializer(
+            user_instance, context={"serializer_class": StudentProfileDataSerializer}
+        )
 
         return self.created(response_serializer.data)
 
@@ -139,84 +144,24 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
     """
 
     permission_classes = [IsAuthenticated]
-    serializer_class = InstructorProfileSerializer
+    serializer_class = StudentProfileDataSerializer
     http_method_names = ["get", "patch"]
     resource_name = "users"
 
     def get_serializer_class(self):
-        if self.action in ["retrieve", "partial_update"]:
-            user = self.request.user
-            if user and hasattr(user, "student_profile"):
-                return StudentProfileSerializer
-            if user and hasattr(user, "instructor_profile"):
-                return InstructorProfileSerializer
-            return UserProfileSerializer
-        return self.serializer_class
+        user = self.request.user
+        if user and hasattr(user, "student_profile"):
+            return StudentProfileDataSerializer
+        if user and hasattr(user, "instructor_profile"):
+            return InstructorProfileDataSerializer
+        return UserSerializer
 
     def get_queryset(self):
         return User.objects.select_related("student_profile", "instructor_profile")
 
     @extend_schema(
         description="Retrieve a user profile (Instructor or Student, admin)",
-        responses={
-            200: OpenApiResponse(
-                response=InstructorProfileSerializer,
-                description="Returns either Instructor or Student profile",
-                examples=[
-                    OpenApiExample(
-                        "Instructor Profile Example",
-                        value={
-                            "data": {
-                                "uuid": "1e80d4c5-f612-4ead-a165-811b1466f03d",
-                                "username": "instructor user name",
-                                "first_name": "instructor first name",
-                                "last_name": "instructor last name",
-                                "email": "instructor@example.com",
-                                "phone_number": "0652485157",
-                                "date_of_birth": "1990-01-01",
-                                "gender": "female",
-                                "degree": "no",
-                                "subjects": [],
-                            }
-                        },
-                        response_only=True,
-                    ),
-                    OpenApiExample(
-                        "Student Profile Example",
-                        value={
-                            "data": {
-                                "uuid": "1e80d4c5-f612-4ead-a165-811b1466f03d",
-                                "username": "instructor user name",
-                                "first_name": "instructor first name",
-                                "last_name": "instructor last name",
-                                "email": "instructor@example.com",
-                                "phone_number": "0652485157",
-                                "date_of_birth": "1990-01-01",
-                                "gender": "female",
-                                "scholarship": 0,
-                            }
-                        },
-                        response_only=True,
-                    ),
-                    OpenApiExample(
-                        "Admin Profile Example",
-                        value={
-                            "data": {
-                                "uuid": "deb00a3f-d4h8-2d74-asvb-bfda19ewf15f",
-                                "username": "Admin user name",
-                                "first_name": "admin first name",
-                                "last_name": "admin last name",
-                                "email": "admin@example.com",
-                                "phone_number": "0652154875",
-                                "date_of_birth": "1990-01-01",
-                                "gender": "male",
-                            }
-                        },
-                        response_only=True,
-                    ),
-                ],
-            )
-        },
+        responses={200: user_profile_response_schema},
     )
     def retrieve(self, request, *args, **kwargs):
         """
@@ -229,71 +174,16 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         if pk not in ["me", str(user.uuid)]:
             return self.forbidden()
 
-        serializer = self.get_serializer({"data": user})
-
+        serializer = BaseDetailSerializer(
+            user, context={"serializer_class": self.get_serializer_class()}
+        )
         return self.ok(serializer.data)
 
     @extend_schema(
         description="Update the student or instructor profile",
         request=UserProfileUpdateSerializer,
         responses={
-            200: OpenApiResponse(
-                response=InstructorProfileSerializer,
-                description="Returns either Instructor or Student profile",
-                examples=[
-                    OpenApiExample(
-                        "Instructor Profile Example",
-                        value={
-                            "data": {
-                                "uuid": "1e80d4c5-f612-4ead-a165-811b1466f03d",
-                                "username": "instructor user name",
-                                "first_name": "instructor first name",
-                                "last_name": "instructor last name",
-                                "email": "instructor@example.com",
-                                "phone_number": "0652485157",
-                                "date_of_birth": "1990-01-01",
-                                "gender": "female",
-                                "degree": "no",
-                                "subjects": [],
-                            }
-                        },
-                        response_only=True,
-                    ),
-                    OpenApiExample(
-                        "Student Profile Example",
-                        value={
-                            "data": {
-                                "uuid": "1e80d4c5-f612-4ead-a165-811b1466f03d",
-                                "username": "instructor user name",
-                                "first_name": "instructor first name",
-                                "last_name": "instructor last name",
-                                "email": "instructor@example.com",
-                                "phone_number": "0652485157",
-                                "date_of_birth": "1990-01-01",
-                                "gender": "female",
-                                "scholarship": 0,
-                            }
-                        },
-                        response_only=True,
-                    ),
-                    OpenApiExample(
-                        "Admin Profile Example",
-                        value={
-                            "data": {
-                                "uuid": "deb00a3f-d4h8-2d74-asvb-bfda19ewf15f",
-                                "username": "Admin user name",
-                                "first_name": "admin first name",
-                                "last_name": "admin last name",
-                                "email": "admin@example.com",
-                                "phone_number": "0652154875",
-                                "date_of_birth": "1990-01-01",
-                                "gender": "male",
-                            }
-                        },
-                        response_only=True,
-                    ),
-                ],
-            ),
+            200: user_profile_response_schema,
             403: BaseForbiddenResponseSerializer,
         },
     )
@@ -318,7 +208,9 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         serializer.save()
 
         updated_user = self.get_queryset().get(uuid=user.uuid)
-        response_serializer = self.get_serializer({"data": updated_user})
+        response_serializer = BaseDetailSerializer(
+            updated_user, context={"serializer_class": self.get_serializer_class()}
+        )
         return self.ok(response_serializer.data)
 
 
