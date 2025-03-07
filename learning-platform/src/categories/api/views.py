@@ -16,7 +16,6 @@ class CategoryViewSet(BaseGenericViewSet, ListModelMixin):
     serializer_class = CategorySerializer
     http_method_names = ["get"]
     resource_name = "categories"
-    lookup_field = "uuid"
 
     def get_queryset(self):
         return Category.objects.all()

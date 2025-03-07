@@ -12,6 +12,8 @@ class CommonViewSet:
     - get resource URI
     """
 
+    lookup_field = "uuid"
+
     def ok(self, data: dict | None = None) -> Response:
         """
         Default response ok. Status code is 200
@@ -103,7 +105,7 @@ class BaseModelViewSet(ModelViewSet, CommonViewSet):
     """
 
 
-class BaseGenericViewSet(GenericViewSet, CommonViewSet):
+class BaseGenericViewSet(CommonViewSet, GenericViewSet):
     """
     Base generic view set.
     """

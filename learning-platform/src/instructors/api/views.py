@@ -24,7 +24,6 @@ class SubjectViewSet(BaseGenericViewSet, ListModelMixin):
     serializer_class = SubjectSerializer
     http_method_names = ["get"]
     resource_name = "subjects"
-    lookup_field = "uuid"
 
     def get_queryset(self):
         return Subject.objects.all()

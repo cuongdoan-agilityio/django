@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from instructors.models import Subject
+from instructors.models import Subject, Instructor
 
 from django.contrib.auth import get_user_model
 
@@ -15,7 +15,6 @@ class InstructorProfileDataSerializer(serializers.ModelSerializer):
 
     subjects = serializers.SerializerMethodField()
     degree = serializers.SerializerMethodField()
-    uuid = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -37,8 +36,6 @@ class InstructorProfileDataSerializer(serializers.ModelSerializer):
         Retrieves the instructor degree.
         """
 
-        self.check_user(obj)
-
         return obj.instructor_profile.degree
 
     def get_subjects(self, obj) -> list[str] | None:
@@ -46,33 +43,42 @@ class InstructorProfileDataSerializer(serializers.ModelSerializer):
         Retrieves the instructor subjects.
         """
 
-        self.check_user(obj)
         return [subject.uuid for subject in obj.instructor_profile.subjects.all()]
 
-    def get_uuid(self, obj) -> int:
-        """
-        Retrieves the instructor uuid.
-        """
 
-        self.check_user(obj)
-
-        return obj.instructor_profile.uuid
-
-    def check_user(self, obj) -> None:
-        """
-        Raise an error if the user is not an instructor.
-        """
-
-        if not hasattr(obj, "instructor_profile"):
-            raise serializers.ValidationError("User is not a instructor.")
-
-
-class InstructorProfileSerializer(serializers.Serializer):
+class InstructorBaseSerializer(serializers.ModelSerializer):
     """
-    Serializer for instructor profiles.
+    Serializer for Instructor serializer.
     """
 
-    data = InstructorProfileDataSerializer()
+    first_name = serializers.SerializerMethodField()
+    last_name = serializers.SerializerMethodField()
+    email = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Instructor
+        fields = ["uuid", "first_name", "last_name", "email"]
+
+    def get_first_name(self, obj) -> str | None:
+        """
+        Retrieves the instructor first name.
+        """
+
+        return obj.user.first_name
+
+    def get_last_name(self, obj) -> str | None:
+        """
+        Retrieves the instructor last name.
+        """
+
+        return obj.user.last_name
+
+    def get_email(self, obj) -> str:
+        """
+        Retrieves the instructor email.
+        """
+
+        return obj.user.email
 
 
 class SubjectSerializer(serializers.ModelSerializer):

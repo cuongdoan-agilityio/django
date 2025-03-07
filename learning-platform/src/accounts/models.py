@@ -185,3 +185,13 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
             bool: True if the user is an instructor, False otherwise.
         """
         return hasattr(self, "instructor_profile")
+
+    @property
+    def is_student(self):
+        """
+        Checks if the user is an student.
+
+        Returns:
+            bool: True if the user is an student, False otherwise.
+        """
+        return hasattr(self, "student_profile")

@@ -2,17 +2,23 @@ from rest_framework import filters
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
+from drf_spectacular.utils import extend_schema
 
 from core.api_views import BaseModelViewSet
-from core.serializers import BaseSuccessResponseSerializer
+from core.serializers import (
+    BaseSuccessResponseSerializer,
+    BaseListSerializer,
+    BaseDetailSerializer,
+)
+from core.permissions import IsInstructorAndOwner, IsStudent
 from students.models import Student
 from enrollments.models import Enrollment
-from students.api.serializers import StudentListSerializer
+from students.api.serializers import StudentBaseSerializer
+
+from .response_schema import course_response_schema, student_list_response_schema
 
 from ..models import Course
 from .serializers import (
-    CourseSerializer,
     CourseCreateSerializer,
     CourseDataSerializer,
     CourseUpdateSerializer,
@@ -42,7 +48,7 @@ class CourseViewSet(BaseModelViewSet):
     permission_classes = [AllowAny]
     http_method_names = ["get", "post", "patch"]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["category", "status", "instructor"]
+    filterset_fields = ["category", "status"]
     search_fields = ["title", "description"]
 
     def get_permissions(self):
@@ -50,8 +56,11 @@ class CourseViewSet(BaseModelViewSet):
         Get permissions for Course APIs.
         """
 
-        if self.action in ["create", "partial_update", "enroll", "leave", "students"]:
-            return [IsAuthenticated()]
+        if self.action in ["students", "partial_update", "create"]:
+            return [IsAuthenticated(), IsInstructorAndOwner()]
+
+        if self.action in ["enroll", "leave"]:
+            return [IsAuthenticated(), IsStudent()]
 
         return super().get_permissions()
 
@@ -64,7 +73,7 @@ class CourseViewSet(BaseModelViewSet):
         queryset = super().get_queryset()
         enrolled = self.request.query_params.get("enrolled", None)
         if enrolled and not self.request.user.is_instructor:
-            student = Student.objects.get(user=self.request.user)
+            student = Student.objects.filter(user=self.request.user).first()
             queryset = queryset.filter(enrollments__student=student)
         return queryset
 
@@ -82,13 +91,18 @@ class CourseViewSet(BaseModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
 
         page = self.paginate_queryset(queryset)
-        serializer = self.get_serializer(page, many=True)
-        return self.get_paginated_response(serializer.data)
+        data = self.get_paginated_response(page).data
+        serializer = BaseListSerializer(
+            data, context={"serializer_class": CourseDataSerializer}
+        )
+        return self.ok(serializer.data)
 
     @extend_schema(
         description="Create a course.",
         request=CourseCreateSerializer,
-        responses={201: CourseSerializer},
+        responses={
+            201: course_response_schema,
+        },
     )
     def create(self, request, *args, **kwargs):
         """
@@ -101,9 +115,6 @@ class CourseViewSet(BaseModelViewSet):
             Response: The created course data.
         """
 
-        if not request.user.is_instructor:
-            return self.forbidden()
-
         serializer = CourseCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -111,13 +122,15 @@ class CourseViewSet(BaseModelViewSet):
             instructor=request.user.instructor_profile,
         )
 
-        course_serializer = CourseSerializer({"data": course})
+        course_serializer = BaseDetailSerializer(
+            {"data": course}, context={"serializer_class": CourseDataSerializer}
+        )
         return self.created(course_serializer.data)
 
     @extend_schema(
         description="Retrieve a single course",
         responses={
-            200: CourseSerializer,
+            200: course_response_schema,
         },
     )
     def retrieve(self, request, *args, **kwargs):
@@ -128,19 +141,16 @@ class CourseViewSet(BaseModelViewSet):
             Response: The course data.
         """
 
-        pk = kwargs.get("pk")
-        if course := Course.objects.filter(uuid=pk).first():
-            serializer = CourseSerializer({"data": course})
-            return self.ok(serializer.data)
-        else:
-            return self.not_found()
+        course = self.get_object()
+        serializer = BaseDetailSerializer(
+            {"data": course}, context={"serializer_class": CourseDataSerializer}
+        )
+        return self.ok(serializer.data)
 
     @extend_schema(
         description="Enroll a student in a course.",
         request=CourseUpdateSerializer,
-        responses={
-            200: CourseSerializer,
-        },
+        responses={200: course_response_schema},
     )
     def partial_update(self, request, *args, **kwargs):
         """
@@ -155,20 +165,7 @@ class CourseViewSet(BaseModelViewSet):
             Response: The updated course data.
         """
 
-        if not request.user.is_instructor:
-            return self.forbidden()
-
         instance = self.get_object()
-
-        # Ensure the instructor can only update their own courses
-        if (
-            not request.user.is_authenticated
-            or not hasattr(request.user, "instructor_profile")
-            or instance.instructor != request.user.instructor_profile
-        ):
-            return self.forbidden(
-                {"detail": "You do not have permission to update this course."}
-            )
 
         serializer = CourseUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -186,7 +183,10 @@ class CourseViewSet(BaseModelViewSet):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         course = serializer.save()
-        return self.ok(CourseSerializer({"data": course}).data)
+        data = BaseDetailSerializer(
+            course, context={"serializer_class": CourseDataSerializer}
+        )
+        return self.ok(data.data)
 
     @extend_schema(
         description="Enroll a student in a course.",
@@ -204,17 +204,14 @@ class CourseViewSet(BaseModelViewSet):
             request (HttpRequest): The current request object.
         """
 
-        if request.user.is_instructor:
-            return self.forbidden({"detail": "Instructors cannot enroll course."})
-
-        course = Course.objects.get(uuid=kwargs.get("pk"))
+        course = self.get_object()
 
         if course.status != "activate" or not course.instructor:
             return self.bad_request("This course is not available for enrollment.")
 
         student = Student.objects.get(user=request.user)
 
-        if Enrollment.objects.filter(course=course, student=student).exists():
+        if student.enrollments.filter(course=course).exists():
             return self.bad_request("You are already enrolled in this course.")
 
         Enrollment.objects.create(course=course, student=student)
@@ -239,14 +236,10 @@ class CourseViewSet(BaseModelViewSet):
         Instructors are not allowed to leave courses.
         """
 
-        if request.user.is_instructor:
-            return self.forbidden({"detail": "Instructors cannot leave course."})
+        course = self.get_object()
+        student = Student.objects.filter(user=request.user).first()
 
-        course = Course.objects.get(uuid=kwargs.get("pk"))
-        student = Student.objects.get(user=request.user)
-        if enrollment := Enrollment.objects.filter(
-            course=course, student=student
-        ).first():
+        if enrollment := student.enrollments.filter(course=course).first():
             enrollment.delete()
             response_serializer = BaseSuccessResponseSerializer(
                 {"data": {"success": True}}
@@ -257,31 +250,7 @@ class CourseViewSet(BaseModelViewSet):
 
     @extend_schema(
         description="View all students enrolled in a course.",
-        responses={
-            200: OpenApiResponse(
-                response=StudentListSerializer,
-                examples=[
-                    OpenApiExample(
-                        "Example response",
-                        summary="Example response",
-                        value={
-                            "data": [
-                                {
-                                    "uuid": "string",
-                                    "username": "string",
-                                    "first_name": "string",
-                                    "last_name": "string",
-                                    "email": "user@example.com",
-                                }
-                            ],
-                            "meta": {
-                                "pagination": {"total": 1, "limit": 20, "offset": 0}
-                            },
-                        },
-                    )
-                ],
-            )
-        },
+        responses={200: student_list_response_schema},
     )
     @action(detail=True, methods=["get"])
     def students(self, request, **kwargs):
@@ -295,25 +264,17 @@ class CourseViewSet(BaseModelViewSet):
             Response: A list of students enrolled in the course.
         """
 
-        if not request.user.is_instructor:
-            return self.forbidden(
-                {"detail": "Only instructors can view enrolled students."}
-            )
-
-        course = Course.objects.get(uuid=kwargs.get("pk"))
-
-        if course.instructor != request.user.instructor_profile:
-            return self.forbidden(
-                {
-                    "detail": "You do not have permission to view the students of this course."
-                }
-            )
+        course = self.get_object()
 
         enrollments = Enrollment.objects.filter(course=course)
         users = [enrollment.student.user for enrollment in enrollments]
+
         paginator = self.paginator
         page = paginator.paginate_queryset(users, request)
-        serializer = StudentListSerializer(paginator.get_paginated_response(page).data)
+        serializer = BaseListSerializer(
+            paginator.get_paginated_response(page).data,
+            context={"serializer_class": StudentBaseSerializer},
+        )
         return self.ok(serializer.data)
 
 

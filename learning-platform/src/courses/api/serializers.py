@@ -1,9 +1,11 @@
 from rest_framework import serializers
 
-from core.serializers import MetaSerializer
 from core.constants import Status
 from courses.models import Course
 from categories.models import Category
+
+from categories.api.serializers import CategorySerializer
+from instructors.api.serializers import InstructorBaseSerializer
 
 
 class CourseDataSerializer(serializers.ModelSerializer):
@@ -19,27 +21,13 @@ class CourseDataSerializer(serializers.ModelSerializer):
         status (CharField): The status of the course.
     """
 
+    instructor = InstructorBaseSerializer()
+    category = CategorySerializer()
+
     class Meta:
         model = Course
         fields = ["uuid", "title", "description", "category", "instructor", "status"]
-        read_only_fields = ["uuid", "instructor"]
-
-
-class CourseListSerializer(serializers.Serializer):
-    """
-    Serializer for a list of courses with pagination metadata.
-    """
-
-    data = CourseDataSerializer(many=True)
-    meta = MetaSerializer()
-
-
-class CourseSerializer(serializers.Serializer):
-    """
-    Serializer for course detail.
-    """
-
-    data = CourseDataSerializer()
+        read_only_fields = ["instructor"]
 
 
 class CourseCreateSerializer(serializers.ModelSerializer):

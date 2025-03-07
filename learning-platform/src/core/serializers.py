@@ -105,3 +105,35 @@ class MetaSerializer(serializers.Serializer):
     """
 
     pagination = PaginationSerializer()
+
+
+class BaseListSerializer(serializers.Serializer):
+    """
+    Base serializer for a list response.
+    """
+
+    data = serializers.SerializerMethodField()
+
+    def get_data(self, obj_list) -> list:
+        """
+        Get the data from the list of objects.
+        """
+        serializer_class = self.context.get("serializer_class")
+        return serializer_class(obj_list["data"], many=True).data
+
+    meta = MetaSerializer()
+
+
+class BaseDetailSerializer(serializers.Serializer):
+    """
+    Base serializer for a response.
+    """
+
+    data = serializers.SerializerMethodField()
+
+    def get_data(self, obj) -> dict:
+        """
+        Get the data from the list of objects.
+        """
+        serializer_class = self.context.get("serializer_class")
+        return serializer_class(obj).data
