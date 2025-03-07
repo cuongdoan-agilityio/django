@@ -2,18 +2,23 @@ from rest_framework import filters
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
+from drf_spectacular.utils import extend_schema
 
 from core.api_views import BaseModelViewSet
-from core.serializers import BaseSuccessResponseSerializer, BaseListSerializer
+from core.serializers import (
+    BaseSuccessResponseSerializer,
+    BaseListSerializer,
+    BaseDetailSerializer,
+)
 from core.permissions import IsInstructorAndOwner, IsStudent
 from students.models import Student
 from enrollments.models import Enrollment
 from students.api.serializers import StudentBaseSerializer
 
+from .response_schema import course_response_schema, student_list_response_schema
+
 from ..models import Course
 from .serializers import (
-    CourseSerializer,
     CourseCreateSerializer,
     CourseDataSerializer,
     CourseUpdateSerializer,
@@ -95,7 +100,9 @@ class CourseViewSet(BaseModelViewSet):
     @extend_schema(
         description="Create a course.",
         request=CourseCreateSerializer,
-        responses={201: CourseSerializer},
+        responses={
+            201: course_response_schema,
+        },
     )
     def create(self, request, *args, **kwargs):
         """
@@ -115,13 +122,15 @@ class CourseViewSet(BaseModelViewSet):
             instructor=request.user.instructor_profile,
         )
 
-        course_serializer = CourseSerializer({"data": course})
+        course_serializer = BaseDetailSerializer(
+            {"data": course}, context={"serializer_class": CourseDataSerializer}
+        )
         return self.created(course_serializer.data)
 
     @extend_schema(
         description="Retrieve a single course",
         responses={
-            200: CourseSerializer,
+            200: course_response_schema,
         },
     )
     def retrieve(self, request, *args, **kwargs):
@@ -133,15 +142,15 @@ class CourseViewSet(BaseModelViewSet):
         """
 
         course = self.get_object()
-        serializer = CourseSerializer({"data": course})
+        serializer = BaseDetailSerializer(
+            {"data": course}, context={"serializer_class": CourseDataSerializer}
+        )
         return self.ok(serializer.data)
 
     @extend_schema(
         description="Enroll a student in a course.",
         request=CourseUpdateSerializer,
-        responses={
-            200: CourseSerializer,
-        },
+        responses={200: course_response_schema},
     )
     def partial_update(self, request, *args, **kwargs):
         """
@@ -174,7 +183,10 @@ class CourseViewSet(BaseModelViewSet):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         course = serializer.save()
-        return self.ok(CourseSerializer({"data": course}).data)
+        data = BaseDetailSerializer(
+            course, context={"serializer_class": CourseDataSerializer}
+        )
+        return self.ok(data.data)
 
     @extend_schema(
         description="Enroll a student in a course.",
@@ -238,31 +250,7 @@ class CourseViewSet(BaseModelViewSet):
 
     @extend_schema(
         description="View all students enrolled in a course.",
-        responses={
-            200: OpenApiResponse(
-                response=BaseListSerializer,
-                examples=[
-                    OpenApiExample(
-                        "Example response",
-                        summary="Example response",
-                        value={
-                            "data": [
-                                {
-                                    "uuid": "string",
-                                    "username": "string",
-                                    "first_name": "string",
-                                    "last_name": "string",
-                                    "email": "user@example.com",
-                                }
-                            ],
-                            "meta": {
-                                "pagination": {"total": 1, "limit": 20, "offset": 0}
-                            },
-                        },
-                    )
-                ],
-            )
-        },
+        responses={200: student_list_response_schema},
     )
     @action(detail=True, methods=["get"])
     def students(self, request, **kwargs):

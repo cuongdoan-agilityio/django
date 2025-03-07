@@ -30,14 +30,6 @@ class CourseDataSerializer(serializers.ModelSerializer):
         read_only_fields = ["instructor"]
 
 
-class CourseSerializer(serializers.Serializer):
-    """
-    Serializer for course detail.
-    """
-
-    data = CourseDataSerializer()
-
-
 class CourseCreateSerializer(serializers.ModelSerializer):
     """
     Serializer for handling create course requests.
