@@ -5,7 +5,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 
 from core.api_views import BaseModelViewSet
-from core.serializers import BaseSuccessResponseSerializer
+from core.serializers import BaseSuccessResponseSerializer, BaseListSerializer
 from core.permissions import IsInstructorAndOwner, IsStudent
 from students.models import Student
 from enrollments.models import Enrollment
@@ -86,8 +86,11 @@ class CourseViewSet(BaseModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
 
         page = self.paginate_queryset(queryset)
-        serializer = self.get_serializer(page, many=True)
-        return self.get_paginated_response(serializer.data)
+        data = self.get_paginated_response(page).data
+        serializer = BaseListSerializer(
+            data, context={"serializer_class": CourseDataSerializer}
+        )
+        return self.ok(serializer.data)
 
     @extend_schema(
         description="Create a course.",
