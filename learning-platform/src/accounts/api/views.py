@@ -28,6 +28,7 @@ from .serializers import (
     LoginResponseSerializer,
     RegisterSerializer,
     UserProfileUpdateSerializer,
+    UserProfileSerializer,
 )
 
 
@@ -147,14 +148,16 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
             user = self.request.user
             if user and hasattr(user, "student_profile"):
                 return StudentProfileSerializer
-            return InstructorProfileSerializer
+            if user and hasattr(user, "instructor_profile"):
+                return InstructorProfileSerializer
+            return UserProfileSerializer
         return self.serializer_class
 
     def get_queryset(self):
         return User.objects.select_related("student_profile", "instructor_profile")
 
     @extend_schema(
-        description="Retrieve a user profile (Instructor or Student)",
+        description="Retrieve a user profile (Instructor or Student, admin)",
         responses={
             200: OpenApiResponse(
                 response=InstructorProfileSerializer,
@@ -191,6 +194,22 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
                                 "date_of_birth": "1990-01-01",
                                 "gender": "female",
                                 "scholarship": 0,
+                            }
+                        },
+                        response_only=True,
+                    ),
+                    OpenApiExample(
+                        "Admin Profile Example",
+                        value={
+                            "data": {
+                                "uuid": "deb00a3f-d4h8-2d74-asvb-bfda19ewf15f",
+                                "username": "Admin user name",
+                                "first_name": "admin first name",
+                                "last_name": "admin last name",
+                                "email": "admin@example.com",
+                                "phone_number": "0652154875",
+                                "date_of_birth": "1990-01-01",
+                                "gender": "male",
                             }
                         },
                         response_only=True,

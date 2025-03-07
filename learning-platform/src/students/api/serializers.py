@@ -29,16 +29,7 @@ class StudentBaseSerializer(serializers.ModelSerializer):
         Retrieves the student uuid.
         """
 
-        self.check_user(obj)
         return obj.student_profile.uuid
-
-    def check_user(self, obj) -> None:
-        """
-        Raise an error if the user is not a student.
-        """
-
-        if not hasattr(obj, "student_profile"):
-            raise serializers.ValidationError("User is not a student.")
 
 
 class StudentProfileDataSerializer(StudentBaseSerializer):
@@ -66,7 +57,6 @@ class StudentProfileDataSerializer(StudentBaseSerializer):
         Retrieves the student scholarship.
         """
 
-        self.check_user(obj)
         return obj.student_profile.scholarship
 
 
