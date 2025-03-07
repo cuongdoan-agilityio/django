@@ -12,8 +12,6 @@ class StudentBaseSerializer(serializers.ModelSerializer):
     Base serializer for student data.
     """
 
-    uuid = serializers.SerializerMethodField()
-
     class Meta:
         model = User
         fields = [
@@ -23,13 +21,6 @@ class StudentBaseSerializer(serializers.ModelSerializer):
             "last_name",
             "email",
         ]
-
-    def get_uuid(self, obj) -> str:
-        """
-        Retrieves the student uuid.
-        """
-
-        return obj.student_profile.uuid
 
 
 class StudentProfileDataSerializer(StudentBaseSerializer):

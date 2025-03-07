@@ -63,7 +63,7 @@ class AuthenticationViewSet(BaseViewSet):
     permission_classes = [AllowAny]
     resource_name = "auth"
 
-    @action(detail=False, methods=["post"], permission_classes=[AllowAny])
+    @action(detail=False, methods=["post"])
     def login(self, request):
         """
         Handles user login and returns an authentication token.
@@ -101,7 +101,7 @@ class AuthenticationViewSet(BaseViewSet):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-    @action(detail=False, methods=["post"], permission_classes=[AllowAny])
+    @action(detail=False, methods=["post"])
     def signup(self, request):
         """
         Handles sign-up user and returns a success message.
@@ -245,8 +245,11 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
                         "Instructor Profile Example",
                         value={
                             "data": {
+                                "uuid": "1e80d4c5-f612-4ead-a165-811b1466f03d",
+                                "username": "instructor user name",
                                 "first_name": "instructor first name",
                                 "last_name": "instructor last name",
+                                "email": "instructor@example.com",
                                 "phone_number": "0652485157",
                                 "date_of_birth": "1990-01-01",
                                 "gender": "female",
@@ -260,12 +263,31 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
                         "Student Profile Example",
                         value={
                             "data": {
+                                "uuid": "1e80d4c5-f612-4ead-a165-811b1466f03d",
+                                "username": "instructor user name",
                                 "first_name": "instructor first name",
                                 "last_name": "instructor last name",
+                                "email": "instructor@example.com",
                                 "phone_number": "0652485157",
                                 "date_of_birth": "1990-01-01",
                                 "gender": "female",
                                 "scholarship": 0,
+                            }
+                        },
+                        response_only=True,
+                    ),
+                    OpenApiExample(
+                        "Admin Profile Example",
+                        value={
+                            "data": {
+                                "uuid": "deb00a3f-d4h8-2d74-asvb-bfda19ewf15f",
+                                "username": "Admin user name",
+                                "first_name": "admin first name",
+                                "last_name": "admin last name",
+                                "email": "admin@example.com",
+                                "phone_number": "0652154875",
+                                "date_of_birth": "1990-01-01",
+                                "gender": "male",
                             }
                         },
                         response_only=True,

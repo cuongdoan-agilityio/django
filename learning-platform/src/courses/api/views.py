@@ -6,6 +6,7 @@ from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 
 from core.api_views import BaseModelViewSet
 from core.serializers import BaseSuccessResponseSerializer
+from core.permissions import IsInstructorAndOwner, IsStudent
 from students.models import Student
 from enrollments.models import Enrollment
 from students.api.serializers import StudentListSerializer
@@ -42,7 +43,7 @@ class CourseViewSet(BaseModelViewSet):
     permission_classes = [AllowAny]
     http_method_names = ["get", "post", "patch"]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["category", "status", "instructor"]
+    filterset_fields = ["category", "status"]
     search_fields = ["title", "description"]
 
     def get_permissions(self):
@@ -50,8 +51,11 @@ class CourseViewSet(BaseModelViewSet):
         Get permissions for Course APIs.
         """
 
-        if self.action in ["create", "partial_update", "enroll", "leave", "students"]:
-            return [IsAuthenticated()]
+        if self.action in ["students", "partial_update", "create"]:
+            return [IsAuthenticated(), IsInstructorAndOwner()]
+
+        if self.action in ["enroll", "leave"]:
+            return [IsAuthenticated(), IsStudent()]
 
         return super().get_permissions()
 
@@ -64,7 +68,7 @@ class CourseViewSet(BaseModelViewSet):
         queryset = super().get_queryset()
         enrolled = self.request.query_params.get("enrolled", None)
         if enrolled and not self.request.user.is_instructor:
-            student = Student.objects.get(user=self.request.user)
+            student = Student.objects.filter(user=self.request.user).first()
             queryset = queryset.filter(enrollments__student=student)
         return queryset
 
@@ -101,9 +105,6 @@ class CourseViewSet(BaseModelViewSet):
             Response: The created course data.
         """
 
-        if not request.user.is_instructor:
-            return self.forbidden()
-
         serializer = CourseCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -128,12 +129,9 @@ class CourseViewSet(BaseModelViewSet):
             Response: The course data.
         """
 
-        pk = kwargs.get("pk")
-        if course := Course.objects.filter(uuid=pk).first():
-            serializer = CourseSerializer({"data": course})
-            return self.ok(serializer.data)
-        else:
-            return self.not_found()
+        course = self.get_object()
+        serializer = CourseSerializer({"data": course})
+        return self.ok(serializer.data)
 
     @extend_schema(
         description="Enroll a student in a course.",
@@ -155,20 +153,7 @@ class CourseViewSet(BaseModelViewSet):
             Response: The updated course data.
         """
 
-        if not request.user.is_instructor:
-            return self.forbidden()
-
         instance = self.get_object()
-
-        # Ensure the instructor can only update their own courses
-        if (
-            not request.user.is_authenticated
-            or not hasattr(request.user, "instructor_profile")
-            or instance.instructor != request.user.instructor_profile
-        ):
-            return self.forbidden(
-                {"detail": "You do not have permission to update this course."}
-            )
 
         serializer = CourseUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -204,17 +189,14 @@ class CourseViewSet(BaseModelViewSet):
             request (HttpRequest): The current request object.
         """
 
-        if request.user.is_instructor:
-            return self.forbidden({"detail": "Instructors cannot enroll course."})
-
-        course = Course.objects.get(uuid=kwargs.get("pk"))
+        course = self.get_object()
 
         if course.status != "activate" or not course.instructor:
             return self.bad_request("This course is not available for enrollment.")
 
         student = Student.objects.get(user=request.user)
 
-        if Enrollment.objects.filter(course=course, student=student).exists():
+        if student.enrollments.filter(course=course).exists():
             return self.bad_request("You are already enrolled in this course.")
 
         Enrollment.objects.create(course=course, student=student)
@@ -239,14 +221,10 @@ class CourseViewSet(BaseModelViewSet):
         Instructors are not allowed to leave courses.
         """
 
-        if request.user.is_instructor:
-            return self.forbidden({"detail": "Instructors cannot leave course."})
+        course = self.get_object()
+        student = Student.objects.filter(user=request.user).first()
 
-        course = Course.objects.get(uuid=kwargs.get("pk"))
-        student = Student.objects.get(user=request.user)
-        if enrollment := Enrollment.objects.filter(
-            course=course, student=student
-        ).first():
+        if enrollment := student.enrollments.filter(course=course).first():
             enrollment.delete()
             response_serializer = BaseSuccessResponseSerializer(
                 {"data": {"success": True}}
@@ -295,22 +273,11 @@ class CourseViewSet(BaseModelViewSet):
             Response: A list of students enrolled in the course.
         """
 
-        if not request.user.is_instructor:
-            return self.forbidden(
-                {"detail": "Only instructors can view enrolled students."}
-            )
-
-        course = Course.objects.get(uuid=kwargs.get("pk"))
-
-        if course.instructor != request.user.instructor_profile:
-            return self.forbidden(
-                {
-                    "detail": "You do not have permission to view the students of this course."
-                }
-            )
+        course = self.get_object()
 
         enrollments = Enrollment.objects.filter(course=course)
         users = [enrollment.student.user for enrollment in enrollments]
+
         paginator = self.paginator
         page = paginator.paginate_queryset(users, request)
         serializer = StudentListSerializer(paginator.get_paginated_response(page).data)

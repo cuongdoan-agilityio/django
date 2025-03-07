@@ -5,6 +5,9 @@ from core.constants import Status
 from courses.models import Course
 from categories.models import Category
 
+from categories.api.serializers import CategorySerializer
+from instructors.api.serializers import InstructorBaseSerializer
+
 
 class CourseDataSerializer(serializers.ModelSerializer):
     """
@@ -19,10 +22,13 @@ class CourseDataSerializer(serializers.ModelSerializer):
         status (CharField): The status of the course.
     """
 
+    instructor = InstructorBaseSerializer()
+    category = CategorySerializer()
+
     class Meta:
         model = Course
         fields = ["uuid", "title", "description", "category", "instructor", "status"]
-        read_only_fields = ["uuid", "instructor"]
+        read_only_fields = ["instructor"]
 
 
 class CourseListSerializer(serializers.Serializer):
