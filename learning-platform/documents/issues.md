@@ -24,6 +24,6 @@
 - Check the `role` field in `User` mode, is this field really necessary?
 
 - Check again if the two models `Student` and `Instructor` are necessary, and the problems caused:
-    - The 1-1 relationship between the two models above with the `User` model makes it difficult to create documents and create APIs.
-    - Requires more serializers and needs to customize the data structure returned to the user.
-    - Takes a lot of time to do.
+  - The 1-1 relationship between the two models above with the `User` model makes it difficult to create documents and create APIs.
+  - Requires more serializers and needs to customize the data structure returned to the user.
+  - Takes a lot of time to do.

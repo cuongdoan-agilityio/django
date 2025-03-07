@@ -179,3 +179,22 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for user data.
+    """
+
+    class Meta:
+        model = User
+        fields = [
+            "uuid",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "phone_number",
+            "date_of_birth",
+            "gender",
+        ]

@@ -1,5 +1,13 @@
 from core.api_views import BaseModelViewSet
 
+from core.api_views import BaseGenericViewSet
+from rest_framework.mixins import ListModelMixin
+from rest_framework.permissions import AllowAny
+
+from instructors.models import Subject
+
+from .serializers import SubjectSerializer
+
 
 class InstructorViewSet(BaseModelViewSet):
     """Instructor view set"""
@@ -7,4 +15,18 @@ class InstructorViewSet(BaseModelViewSet):
     pass
 
 
-apps = [InstructorViewSet]
+class SubjectViewSet(BaseGenericViewSet, ListModelMixin):
+    """
+    Subject view set
+    """
+
+    permission_classes = [AllowAny]
+    serializer_class = SubjectSerializer
+    http_method_names = ["get"]
+    resource_name = "subjects"
+
+    def get_queryset(self):
+        return Subject.objects.all()
+
+
+apps = [SubjectViewSet, InstructorViewSet]
