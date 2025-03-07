@@ -75,7 +75,7 @@ class StudentProfileSerializer(serializers.Serializer):
     Serializer for student profile.
     """
 
-    data = StudentProfileDataSerializer(many=True)
+    data = StudentProfileDataSerializer()
 
 
 class StudentListSerializer(serializers.Serializer):
