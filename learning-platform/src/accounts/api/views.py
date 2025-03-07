@@ -141,7 +141,6 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
     serializer_class = InstructorProfileSerializer
     http_method_names = ["get", "patch"]
     resource_name = "users"
-    lookup_field = "uuid"
 
     def get_serializer_class(self):
         if self.action in ["retrieve", "partial_update"]:
@@ -269,8 +268,8 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         """
         user = request.user
 
-        pk = kwargs.get("pk")
-        if pk != str(user.uuid):
+        pk = kwargs.get("uuid")
+        if pk not in ["me", str(user.uuid)]:
             return self.forbidden()
 
         serializer = UserProfileUpdateSerializer(user, data=request.data, partial=True)
