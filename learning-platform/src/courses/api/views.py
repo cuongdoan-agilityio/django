@@ -123,7 +123,7 @@ class CourseViewSet(BaseModelViewSet):
         )
 
         course_serializer = BaseDetailSerializer(
-            {"data": course}, context={"serializer_class": CourseDataSerializer}
+            course, context={"serializer_class": CourseDataSerializer}
         )
         return self.created(course_serializer.data)
 
@@ -143,7 +143,7 @@ class CourseViewSet(BaseModelViewSet):
 
         course = self.get_object()
         serializer = BaseDetailSerializer(
-            {"data": course}, context={"serializer_class": CourseDataSerializer}
+            course, context={"serializer_class": CourseDataSerializer}
         )
         return self.ok(serializer.data)
 
