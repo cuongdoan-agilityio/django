@@ -186,8 +186,6 @@ Develop a functional “Student Course Management System” by building, testing
     |   +---migrations
     |   |
     |   +---tests
-    |
-    +---utils
 ```
 
 ## How to run
@@ -254,3 +252,6 @@ Setup environments: create `.env` follow `.env.example` with your own settings
     - POST: /api/v1/courses/{uuid}/leave/
   - Get course student
     - GET: /api/v1/courses/{uuid}/students/
+
+## Issues
+- [Issues document](./documents/issues.md)
