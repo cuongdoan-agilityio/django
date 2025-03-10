@@ -2,6 +2,7 @@ from django import forms
 from .models import Enrollment
 
 from core.constants import Status
+from core.exceptions import ErrorMessage
 from courses.models import Course
 
 
@@ -41,8 +42,6 @@ class EnrollmentForm(forms.ModelForm):
         student = cleaned_data.get("student")
 
         if Enrollment.objects.filter(course=course, student=student).exists():
-            self.add_error(
-                "student", "This student is already enrolled in this course."
-            )
+            self.add_error("student", ErrorMessage.STUDENT_ALREADY_ENROLLED)
 
         return cleaned_data

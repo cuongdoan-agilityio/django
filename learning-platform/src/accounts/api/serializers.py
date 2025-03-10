@@ -4,6 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 
 from core.constants import ScholarshipChoices, Degree
 from core.validators import validate_phone_number as check_phone_number
+from core.exceptions import ErrorMessage
 from students.models import Student
 from instructors.models import Subject
 from datetime import date
@@ -109,7 +110,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
 
         for subject in value:
             if not Subject.objects.filter(uuid=subject).exists():
-                raise serializers.ValidationError(f"Subject {subject} does not exist.")
+                raise serializers.ValidationError(ErrorMessage.SUBJECT_NOT_EXIST)
         return value
 
     def validate_phone_number(self, value):
@@ -133,14 +134,10 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
 
         if hasattr(self.instance, "student_profile"):
             if age < 6 or age > 100:
-                raise serializers.ValidationError(
-                    "Student age must be between 6 and 100 years."
-                )
+                raise serializers.ValidationError(ErrorMessage.INVALID_STUDENT_AGE)
         elif hasattr(self.instance, "instructor_profile"):
             if age < 18 or age > 100:
-                raise serializers.ValidationError(
-                    "Instructor age must be between 18 and 100 years."
-                )
+                raise serializers.ValidationError(ErrorMessage.INVALID_INSTRUCTOR_AGE)
         return value
 
     def update(self, instance, validated_data):

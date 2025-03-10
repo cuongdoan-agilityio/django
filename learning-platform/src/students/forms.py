@@ -1,6 +1,5 @@
 import datetime
 
-from django.utils import timezone
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -12,6 +11,7 @@ from core.validators import (
     validate_username,
     validate_phone_number,
 )
+from core.exceptions import ErrorMessage
 from courses.models import Course
 from enrollments.models import Enrollment
 
@@ -93,7 +93,7 @@ class StudentBaseForm(forms.ModelForm):
         today = datetime.date.today()
         age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
         if age < 6 or age > 100:
-            raise ValidationError("Invalid date of birth.")
+            raise ValidationError(ErrorMessage.INVALID_DATE_OF_BIRTH)
         return dob
 
     def clean_password(self):
@@ -253,7 +253,6 @@ class StudentEditForm(StudentBaseForm):
                     Enrollment.objects.create(
                         student=student,
                         course=course,
-                        enrolled_at=timezone.now().date(),
                     )
 
         Enrollment.objects.filter(student=student).exclude(course__in=courses).delete()

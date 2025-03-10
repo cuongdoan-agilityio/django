@@ -13,6 +13,7 @@ from core.validators import (
     validate_username,
     validate_phone_number,
 )
+from core.exceptions import ErrorMessage
 from .models import Instructor, Subject
 
 
@@ -89,7 +90,7 @@ class InstructorBaseForm(forms.ModelForm):
 
         # From 18 years of age and older, individuals are fully responsible for the content posted on the internet.
         if age < 18 or age > 100:
-            raise ValidationError("Invalid date of birth.")
+            raise ValidationError(ErrorMessage.INVALID_DATE_OF_BIRTH)
         return dob
 
     def clean_password(self):

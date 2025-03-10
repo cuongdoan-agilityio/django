@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from core.constants import Status
+from core.exceptions import ErrorMessage
 from courses.models import Course
 from categories.models import Category
 
@@ -75,6 +76,6 @@ class CourseUpdateSerializer(serializers.Serializer):
         """
 
         if not Category.objects.filter(uuid=value).exists():
-            raise serializers.ValidationError(f"Category {value} does not exist.")
+            raise serializers.ValidationError(ErrorMessage.CATEGORY_NOT_EXIST)
 
         return value
