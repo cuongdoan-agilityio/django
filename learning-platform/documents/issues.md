@@ -16,6 +16,8 @@
 - For `pagination` feature, need validation pagination information, if page number not found, return empty data instead of page does not exist error.
 
 - Need to handle response data for failed API calls.
+  - Handle exceptions before requests are sent to views, Use [Middleware](https://docs.djangoproject.com/en/5.1/topics/http/middleware/) to customize
+  - Handle exception requests when sent to views: [Custom exception handling](https://www.django-rest-framework.org/api-guide/exceptions/#custom-exception-handling)
 
 - Handle API documentation not displaying correct structure in Swagger.
   - References: [How to generate a schema for a custom pagination in django rfw with drf-spectacular?](https://stackoverflow.com/questions/71431687/how-to-generate-a-schema-for-a-custom-pagination-in-django-rfw-with-drf-spectacu)
