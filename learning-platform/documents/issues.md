@@ -13,8 +13,6 @@
 - Didn't understand the requirements at the beginning: Working on course management at school, actually online course.
   - Consequences, slow progress
 
-- For `pagination` feature, need validation pagination information, if page number not found, return empty data instead of page does not exist error.
-
 - Need to handle response data for failed API calls.
   - Handle exceptions before requests are sent to views, Use [Middleware](https://docs.djangoproject.com/en/5.1/topics/http/middleware/) to customize
   - Handle exception requests when sent to views: [Custom exception handling](https://www.django-rest-framework.org/api-guide/exceptions/#custom-exception-handling)
@@ -29,3 +27,5 @@
   - The 1-1 relationship between the two models above with the `User` model makes it difficult to create documents and create APIs.
   - Requires more serializers and needs to customize the data structure returned to the user.
   - Takes a lot of time to do.
+
+- Need allow Admin to update their profile.
