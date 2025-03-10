@@ -11,7 +11,7 @@ User = get_user_model()
 
 class Command(BaseCommand):
     """
-    Init courses command.
+    Init student command.
     """
 
     help = "Init student from JSON file."

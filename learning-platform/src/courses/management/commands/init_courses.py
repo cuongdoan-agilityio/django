@@ -16,7 +16,7 @@ class Command(BaseCommand):
     Init courses command.
     """
 
-    help = "Init courses from JSON file."
+    help = "Init courses, instructors, categories and subjects from JSON file."
 
     def handle(self, *args, **options):
         file_path = os.path.join(os.path.dirname(__file__), "courses.json")

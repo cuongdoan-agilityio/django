@@ -219,7 +219,6 @@ class InstructorEditForm(InstructorBaseForm):
             self.fields["phone_number"].initial = self.instance.user.phone_number
             self.fields["date_of_birth"].initial = self.instance.user.date_of_birth
             self.fields["gender"].initial = self.instance.user.gender
-            # self.fields["password"].initial = self.instance.user.password
             self.fields["courses"].queryset = Course.objects.filter(
                 Q(instructor=self.instance)
                 | (Q(status=Status.ACTIVATE.value) and Q(instructor__isnull=True))
