@@ -12,27 +12,181 @@ Develop a functional “Student Course Management System” by building, testing
 - Django REST Framework
 - SQlite
 
+## Description of Requirements
+- Admin Dashboard:
+  - Log in to the Django admin dashboard
+  - Course Management:
+    - View, create, edit, delete, and filter courses
+    - Perform bulk actions on courses
+  - Student Management:
+    - View, create, edit, delete, and filter students
+    - Enroll and remove students from courses
+  - Enrollment Management:
+    - View, filter, and manage enrollments
+  - Instructor Management:
+    - View, create, edit, delete, and filter instructors
+    - Set instructor to a course
+
+- API endpoints:
+  - Student Management
+    - Students can register, log in.
+    - Students can view and update their profiles.
+    - Students can see their enrolled courses (with pagination)
+    - Students can enroll in or leave an active course.
+    - Students can not enroll in inactive/not available courses.
+    - Students can filter/search enrolled courses.
+
+  - Course Management
+    - Anonymous/Student can view list courses (with pagination)
+    - Anonymous/Student can view course detail
+    - Anonymous/Student can filter list courses by category, name, status
+
+  - Instructor Management
+    - Instructors can login to the system
+    - Instructors can view and update their profile
+    - Instructors can create or update a course
+    - Instructors can view all enrolled students in their course
+    - Instructors can not disable a course if it is in progress and has students enrolled in it.
+
 ## Code structure
-    ├── src/
-    │   ├── accounts
-    │   │
-    │   ├── categories
-    │   │
-    │   ├── config
-    │   │
-    │   ├── courses
-    │   │
-    │   ├── enrollments
-    │   │
-    │   ├── instructors
-    │   │
-    │   ├── students
-    │
-    ├── .gitignore
-    ├── README.md
-    ├── .env.sample.py
-    ├── .env.sample
-    ├── .pre-commit-config.yaml
+```
+|   .coverage
+|   .env
+|   .env.example
+|   .gitignore
+|   .pre-commit-config.yaml
+|   .python-version
+|   pyproject.toml
+|   README.md
+|   uv.lock
+|
++---documents
+|       issues.md
+|
++---src
+    |   .coverage
+    |   db.sqlite3
+    |   manage.py
+    |
+    +---accounts
+    |   |   admin.py
+    |   |   apps.py
+    |   |   factories.py
+    |   |   models.py
+    |   |   views.py
+    |   |
+    |   +---api
+    |   |   |   response_schema.py
+    |   |   |   serializers.py
+    |   |   |   views.py
+    |   |
+    |   +---migrations
+    |   |
+    |   +---tests
+    |
+    +---categories
+    |   |   admin.py
+    |   |   apps.py
+    |   |   factories.py
+    |   |   models.py
+    |   |   views.py
+    |   |
+    |   +---api
+    |   |   |   serializers.py
+    |   |   |   views.py
+    |   |
+    |   +---migrations
+    |   |
+    |   +---tests
+    |
+    +---config
+    |   |   api_router.py
+    |   |   asgi.py
+    |   |   urls.py
+    |   |   wsgi.py
+    |   |
+    |   +---settings
+    |   |   |   base.py
+    |   |   |   local.py
+    |   |   |   production.py
+    |   |   |   test.py
+    |
+    +---core
+    |   |   api_views.py
+    |   |   constants.py
+    |   |   models.py
+    |   |   pagination.py
+    |   |   permissions.py
+    |   |   responses.py
+    |   |   serializers.py
+    |   |   validators.py
+    |
+    +---courses
+    |   |   admin.py
+    |   |   apps.py
+    |   |   factories.py
+    |   |   models.py
+    |   |   views.py
+    |   |
+    |   +---api
+    |   |   |   response_schema.py
+    |   |   |   serializers.py
+    |   |   |   views.py
+    |   |
+    |   +---migrations
+    |   |
+    |   +---tests
+    |   |   |   test_course_model.py
+    |   |   |   test_course_view_set.py
+    |
+    +---enrollments
+    |   |   admin.py
+    |   |   apps.py
+    |   |   factories.py
+    |   |   forms.py
+    |   |   models.py
+    |   |   views.py
+    |   |
+    |   +---api
+    |   |   |   serializers.py
+    |   |   |   views.py
+    |   |
+    |   +---migrations
+    |   |
+    |   +---tests
+    |
+    +---instructors
+    |   |   admin.py
+    |   |   apps.py
+    |   |   factories.py
+    |   |   forms.py
+    |   |   models.py
+    |   |   views.py
+    |   |
+    |   +---api
+    |   |   |   serializers.py
+    |   |   |   views.py
+    |   |
+    |   +---migrations
+    |   |
+    |   +---tests
+    |
+    +---students
+    |   |   admin.py
+    |   |   apps.py
+    |   |   factories.py
+    |   |   forms.py
+    |   |   models.py
+    |   |   views.py
+    |   |
+    |   +---api
+    |   |   |   serializers.py
+    |   |   |   views.py
+    |   |
+    |   +---migrations
+    |   |
+    |   +---tests
+```
 
 ## How to run
 1. Clone the repository
@@ -50,7 +204,54 @@ Setup environments: create `.env` follow `.env.example` with your own settings
 3. Install hook scripts: `pre-commit install`
 
 4. Run project
-    - Make migrations: `uv run ./src/manage.py makemigrations`
-    - Migrate: `uv run ./src/manage.py migrate`
-    - Create superuser: `uv run ./src/manage.py createsuperuser --username admin --email admin@example.com`
-    - Run server: `uv run ./src/manage.py runserver`
+- Make migrations: `uv run ./src/manage.py makemigrations`
+- Migrate: `uv run ./src/manage.py migrate`
+- Create superuser: `uv run ./src/manage.py createsuperuser --username admin --email admin@example.com`
+- Run server: `uv run ./src/manage.py runserver`
+
+5. Flow create data with admin page
+- Login to [admin page](http://127.0.0.1:8000/admin-dashboard/) with admin info.
+- Create course subjects.
+- Create students.
+- Create instructors.
+- Create courses with subject and instructor.
+- Create Enrollments.
+
+## Unit Testing
+- coverage run manage.py test
+- coverage report
+- coverage html
+
+## APIs
+- Auth
+  - Login:
+    - POST: /api/v1/auth/login/
+  - Signup
+    - POST: /api/v1/auth/signup/
+- User
+  - Get profile
+    - GET: /api/v1/users/{uuid}/
+  - Update profile
+    - PATCH: /api/v1/users/{uuid}/
+- Category
+  - Get category
+    - GET: /api/v1/categories/
+- Subject
+  - Get subject
+    - GET: /api/v1/subjects/
+- Courses
+  - Get courses
+    - GET: /api/v1/courses/
+  - Get course detail
+    - GET: /api/v1/courses/{uuid}/
+  - Update course
+    - PATCH: /api/v1/courses/{uuid}/
+  - Enroll course
+    - POST: /api/v1/courses/{uuid}/enroll/
+  - Leave course
+    - POST: /api/v1/courses/{uuid}/leave/
+  - Get course student
+    - GET: /api/v1/courses/{uuid}/students/
+
+## Issues
+- [Issues document](./documents/issues.md)

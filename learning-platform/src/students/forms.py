@@ -187,7 +187,7 @@ class StudentEditForm(StudentBaseForm):
         required=False,
     )
     password = forms.CharField(
-        widget=forms.PasswordInput(render_value=True),
+        widget=forms.PasswordInput(attrs={"placeholder": "********"}),
         min_length=8,
         max_length=128,
         required=False,

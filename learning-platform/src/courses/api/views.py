@@ -1,5 +1,4 @@
 from rest_framework import filters
-from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
@@ -10,7 +9,7 @@ from core.serializers import (
     BaseListSerializer,
     BaseDetailSerializer,
 )
-from core.permissions import IsInstructorAndOwner, IsStudent
+from courses.permissions import CoursePermission
 from students.models import Student
 from enrollments.models import Enrollment
 from students.api.serializers import StudentBaseSerializer
@@ -45,24 +44,11 @@ class CourseViewSet(BaseModelViewSet):
     resource_name = "courses"
     serializer_class = CourseDataSerializer
     queryset = Course.objects.all()
-    permission_classes = [AllowAny]
+    permission_classes = [CoursePermission]
     http_method_names = ["get", "post", "patch"]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["category", "status"]
     search_fields = ["title", "description"]
-
-    def get_permissions(self):
-        """
-        Get permissions for Course APIs.
-        """
-
-        if self.action in ["students", "partial_update", "create"]:
-            return [IsAuthenticated(), IsInstructorAndOwner()]
-
-        if self.action in ["enroll", "leave"]:
-            return [IsAuthenticated(), IsStudent()]
-
-        return super().get_permissions()
 
     def get_queryset(self):
         """
@@ -123,7 +109,7 @@ class CourseViewSet(BaseModelViewSet):
         )
 
         course_serializer = BaseDetailSerializer(
-            {"data": course}, context={"serializer_class": CourseDataSerializer}
+            course, context={"serializer_class": CourseDataSerializer}
         )
         return self.created(course_serializer.data)
 
@@ -143,7 +129,7 @@ class CourseViewSet(BaseModelViewSet):
 
         course = self.get_object()
         serializer = BaseDetailSerializer(
-            {"data": course}, context={"serializer_class": CourseDataSerializer}
+            course, context={"serializer_class": CourseDataSerializer}
         )
         return self.ok(serializer.data)
 
