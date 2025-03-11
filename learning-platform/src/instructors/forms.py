@@ -197,7 +197,9 @@ class InstructorEditForm(InstructorBaseForm):
         required=False,
     )
     password = forms.CharField(
-        widget=forms.PasswordInput(attrs={"placeholder": "********"}),
+        widget=forms.PasswordInput(
+            attrs={"placeholder": "********", "autocomplete": "new-password"}
+        ),
         min_length=8,
         max_length=128,
         required=False,
@@ -217,7 +219,6 @@ class InstructorEditForm(InstructorBaseForm):
             self.fields["phone_number"].initial = self.instance.user.phone_number
             self.fields["date_of_birth"].initial = self.instance.user.date_of_birth
             self.fields["gender"].initial = self.instance.user.gender
-            self.fields["password"].initial = self.instance.user.password
             self.fields["courses"].queryset = Course.objects.filter(
                 Q(instructor=self.instance)
                 | (Q(status=Status.ACTIVATE.value) and Q(instructor__isnull=True))

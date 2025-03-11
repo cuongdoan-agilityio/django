@@ -1,0 +1,314 @@
+[
+    {
+        "title": "Geometry",
+        "description": "Basic geometry.",
+        "category": {
+            "name": "Math"
+        },
+        "instructor": {
+            "first_name": "Minh",
+            "last_name": "Nguyen van",
+            "email": "minhnguyen@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Mechanics",
+        "description": "Concepts and applications of mechanics.",
+        "category": {
+            "name": "Physics"
+        },
+        "instructor": {
+            "first_name": "Han",
+            "last_name": "Phan van",
+            "email": "hanphan@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Guitar",
+        "description": "Guitar Introduction.",
+        "category": {
+            "name": "Music"
+        },
+        "instructor": {
+            "first_name": "Dao",
+            "last_name": "Pham minh",
+            "email": "daopham@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "English",
+        "description": "English grammar.",
+        "category": {
+            "name": "English"
+        },
+        "instructor": {
+            "first_name": "Tieu",
+            "last_name": "Hoang",
+            "email": "tieuhoang@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Japanese",
+        "description": "Japanese Grammar.",
+        "category": {
+            "name": "Japanese"
+        },
+        "instructor": {
+            "first_name": "Bach",
+            "last_name": "Ong",
+            "email": "bachong@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Calculus",
+        "description": "Introduction to calculus.",
+        "category": {
+            "name": "Math"
+        },
+        "instructor": {
+            "first_name": "Linh",
+            "last_name": "Kim",
+            "email": "linhkim@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Chemistry",
+        "description": "Basic chemistry concepts.",
+        "category": {
+            "name": "Chemistry"
+        },
+        "instructor": {
+            "first_name": "Minh",
+            "last_name": "Phan",
+            "email": "minhphan@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Biology",
+        "description": "Introduction to biology.",
+        "category": {
+            "name": "Biology"
+        },
+        "instructor": {
+            "first_name": "Thoat",
+            "last_name": "Tran",
+            "email": "thoattran@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "History",
+        "description": "World history overview.",
+        "category": {
+            "name": "History"
+        },
+        "instructor": {
+            "first_name": "Hi",
+            "last_name": "Le",
+            "email": "hile@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Geography",
+        "description": "Introduction to geography.",
+        "category": {
+            "name": "Geography"
+        },
+        "instructor": {
+            "first_name": "Khang",
+            "last_name": "Vu",
+            "email": "khangvu@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Art",
+        "description": "Basic art concepts.",
+        "category": {
+            "name": "Art"
+        },
+        "instructor": {
+            "first_name": "Lang",
+            "last_name": "Hoang",
+            "email": "langoang@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Programming",
+        "description": "Introduction to programming.",
+        "category": {
+            "name": "Computer Science"
+        },
+        "instructor": {
+            "first_name": "Thoi",
+            "last_name": "Nguyen",
+            "email": "thoinguyen@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Data Science",
+        "description": "Introduction to data science.",
+        "category": {
+            "name": "Computer Science"
+        },
+        "instructor": {
+            "first_name": "Man",
+            "last_name": "Pham",
+            "email": "manpham@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Physics",
+        "description": "Basic physics concepts.",
+        "category": {
+            "name": "Physics"
+        },
+        "instructor": {
+            "first_name": "Du",
+            "last_name": "Tran",
+            "email": "dutran@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Economics",
+        "description": "Introduction to economics.",
+        "category": {
+            "name": "Economics"
+        },
+        "instructor": {
+            "first_name": "An",
+            "last_name": "Le",
+            "email": "anle@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Philosophy",
+        "description": "Introduction to philosophy.",
+        "category": {
+            "name": "Philosophy"
+        },
+        "instructor": {
+            "first_name": "Phuon",
+            "last_name": "Nguyen",
+            "email": "phuonnguyen@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Sociology",
+        "description": "Introduction to sociology.",
+        "category": {
+            "name": "Sociology"
+        },
+        "instructor": {
+            "first_name": "Song",
+            "last_name": "Pham",
+            "email": "songpham@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Psychology",
+        "description": "Introduction to psychology.",
+        "category": {
+            "name": "Psychology"
+        },
+        "instructor": {
+            "first_name": "Tranh",
+            "last_name": "Tran",
+            "email": "tranhtran@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Statistics",
+        "description": "Introduction to statistics.",
+        "category": {
+            "name": "Math"
+        },
+        "instructor": {
+            "first_name": "Hanh",
+            "last_name": "Ly",
+            "email": "hanhly@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Literature",
+        "description": "Introduction to literature.",
+        "category": {
+            "name": "Literature"
+        },
+        "instructor": {
+            "first_name": "Bin",
+            "last_name": "Vu",
+            "email": "binvu@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Astronomy",
+        "description": "Introduction to astronomy.",
+        "category": {
+            "name": "Astronomy"
+        },
+        "instructor": {
+            "first_name": "Hoi",
+            "last_name": "Hoang",
+            "email": "hoihoang@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Environmental Science",
+        "description": "Introduction to environmental science.",
+        "category": {
+            "name": "Environmental Science"
+        },
+        "instructor": {
+            "first_name": "Quy",
+            "last_name": "Nguyen",
+            "email": "quynguyen@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Political Science",
+        "description": "Introduction to political science.",
+        "category": {
+            "name": "Political Science"
+        },
+        "instructor": {
+            "first_name": "Tam",
+            "last_name": "Le",
+            "email": "tample@instructor.com"
+        },
+        "status": "activate"
+    },
+    {
+        "title": "Anthropology",
+        "description": "Introduction to anthropology.",
+        "category": {
+            "name": "Anthropology"
+        },
+        "instructor": {
+            "first_name": "Vinh",
+            "last_name": "Tran van",
+            "email": "vinhtranvan@instructor.com"
+        },
+        "status": "activate"
+    }
+]
