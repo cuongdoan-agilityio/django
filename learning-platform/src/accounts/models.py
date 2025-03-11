@@ -8,6 +8,7 @@ from rest_framework.authtoken.models import Token
 
 from core.constants import Gender, Role
 from core.models import AbstractBaseModel
+from core.exceptions import ErrorMessage
 from django.contrib.auth.validators import UnicodeUsernameValidator
 
 
@@ -50,10 +51,10 @@ class UserManager(BaseUserManager):
             User: The created user.
         """
         if not email:
-            raise ValueError("The Email must be set")
+            raise ValueError(ErrorMessage.EMAIL_REQUIRED)
 
         if not password:
-            raise ValueError("The Password must be set")
+            raise ValueError(ErrorMessage.PASSWORD_REQUIRED)
 
         email = self.normalize_email(email)
         user = self.model(

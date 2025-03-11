@@ -3,6 +3,7 @@ from django.contrib import admin
 from core.constants import Status
 
 from .models import Course
+from .constants import CourseAdminMessage
 
 
 @admin.register(Course)
@@ -36,7 +37,7 @@ class CourseAdmin(admin.ModelAdmin):
         """
 
         queryset.update(status=Status.ACTIVATE.value)
-        self.message_user(request, "Activate all selected courses.")
+        self.message_user(request, CourseAdminMessage.ACTIVATE_ALL)
 
     @admin.action(description="Deactivate all selected courses.")
     def deactivate_all(self, request, queryset):
@@ -50,7 +51,7 @@ class CourseAdmin(admin.ModelAdmin):
         """
 
         queryset.update(status=Status.INACTIVE.value)
-        self.message_user(request, "Deactivate all selected courses.")
+        self.message_user(request, CourseAdminMessage.DEACTIVATE_ALL)
 
     list_display = [
         "title",

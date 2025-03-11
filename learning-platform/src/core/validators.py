@@ -1,8 +1,8 @@
 from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
 
 from .constants import SPECIAL_CHARACTER
-
-from django.contrib.auth import get_user_model
+from .exceptions import ErrorMessage
 
 
 User = get_user_model()
@@ -31,16 +31,16 @@ def validate_password(password):
             break
 
     if not has_lower:
-        raise ValidationError("Password must contain at least one lowercase letter.")
+        raise ValidationError(ErrorMessage.PASSWORD_LOWERCASE)
 
     if not has_upper:
-        raise ValidationError("Password must contain at least one uppercase letter.")
+        raise ValidationError(ErrorMessage.PASSWORD_UPPERCASE)
 
     if not has_digit:
-        raise ValidationError("Password must contain at least one number.")
+        raise ValidationError(ErrorMessage.PASSWORD_NUMBER)
 
     if not has_special:
-        raise ValidationError("Password must contain at least one special character.")
+        raise ValidationError(ErrorMessage.PASSWORD_SPECIAL_CHAR)
 
     return password
 
@@ -51,7 +51,7 @@ def validate_email(email):
     """
 
     if User.objects.filter(email=email).exists():
-        raise ValidationError("Email already exists. Please choose another one.")
+        raise ValidationError(ErrorMessage.EMAIL_EXISTS)
     return email
 
 
@@ -61,7 +61,7 @@ def validate_username(username):
     """
 
     if User.objects.filter(username=username).exists():
-        raise ValidationError("Username already exists. Please choose another one.")
+        raise ValidationError(ErrorMessage.USERNAME_EXISTS)
     return username
 
 
@@ -74,7 +74,7 @@ def validate_phone_number(phone_number):
         return
 
     if not phone_number.isdigit():
-        raise ValidationError("Phone numbers must contain numbers only.")
+        raise ValidationError(ErrorMessage.PHONE_NUMBER_ONLY_NUMBER)
     if len(phone_number) < 10 or len(phone_number) > 11:
-        raise ValidationError("Phone number must be 10 to 11 digits.")
+        raise ValidationError(ErrorMessage.PHONE_NUMBER_INVALID_LENGTH)
     return phone_number

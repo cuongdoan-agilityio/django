@@ -9,6 +9,7 @@ from core.serializers import (
     BaseListSerializer,
     BaseDetailSerializer,
 )
+from core.exceptions import ErrorMessage
 from courses.permissions import CoursePermission
 from students.models import Student
 from enrollments.models import Enrollment
@@ -162,9 +163,7 @@ class CourseViewSet(BaseModelViewSet):
             if Enrollment.objects.filter(
                 course=instance, course__status="activate"
             ).exists():
-                return self.bad_request(
-                    "Cannot disable a course that is in progress and has students enrolled."
-                )
+                return self.bad_request(ErrorMessage.COURSE_HAS_STUDENTS)
 
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -193,12 +192,12 @@ class CourseViewSet(BaseModelViewSet):
         course = self.get_object()
 
         if course.status != "activate" or not course.instructor:
-            return self.bad_request("This course is not available for enrollment.")
+            return self.bad_request(ErrorMessage.COURSE_NOT_AVAILABLE)
 
         student = Student.objects.get(user=request.user)
 
         if student.enrollments.filter(course=course).exists():
-            return self.bad_request("You are already enrolled in this course.")
+            return self.bad_request(ErrorMessage.ALREADY_ENROLLED)
 
         Enrollment.objects.create(course=course, student=student)
         enrollment_serializer = BaseSuccessResponseSerializer(
@@ -232,7 +231,7 @@ class CourseViewSet(BaseModelViewSet):
             )
             return self.ok(response_serializer.data)
         else:
-            return self.bad_request("You are not enrolled in this course.")
+            return self.bad_request(ErrorMessage.NOT_ENROLLED)
 
     @extend_schema(
         description="View all students enrolled in a course.",

@@ -11,6 +11,7 @@ from core.validators import (
     validate_username,
     validate_phone_number,
 )
+from core.exceptions import ErrorMessage
 from courses.models import Course
 from enrollments.models import Enrollment
 
@@ -92,7 +93,7 @@ class StudentBaseForm(forms.ModelForm):
         today = datetime.date.today()
         age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
         if age < 6 or age > 100:
-            raise ValidationError("Invalid date of birth.")
+            raise ValidationError(ErrorMessage.INVALID_DATE_OF_BIRTH)
         return dob
 
     def clean_password(self):
