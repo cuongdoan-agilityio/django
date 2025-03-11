@@ -8,6 +8,7 @@ from core.serializers import (
     BaseSuccessResponseSerializer,
     BaseListSerializer,
     BaseDetailSerializer,
+    BaseBadRequestResponseSerializer,
 )
 from core.exceptions import ErrorMessage
 from courses.permissions import CoursePermission
@@ -137,7 +138,7 @@ class CourseViewSet(BaseModelViewSet):
     @extend_schema(
         description="Enroll a student in a course.",
         request=CourseUpdateSerializer,
-        responses={200: course_response_schema},
+        responses={200: course_response_schema, 400: BaseBadRequestResponseSerializer},
     )
     def partial_update(self, request, *args, **kwargs):
         """
@@ -178,6 +179,7 @@ class CourseViewSet(BaseModelViewSet):
         request=None,
         responses={
             200: BaseSuccessResponseSerializer,
+            404: BaseBadRequestResponseSerializer,
         },
     )
     @action(detail=True, methods=["post"])
@@ -210,6 +212,7 @@ class CourseViewSet(BaseModelViewSet):
         request=None,
         responses={
             200: BaseSuccessResponseSerializer,
+            400: BaseBadRequestResponseSerializer,
         },
     )
     @action(detail=True, methods=["post"])
@@ -231,7 +234,7 @@ class CourseViewSet(BaseModelViewSet):
             )
             return self.ok(response_serializer.data)
         else:
-            return self.bad_request(ErrorMessage.NOT_ENROLLED)
+            return self.bad_request(ErrorMessage.STUDENT_NOT_ENROLLED)
 
     @extend_schema(
         description="View all students enrolled in a course.",

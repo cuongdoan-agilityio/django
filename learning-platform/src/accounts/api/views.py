@@ -161,7 +161,10 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
 
     @extend_schema(
         description="Retrieve a user profile (Instructor or Student, admin)",
-        responses={200: user_profile_response_schema},
+        responses={
+            200: user_profile_response_schema,
+            403: BaseForbiddenResponseSerializer,
+        },
     )
     def retrieve(self, request, *args, **kwargs):
         """
