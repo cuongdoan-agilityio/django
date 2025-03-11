@@ -208,6 +208,8 @@ Setup environments: create `.env` follow `.env.example` with your own settings
 - Migrate: `uv run ./src/manage.py migrate`
 - Create superuser: `uv run ./src/manage.py createsuperuser --username admin --email admin@example.com`
 - Run server: `uv run ./src/manage.py runserver`
+- Swagger documents: `http://127.0.0.1:8000/docs/swagger/`
+- Admin page: `http://127.0.0.1:8000/admin-dashboard/`
 
 5. Flow create data with admin page
 - Login to [admin page](http://127.0.0.1:8000/admin-dashboard/) with admin info.

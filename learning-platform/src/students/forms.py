@@ -1,6 +1,5 @@
 import datetime
 
-from django.utils import timezone
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -253,7 +252,6 @@ class StudentEditForm(StudentBaseForm):
                     Enrollment.objects.create(
                         student=student,
                         course=course,
-                        enrolled_at=timezone.now().date(),
                     )
 
         Enrollment.objects.filter(student=student).exclude(course__in=courses).delete()
