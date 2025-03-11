@@ -1,5 +1,7 @@
 from django.contrib import admin
 
+from core.filters import GenderFilter
+
 from .forms import StudentCreationForm, StudentEditForm
 from .models import Student
 
@@ -79,7 +81,7 @@ class StudentAdmin(admin.ModelAdmin):
         "scholarship",
     ]
 
-    list_filter = ["user__gender", ScholarshipFilter]
+    list_filter = [GenderFilter, ScholarshipFilter]
     search_fields = [
         "user__username",
         "user__first_name",
