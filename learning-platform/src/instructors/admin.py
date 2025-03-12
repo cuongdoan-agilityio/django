@@ -1,5 +1,7 @@
 from django.contrib import admin
 
+from core.filters import GenderFilter
+
 from .models import Instructor, Subject
 from .forms import InstructorCreationForm, InstructorEditForm
 
@@ -63,7 +65,7 @@ class InstructorAdmin(admin.ModelAdmin):
         "degree",
     ]
 
-    list_filter = ["user__gender", "degree", "subjects"]
+    list_filter = [GenderFilter, "degree", "subjects"]
     search_fields = [
         "user__username",
         "user__first_name",
