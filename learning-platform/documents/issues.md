@@ -5,8 +5,6 @@
 
 - `Subject` and `Category` models should have `many-to-many` relationships with each other.
 
-- Haven't created constants to manage messages.
-
 - Haven't used docker yet
   - Need docker integration.
 
@@ -27,5 +25,4 @@
   - The 1-1 relationship between the two models above with the `User` model makes it difficult to create documents and create APIs.
   - Requires more serializers and needs to customize the data structure returned to the user.
   - Takes a lot of time to do.
-
-- Need allow Admin to update their profile.
+  - Change the model pk to `ID`, [MR link](https://gitlab.asoft-python.com/cuong.doan/django-training/-/merge_requests/14)
