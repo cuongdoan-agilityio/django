@@ -47,11 +47,3 @@ class StudentProfileDataSerializer(StudentBaseSerializer):
         """
 
         return obj.student_profile.scholarship
-
-
-class StudentProfileSerializer(serializers.Serializer):
-    """
-    Serializer for student profile.
-    """
-
-    data = StudentProfileDataSerializer()
