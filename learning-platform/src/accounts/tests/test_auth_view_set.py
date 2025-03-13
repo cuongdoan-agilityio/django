@@ -2,7 +2,7 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model
-from core.constants import Gender, Role
+from core.constants import Gender
 from accounts.factories import UserFactory
 
 User = get_user_model()
@@ -19,7 +19,6 @@ class AuthorViewSetTests(APITestCase):
         self.phone_number = "1234567890"
         self.date_of_birth = "1990-01-01"
         self.gender = Gender.MALE.value
-        self.role = Role.INSTRUCTOR.value
 
         self.user = UserFactory(
             email=self.email,

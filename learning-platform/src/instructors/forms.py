@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
 from courses.models import Course
-from core.constants import Gender, Role, Degree, Status
+from core.constants import Degree, Gender, Status
 from core.validators import (
     validate_password,
     validate_email,
@@ -139,7 +139,6 @@ class InstructorCreationForm(InstructorBaseForm):
             phone_number=self.cleaned_data["phone_number"],
             date_of_birth=self.cleaned_data["date_of_birth"],
             gender=self.cleaned_data["gender"],
-            role=Role.INSTRUCTOR.value,
             password=self.cleaned_data["password"],
         )
         instructor = super().save(commit=False)

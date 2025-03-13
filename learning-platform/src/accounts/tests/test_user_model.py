@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from core.constants import Gender, Role
+from core.constants import Gender
 from accounts.factories import UserFactory
 
 
@@ -13,7 +13,6 @@ password = "password1234"
 phone_number = "1234567890"
 date_of_birth = "1990-01-01"
 gender = Gender.MALE.value
-role = Role.INSTRUCTOR.value
 
 
 class UserManagerTests(TestCase):
@@ -111,7 +110,6 @@ class UserModelTests(TestCase):
             phone_number=phone_number,
             date_of_birth=date_of_birth,
             gender=gender,
-            role=role,
         )
         self.assertEqual(user.username, username)
         self.assertEqual(user.first_name, first_name)
@@ -120,7 +118,6 @@ class UserModelTests(TestCase):
         self.assertEqual(user.phone_number, phone_number)
         self.assertEqual(user.date_of_birth, date_of_birth)
         self.assertEqual(user.gender, gender)
-        self.assertEqual(user.role, role)
 
     def test_user_str(self):
         """

@@ -5,7 +5,7 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 
-from core.constants import Gender, Role
+from core.constants import Gender
 from core.models import AbstractBaseModel
 from core.exceptions import ErrorMessage
 from django.contrib.auth.validators import UnicodeUsernameValidator
@@ -129,7 +129,6 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
         phone_number (CharField): The phone number of the user.
         date_of_birth (DateField): The birth date of the user.
         gender (CharField): The gender of the user.
-        role (CharField): The role of the user (Instructor or Student).
         is_active (BooleanField): Whether the user is active.
         is_staff (BooleanField): Whether the user is staff.
     """
@@ -152,13 +151,6 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
         max_length=6,
         blank=True,
         null=True,
-    )
-    role = models.CharField(
-        null=True,
-        editable=False,
-        choices=Role.choices(),
-        help_text="Instructor or Student",
-        max_length=10,
     )
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
