@@ -8,7 +8,7 @@ class Category(AbstractBaseModel):
     Category model
     """
 
-    name = models.TextField(help_text="Category name", unique=True)
+    name = models.CharField(help_text="Category name", unique=True, max_length=255)
 
     def __str__(self):
         return self.name

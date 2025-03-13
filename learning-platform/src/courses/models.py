@@ -9,8 +9,8 @@ class Course(AbstractBaseModel):
     Course model
     """
 
-    title = models.TextField(help_text="Course title")
-    description = models.TextField(help_text="Course description")
+    title = models.CharField(help_text="Course title", max_length=255)
+    description = models.CharField(help_text="Course description", max_length=300)
     category = models.ForeignKey(
         "categories.Category",
         on_delete=models.CASCADE,
