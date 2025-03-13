@@ -66,19 +66,6 @@ class Gender(BaseChoiceEnum):
     OTHER = "other"
 
 
-class Role(BaseChoiceEnum):
-    """
-    Role class representing different roles for users.
-
-    Attributes:
-        STUDENT (str): Represents the student role.
-        INSTRUCTOR (str): Represents the instructor role.
-    """
-
-    STUDENT = "student"
-    INSTRUCTOR = "instructor"
-
-
 class Degree(BaseChoiceEnum):
     """
     Degree class representing different academic degrees for users.

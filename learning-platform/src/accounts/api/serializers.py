@@ -122,7 +122,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
 
     def validate_date_of_birth(self, value):
         """
-        Validates the date_of_birth field based on the user's role.
+        Validates the date_of_birth field based on the user's.
         """
 
         today = date.today()

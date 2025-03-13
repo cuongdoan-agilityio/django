@@ -9,7 +9,7 @@ class Course(AbstractBaseModel):
     Course model
     """
 
-    title = models.TextField(help_text="Course title")
+    title = models.CharField(help_text="Course title", max_length=255)
     description = models.TextField(help_text="Course description")
     category = models.ForeignKey(
         "categories.Category",

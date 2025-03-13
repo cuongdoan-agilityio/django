@@ -4,7 +4,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from core.constants import Gender, Role, ScholarshipChoices, Status
+from core.constants import Gender, ScholarshipChoices, Status
 from core.validators import (
     validate_password,
     validate_email,
@@ -133,7 +133,6 @@ class StudentCreationForm(StudentBaseForm):
             phone_number=self.cleaned_data["phone_number"],
             date_of_birth=self.cleaned_data["date_of_birth"],
             gender=self.cleaned_data["gender"],
-            role=Role.STUDENT.value,
             password=self.cleaned_data["password"],
         )
         student = super().save(commit=False)

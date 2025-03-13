@@ -10,9 +10,8 @@ api_routers = DefaultRouter() if settings.DEBUG else SimpleRouter()
 
 # Load all api apps from settings.
 for local_app in settings.LOCAL_APPS:
-    api_module = import_module(f"{local_app}.api.views", "apps")
-
     with contextlib.suppress(Exception):
+        api_module = import_module(f"{local_app}.api.views", "apps")
         # Try to register API views
         print("api_module.apps:", api_module.apps)
         for viewset in api_module.apps:

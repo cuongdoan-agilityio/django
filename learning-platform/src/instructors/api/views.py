@@ -1,18 +1,10 @@
-from core.api_views import BaseModelViewSet
-
-from core.api_views import BaseGenericViewSet
 from rest_framework.mixins import ListModelMixin
 from rest_framework.permissions import AllowAny
 
+from core.api_views import BaseGenericViewSet
 from instructors.models import Subject
 
 from .serializers import SubjectSerializer
-
-
-class InstructorViewSet(BaseModelViewSet):
-    """Instructor view set"""
-
-    pass
 
 
 class SubjectViewSet(BaseGenericViewSet, ListModelMixin):
@@ -29,4 +21,4 @@ class SubjectViewSet(BaseGenericViewSet, ListModelMixin):
         return Subject.objects.all()
 
 
-apps = [SubjectViewSet, InstructorViewSet]
+apps = [SubjectViewSet]
