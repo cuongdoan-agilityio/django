@@ -1,8 +1,9 @@
 from factory import Faker, SubFactory, Iterator, Sequence
 from factory.django import DjangoModelFactory as ModelFactory
 from instructors.factories import InstructorFactory
-from courses.models import Course, Category
+from courses.models import Course, Category, Enrollment
 from core.constants import Status
+from students.factories import StudentFactory
 
 
 class CategoryFactory(ModelFactory):
@@ -34,3 +35,15 @@ class CourseFactory(ModelFactory):
 
     class Meta:
         model = Course
+
+
+class EnrollmentFactory(ModelFactory):
+    """
+    Factory for creating Enrollment instances.
+    """
+
+    class Meta:
+        model = Enrollment
+
+    course = SubFactory(CourseFactory)
+    student = SubFactory(StudentFactory)

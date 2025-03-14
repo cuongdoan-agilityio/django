@@ -9,10 +9,12 @@ class Enrollment(AbstractBaseModel):
     """
 
     course = models.ForeignKey(
-        "courses.Course", on_delete=models.CASCADE, related_name="enrollments"
+        "courses.Course",
+        on_delete=models.CASCADE,
     )
     student = models.ForeignKey(
-        "students.Student", on_delete=models.CASCADE, related_name="enrollments"
+        "students.Student",
+        on_delete=models.CASCADE,
     )
 
     def __str__(self):

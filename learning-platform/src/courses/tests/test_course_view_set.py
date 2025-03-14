@@ -4,8 +4,8 @@ from rest_framework.test import APITestCase
 from accounts.factories import UserFactory
 from core.constants import Status
 from courses.factories import CourseFactory, CategoryFactory
+from courses.models import Enrollment
 from students.factories import StudentFactory
-from enrollments.models import Enrollment
 from instructors.factories import InstructorFactory
 
 

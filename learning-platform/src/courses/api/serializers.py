@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from core.constants import Status
 from core.exceptions import ErrorMessage
-from courses.models import Course, Category
+from courses.models import Course, Category, Enrollment
 
 from instructors.api.serializers import InstructorBaseSerializer
 
@@ -87,3 +87,16 @@ class CourseUpdateSerializer(serializers.Serializer):
             raise serializers.ValidationError(ErrorMessage.CATEGORY_NOT_EXIST)
 
         return value
+
+
+class EnrollmentSerializer(serializers.ModelSerializer):
+    """
+    Enrollment serializer
+    """
+
+    class Meta:
+        model = Enrollment
+        fields = [
+            "course",
+            "student",
+        ]

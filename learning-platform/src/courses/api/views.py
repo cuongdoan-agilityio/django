@@ -15,12 +15,11 @@ from core.serializers import (
 from core.exceptions import ErrorMessage
 from courses.permissions import CoursePermission
 from students.models import Student
-from enrollments.models import Enrollment
 from students.api.serializers import StudentBaseSerializer
 
 from .response_schema import course_response_schema, student_list_response_schema
 
-from ..models import Course, Category
+from ..models import Course, Category, Enrollment
 from .serializers import (
     CourseCreateSerializer,
     CourseDataSerializer,
