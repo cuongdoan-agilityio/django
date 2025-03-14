@@ -2,9 +2,8 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.factories import UserFactory
-from categories.factories import CategoryFactory
 from core.constants import Status
-from courses.factories import CourseFactory
+from courses.factories import CourseFactory, CategoryFactory
 from students.factories import StudentFactory
 from enrollments.models import Enrollment
 from instructors.factories import InstructorFactory

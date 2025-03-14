@@ -1,9 +1,11 @@
 from rest_framework import filters
 from rest_framework.decorators import action
+from rest_framework.mixins import ListModelMixin
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
+from rest_framework.permissions import AllowAny
 
-from core.api_views import BaseModelViewSet
+from core.api_views import BaseModelViewSet, BaseGenericViewSet
 from core.serializers import (
     BaseSuccessResponseSerializer,
     BaseListSerializer,
@@ -18,11 +20,12 @@ from students.api.serializers import StudentBaseSerializer
 
 from .response_schema import course_response_schema, student_list_response_schema
 
-from ..models import Course
+from ..models import Course, Category
 from .serializers import (
     CourseCreateSerializer,
     CourseDataSerializer,
     CourseUpdateSerializer,
+    CategorySerializer,
 )
 
 
@@ -266,4 +269,18 @@ class CourseViewSet(BaseModelViewSet):
         return self.ok(serializer.data)
 
 
-apps = [CourseViewSet]
+class CategoryViewSet(BaseGenericViewSet, ListModelMixin):
+    """
+    Category view set
+    """
+
+    permission_classes = [AllowAny]
+    serializer_class = CategorySerializer
+    http_method_names = ["get"]
+    resource_name = "categories"
+
+    def get_queryset(self):
+        return Category.objects.all()
+
+
+apps = [CourseViewSet, CategoryViewSet]

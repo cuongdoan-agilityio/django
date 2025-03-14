@@ -1,8 +1,7 @@
 import os
 import json
 from django.core.management.base import BaseCommand
-from courses.models import Course
-from categories.models import Category
+from courses.models import Course, Category
 from instructors.models import Instructor, Subject
 from core.constants import Degree
 from django.contrib.auth import get_user_model

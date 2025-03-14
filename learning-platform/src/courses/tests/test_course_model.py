@@ -1,7 +1,6 @@
 from django.test import TestCase
 from courses.models import Course
-from courses.factories import CourseFactory
-from categories.factories import CategoryFactory
+from courses.factories import CourseFactory, CategoryFactory
 from instructors.factories import InstructorFactory
 from core.constants import Status
 

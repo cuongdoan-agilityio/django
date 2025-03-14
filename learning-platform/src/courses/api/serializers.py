@@ -2,11 +2,19 @@ from rest_framework import serializers
 
 from core.constants import Status
 from core.exceptions import ErrorMessage
-from courses.models import Course
-from categories.models import Category
+from courses.models import Course, Category
 
-from categories.api.serializers import CategorySerializer
 from instructors.api.serializers import InstructorBaseSerializer
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Category model.
+    """
+
+    class Meta:
+        model = Category
+        fields = ["uuid", "name", "description"]
 
 
 class CourseDataSerializer(serializers.ModelSerializer):

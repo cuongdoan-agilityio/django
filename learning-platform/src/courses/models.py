@@ -4,6 +4,20 @@ from core.models import AbstractBaseModel
 from core.constants import Status
 
 
+class Category(AbstractBaseModel):
+    """
+    Category model
+    """
+
+    name = models.CharField(help_text="Category name", unique=True, max_length=255)
+    description = models.TextField(
+        help_text="Category description", blank=True, null=True
+    )
+
+    def __str__(self):
+        return self.name
+
+
 class Course(AbstractBaseModel):
     """
     Course model
@@ -12,7 +26,7 @@ class Course(AbstractBaseModel):
     title = models.CharField(help_text="Course title", max_length=255)
     description = models.TextField(help_text="Course description")
     category = models.ForeignKey(
-        "categories.Category",
+        Category,
         on_delete=models.CASCADE,
         help_text="Course category.",
         related_name="courses",
