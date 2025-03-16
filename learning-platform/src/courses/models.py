@@ -45,6 +45,7 @@ class Course(AbstractBaseModel):
         max_length=8,
         default=Status.ACTIVATE.value,
     )
+    image_url = models.URLField(help_text="Course image URL", blank=True, null=True)
 
     def __str__(self):
         return self.title

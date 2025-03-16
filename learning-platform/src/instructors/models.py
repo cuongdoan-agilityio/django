@@ -15,6 +15,9 @@ class Subject(AbstractBaseModel):
     """
 
     name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(
+        help_text="Subject description", blank=True, null=True
+    )
 
     def __str__(self):
         return self.name
