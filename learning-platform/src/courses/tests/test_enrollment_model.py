@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.core.exceptions import ValidationError
 from courses.models import Enrollment
 from courses.factories import CourseFactory, EnrollmentFactory
 from students.factories import StudentFactory
@@ -18,7 +19,7 @@ class EnrollmentModelTest(TestCase):
         self.student = StudentFactory()
         self.enrollment = EnrollmentFactory(course=self.course, student=self.student)
 
-    def test_enrollment_creation(self):
+    def test_enrollment_success(self):
         """
         Test that an enrollment can be created successfully.
         """
@@ -38,3 +39,21 @@ class EnrollmentModelTest(TestCase):
         """
 
         self.assertEqual(self.enrollment.student, self.student)
+
+    def test_enrollment_without_course(self):
+        """
+        Test that an enrollment cannot be created with an invalid course.
+        """
+
+        with self.assertRaises(ValidationError):
+            invalid_enrollment = EnrollmentFactory.build(course=None)
+            invalid_enrollment.full_clean()
+
+    def test_enrollment_without_student(self):
+        """
+        Test that an enrollment cannot be created with an invalid student.
+        """
+
+        with self.assertRaises(ValidationError):
+            invalid_enrollment = EnrollmentFactory.build(course=self.course)
+            invalid_enrollment.full_clean()
