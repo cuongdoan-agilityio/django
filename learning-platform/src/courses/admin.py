@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.conf import settings
 
 from core.constants import Status
 
@@ -62,10 +63,13 @@ class CourseAdmin(admin.ModelAdmin):
         "instructor",
         "status",
         "modified",
+        "image_url",
     ]
-
+    list_per_page = settings.ADMIN_PAGE_SIZE
     list_filter = ["title", "category__name", "instructor", "status"]
     search_fields = ["title", "category__name", "instructor__user__username"]
+    ordering = ["title"]
+    autocomplete_fields = ["category", "instructor"]
 
     actions = [activate_all, deactivate_all]
 
@@ -83,8 +87,9 @@ class CategoryAdmin(admin.ModelAdmin):
     """
 
     list_display = ["uuid", "name", "description", "modified"]
-
+    list_per_page = settings.ADMIN_PAGE_SIZE
     search_fields = ["name"]
+    ordering = ["name"]
 
 
 @admin.register(Enrollment)
@@ -120,8 +125,10 @@ class EnrollmentAdmin(admin.ModelAdmin):
         "student__user__username",
         "created",
     ]
-
+    list_per_page = settings.ADMIN_PAGE_SIZE
+    ordering = ["course__title"]
     form = EnrollmentForm
+    autocomplete_fields = ["course", "student"]
 
     def get_readonly_fields(self, request, obj=None):
         """

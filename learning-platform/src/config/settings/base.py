@@ -206,3 +206,7 @@ SPECTACULAR_SETTINGS = {
 # Project settings example
 API_ROOT_ENDPOINT = env("API_ROOT_ENDPOINT", default="api/v1/")
 GOOGLE_API_KEY = env("GOOGLE_API_KEY")
+
+
+# Admin pagination settings
+ADMIN_PAGE_SIZE = 20
