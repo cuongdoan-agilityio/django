@@ -55,6 +55,10 @@ class CourseAdmin(admin.ModelAdmin):
         queryset.update(status=Status.INACTIVE.value)
         self.message_user(request, CourseAdminMessage.DEACTIVATE_ALL)
 
+    def get_queryset(self, request):
+        query_set = super().get_queryset(request)
+        return query_set.select_related("category", "instructor", "instructor__user")
+
     list_display = [
         "uuid",
         "title",
@@ -66,7 +70,7 @@ class CourseAdmin(admin.ModelAdmin):
         "image_url",
     ]
     list_per_page = settings.ADMIN_PAGE_SIZE
-    list_filter = ["title", "category__name", "instructor", "status"]
+    list_filter = ["title", "category__name", "status"]
     search_fields = ["title", "category__name", "instructor__user__username"]
     ordering = ["title"]
     autocomplete_fields = ["category", "instructor"]
