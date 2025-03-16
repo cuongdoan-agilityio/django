@@ -1,7 +1,9 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 
 from core.models import AbstractBaseModel
 from core.constants import Status
+from core.exceptions import ErrorMessage
 
 
 class Category(AbstractBaseModel):
@@ -65,3 +67,19 @@ class Enrollment(AbstractBaseModel):
 
     def __str__(self):
         return f"{self.student.user.first_name} enrolled in {self.course.title}"
+
+    def save(self, *args, **kwargs):
+        """
+        Override the save method to add custom validation logic.
+        """
+
+        if self.course.status != Status.ACTIVATE.value:
+            raise ValidationError(ErrorMessage.COURSE_NOT_AVAILABLE)
+
+        if not self.course.instructor:
+            raise ValidationError(ErrorMessage.COURSE_HAS_NO_INSTRUCTOR)
+
+        if Enrollment.objects.filter(course=self.course, student=self.student).exists():
+            raise ValidationError(ErrorMessage.STUDENT_ALREADY_ENROLLED)
+
+        super().save(*args, **kwargs)

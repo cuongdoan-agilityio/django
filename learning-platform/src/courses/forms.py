@@ -3,7 +3,6 @@ from .models import Enrollment
 
 from core.constants import Status
 from core.exceptions import ErrorMessage
-from courses.models import Course
 
 
 class EnrollmentForm(forms.ModelForm):
@@ -19,17 +18,6 @@ class EnrollmentForm(forms.ModelForm):
         model = Enrollment
         fields = ["course", "student"]
 
-    def __init__(self, *args, **kwargs):
-        """
-        Initialize the form.
-        """
-
-        super().__init__(*args, **kwargs)
-        if not kwargs.get("instance"):
-            self.fields["course"].queryset = Course.objects.filter(
-                status=Status.ACTIVATE.value, instructor__isnull=False
-            )
-
     def clean(self):
         """
         Custom validation to ensure that a student can only join a class that they have not joined yet.
@@ -40,6 +28,12 @@ class EnrollmentForm(forms.ModelForm):
         cleaned_data = super().clean()
         course = cleaned_data.get("course")
         student = cleaned_data.get("student")
+
+        if course.status != Status.ACTIVATE.value:
+            self.add_error("course", ErrorMessage.COURSE_NOT_AVAILABLE)
+
+        if not course.instructor:
+            self.add_error("course", ErrorMessage.COURSE_HAS_NO_INSTRUCTOR)
 
         if Enrollment.objects.filter(course=course, student=student).exists():
             self.add_error("student", ErrorMessage.STUDENT_ALREADY_ENROLLED)
