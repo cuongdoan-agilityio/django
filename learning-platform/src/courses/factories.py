@@ -12,6 +12,7 @@ class CategoryFactory(ModelFactory):
     """
 
     name = Sequence(lambda n: f"Category_{n}")
+    description = Faker("words")
 
     class Meta:
         """
