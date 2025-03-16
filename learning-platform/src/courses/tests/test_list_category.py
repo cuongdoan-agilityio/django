@@ -1,7 +1,8 @@
 from rest_framework import status
 from rest_framework.test import APITestCase
-from categories.models import Category
-from categories.factories import CategoryFactory
+from courses.models import Category
+from courses.factories import CategoryFactory
+from courses.api.serializers import CategorySerializer
 
 
 class CategoryViewSetTest(APITestCase):
@@ -17,25 +18,27 @@ class CategoryViewSetTest(APITestCase):
         CategoryFactory()
         self.url = "/api/v1/categories/"
 
-    def test_list_categories(self):
+    def test_list_categories_success(self):
         """
         Test listing all categories.
         """
 
         response = self.client.get(self.url)
+        categories = Category.objects.all()
+        serializer = CategorySerializer(categories, many=True)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["data"], serializer.data)
 
-    def test_list_categories_empty(self):
+    def test_list_categories_empty_success(self):
         """
         Test listing categories when there are no categories.
         """
 
         Category.objects.all().delete()
         response = self.client.get(self.url)
-        data = response.data["data"]
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(data, [])
+        self.assertEqual(response.data["data"], [])
 
     def test_category_viewset_permissions(self):
         """
@@ -46,3 +49,12 @@ class CategoryViewSetTest(APITestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_categories_failed(self):
+        """
+        Test listing categories with an incorrect endpoint.
+        """
+
+        incorrect_url = "/api/v1/incorrect_categories/"
+        response = self.client.get(incorrect_url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
