@@ -3,7 +3,7 @@ import django_filters
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework.permissions import AllowAny
 
 from core.api_views import BaseModelViewSet, BaseGenericViewSet
@@ -31,8 +31,9 @@ from .serializers import (
 )
 
 
-class StatusFilter(django_filters.FilterSet):
+class CustomFilter(django_filters.FilterSet):
     status = django_filters.CharFilter(method="filter_status")
+    category = django_filters.UUIDFilter(field_name="category__uuid")
 
     def filter_status(self, queryset, name, value):
         status_list = value.split(",")
@@ -66,7 +67,7 @@ class CourseViewSet(BaseModelViewSet):
     permission_classes = [CoursePermission]
     http_method_names = ["get", "post", "patch"]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_class = StatusFilter
+    filterset_class = CustomFilter
     search_fields = ["title", "description"]
 
     def get_queryset(self):
@@ -88,6 +89,48 @@ class CourseViewSet(BaseModelViewSet):
 
         return queryset
 
+    @extend_schema(
+        description="List all courses with pagination and custom response format.",
+        parameters=[
+            OpenApiParameter(
+                name="search",
+                description="Course title or description.",
+                location=OpenApiParameter.QUERY,
+                type=str,
+                required=False,
+            ),
+            OpenApiParameter(
+                name="limit",
+                description="Maximum number of resources that will be returned.",
+                required=False,
+                type=int,
+            ),
+            OpenApiParameter(
+                name="offset",
+                description="Number of resources to skip.",
+                required=False,
+                type=int,
+            ),
+            OpenApiParameter(
+                name="status",
+                description="Filter courses by status.",
+                required=False,
+                type=str,
+            ),
+            OpenApiParameter(
+                name="category",
+                description="Filter courses by category UUID.",
+                required=False,
+                type=str,
+            ),
+            OpenApiParameter(
+                name="enrolled",
+                description="Filter enrolled courses (students only).",
+                required=False,
+                type=bool,
+            ),
+        ],
+    )
     def list(self, request, *args, **kwargs):
         """
         List all courses with pagination and custom response format.
