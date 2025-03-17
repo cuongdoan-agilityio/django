@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from courses.models import Enrollment
 from courses.factories import CourseFactory, EnrollmentFactory
 from students.factories import StudentFactory
+from core.constants import Status
 
 
 class EnrollmentModelTest(TestCase):
@@ -15,7 +16,7 @@ class EnrollmentModelTest(TestCase):
         Set up the test case with a sample enrollment.
         """
 
-        self.course = CourseFactory()
+        self.course = CourseFactory(status=Status.ACTIVATE.value)
         self.student = StudentFactory()
         self.enrollment = EnrollmentFactory(course=self.course, student=self.student)
 
