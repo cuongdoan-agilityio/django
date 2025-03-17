@@ -69,7 +69,7 @@ class CourseCreateSerializer(serializers.ModelSerializer):
         return course
 
 
-class EnrollmentCreateSerializer(serializers.Serializer):
+class EnrollmentCreateOrEditSerializer(serializers.Serializer):
     """
     Serializer for handling enroll course.
     """

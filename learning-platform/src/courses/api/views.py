@@ -26,7 +26,7 @@ from .serializers import (
     CourseDataSerializer,
     CourseUpdateSerializer,
     CategorySerializer,
-    EnrollmentCreateSerializer,
+    EnrollmentCreateOrEditSerializer,
     EnrollmentSerializer,
 )
 
@@ -207,7 +207,7 @@ class CourseViewSet(BaseModelViewSet):
 
     @extend_schema(
         description="Enroll a student in a course.",
-        request=EnrollmentCreateSerializer,
+        request=EnrollmentCreateOrEditSerializer,
         responses={
             200: BaseSuccessResponseSerializer,
             404: BaseBadRequestResponseSerializer,
@@ -221,7 +221,7 @@ class CourseViewSet(BaseModelViewSet):
         Args:
             request (HttpRequest): The current request object.
         """
-        serializer = EnrollmentCreateSerializer(data=request.data)
+        serializer = EnrollmentCreateOrEditSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         course = self.get_object()
@@ -231,7 +231,7 @@ class CourseViewSet(BaseModelViewSet):
                 return self.bad_request({"student": ErrorMessage.STUDENT_DATA_REQUIRED})
             student = request.data["student"]
         else:
-            student = Student.objects.get(user=request.user).uuid
+            student = Student.objects.filter(user=request.user).first().uuid
 
         enrollment_serializer = EnrollmentSerializer(
             data={
@@ -248,7 +248,7 @@ class CourseViewSet(BaseModelViewSet):
 
     @extend_schema(
         description="Leave a course.",
-        request=None,
+        request=EnrollmentCreateOrEditSerializer,
         responses={
             200: BaseSuccessResponseSerializer,
             400: BaseBadRequestResponseSerializer,
@@ -262,9 +262,16 @@ class CourseViewSet(BaseModelViewSet):
         This method allows a student to leave a course they are enrolled in.
         Instructors are not allowed to leave courses.
         """
+        serializer = EnrollmentCreateOrEditSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
         course = self.get_object()
-        student = Student.objects.filter(user=request.user).first()
+        if request.user.is_superuser:
+            if "student" not in request.data:
+                return self.bad_request({"student": ErrorMessage.STUDENT_DATA_REQUIRED})
+            student = Student.objects.filter(uuid=request.data["student"]).first()
+        else:
+            student = Student.objects.filter(user=request.user).first()
 
         if enrollment := student.enrollments.filter(course=course).first():
             enrollment.delete()
