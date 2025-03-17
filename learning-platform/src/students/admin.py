@@ -71,6 +71,7 @@ class StudentAdmin(admin.ModelAdmin):
     """
 
     list_display = [
+        "uuid",
         "username",
         "first_name",
         "last_name",
@@ -79,6 +80,7 @@ class StudentAdmin(admin.ModelAdmin):
         "date_of_birth",
         "gender",
         "scholarship",
+        "modified",
     ]
 
     list_filter = [GenderFilter, ScholarshipFilter]
@@ -89,6 +91,10 @@ class StudentAdmin(admin.ModelAdmin):
         "user__phone_number",
         "user__email",
     ]
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.select_related("user")
 
     def get_form(self, request, obj=None, **kwargs):
         """
