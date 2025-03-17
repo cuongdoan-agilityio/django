@@ -51,6 +51,7 @@ class CourseCreateSerializer(serializers.ModelSerializer):
             "description",
             "category",
             "status",
+            "instructor",
         ]
 
     def create(self, validated_data):

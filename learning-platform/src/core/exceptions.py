@@ -28,3 +28,4 @@ class ErrorMessage:
         "Cannot disable a course that is in progress and has students enrolled."
     )
     COURSE_HAS_NO_INSTRUCTOR = "Cannot enroll in a course with no instructor."
+    INSTRUCTOR_DATA_REQUIRED = "Instructor data is required."

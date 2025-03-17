@@ -1,4 +1,5 @@
 from rest_framework import filters
+import django_filters
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
 from django_filters.rest_framework import DjangoFilterBackend
@@ -28,6 +29,18 @@ from .serializers import (
 )
 
 
+class StatusFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(method="filter_status")
+
+    def filter_status(self, queryset, name, value):
+        status_list = value.split(",")
+        return queryset.filter(status__in=status_list)
+
+    class Meta:
+        model = Course
+        fields = ["category"]
+
+
 class CourseViewSet(BaseModelViewSet):
     """
     Course view set
@@ -51,7 +64,7 @@ class CourseViewSet(BaseModelViewSet):
     permission_classes = [CoursePermission]
     http_method_names = ["get", "post", "patch"]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["category", "status"]
+    filterset_class = StatusFilter
     search_fields = ["title", "description"]
 
     def get_queryset(self):
@@ -62,9 +75,15 @@ class CourseViewSet(BaseModelViewSet):
 
         queryset = super().get_queryset()
         enrolled = self.request.query_params.get("enrolled", None)
-        if enrolled and not self.request.user.is_instructor:
+
+        if (
+            enrolled
+            and self.request.user.is_authenticated
+            and self.request.user.is_student
+        ):
             student = Student.objects.filter(user=self.request.user).first()
             queryset = queryset.filter(enrollments__student=student)
+
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -108,9 +127,17 @@ class CourseViewSet(BaseModelViewSet):
         serializer = CourseCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        course = serializer.save(
-            instructor=request.user.instructor_profile,
-        )
+        if request.user.is_superuser:
+            if "instructor" not in serializer.validated_data:
+                return self.bad_request(
+                    {"instructor": ErrorMessage.INSTRUCTOR_DATA_REQUIRED}
+                )
+
+            course = serializer.save()
+        else:
+            course = serializer.save(
+                instructor=request.user.instructor_profile,
+            )
 
         course_serializer = BaseDetailSerializer(
             course, context={"serializer_class": CourseDataSerializer}
