@@ -11,6 +11,9 @@ class CoursePermission(BasePermission):
         Check if the user has permission to perform the action.
         """
 
+        if request.user.is_superuser:
+            return True
+
         if view.action in ["create", "partial_update", "students"]:
             return request.user.is_authenticated and hasattr(
                 request.user, "instructor_profile"
@@ -28,7 +31,12 @@ class CoursePermission(BasePermission):
         Check if the user has permission to perform the action on the object.
         """
 
+        if request.user.is_superuser:
+            return True
+
         if view.action in ["partial_update", "students"]:
-            return obj.instructor == request.user.instructor_profile
+            return request.user.is_superuser or (
+                obj.instructor == request.user.instructor_profile
+            )
 
         return True

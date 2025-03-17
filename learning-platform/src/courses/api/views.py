@@ -1,9 +1,12 @@
 from rest_framework import filters
+import django_filters
 from rest_framework.decorators import action
+from rest_framework.mixins import ListModelMixin
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from rest_framework.permissions import AllowAny
 
-from core.api_views import BaseModelViewSet
+from core.api_views import BaseModelViewSet, BaseGenericViewSet
 from core.serializers import (
     BaseSuccessResponseSerializer,
     BaseListSerializer,
@@ -13,17 +16,32 @@ from core.serializers import (
 from core.exceptions import ErrorMessage
 from courses.permissions import CoursePermission
 from students.models import Student
-from enrollments.models import Enrollment
 from students.api.serializers import StudentBaseSerializer
 
 from .response_schema import course_response_schema, student_list_response_schema
 
-from ..models import Course
+from ..models import Course, Category, Enrollment
 from .serializers import (
     CourseCreateSerializer,
     CourseDataSerializer,
     CourseUpdateSerializer,
+    CategorySerializer,
+    EnrollmentCreateOrEditSerializer,
+    EnrollmentSerializer,
 )
+
+
+class CustomFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(method="filter_status")
+    category = django_filters.UUIDFilter(field_name="category__uuid")
+
+    def filter_status(self, queryset, name, value):
+        status_list = value.split(",")
+        return queryset.filter(status__in=status_list)
+
+    class Meta:
+        model = Course
+        fields = ["category"]
 
 
 class CourseViewSet(BaseModelViewSet):
@@ -49,7 +67,7 @@ class CourseViewSet(BaseModelViewSet):
     permission_classes = [CoursePermission]
     http_method_names = ["get", "post", "patch"]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["category", "status"]
+    filterset_class = CustomFilter
     search_fields = ["title", "description"]
 
     def get_queryset(self):
@@ -60,11 +78,59 @@ class CourseViewSet(BaseModelViewSet):
 
         queryset = super().get_queryset()
         enrolled = self.request.query_params.get("enrolled", None)
-        if enrolled and not self.request.user.is_instructor:
+
+        if (
+            enrolled
+            and self.request.user.is_authenticated
+            and self.request.user.is_student
+        ):
             student = Student.objects.filter(user=self.request.user).first()
             queryset = queryset.filter(enrollments__student=student)
+
         return queryset
 
+    @extend_schema(
+        description="List all courses with pagination and custom response format.",
+        parameters=[
+            OpenApiParameter(
+                name="search",
+                description="Course title or description.",
+                location=OpenApiParameter.QUERY,
+                type=str,
+                required=False,
+            ),
+            OpenApiParameter(
+                name="limit",
+                description="Maximum number of resources that will be returned.",
+                required=False,
+                type=int,
+            ),
+            OpenApiParameter(
+                name="offset",
+                description="Number of resources to skip.",
+                required=False,
+                type=int,
+            ),
+            OpenApiParameter(
+                name="status",
+                description="Filter courses by status.",
+                required=False,
+                type=str,
+            ),
+            OpenApiParameter(
+                name="category",
+                description="Filter courses by category UUID.",
+                required=False,
+                type=str,
+            ),
+            OpenApiParameter(
+                name="enrolled",
+                description="Filter enrolled courses (students only).",
+                required=False,
+                type=bool,
+            ),
+        ],
+    )
     def list(self, request, *args, **kwargs):
         """
         List all courses with pagination and custom response format.
@@ -106,9 +172,17 @@ class CourseViewSet(BaseModelViewSet):
         serializer = CourseCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        course = serializer.save(
-            instructor=request.user.instructor_profile,
-        )
+        if request.user.is_superuser:
+            if "instructor" not in serializer.validated_data:
+                return self.bad_request(
+                    {"instructor": ErrorMessage.INSTRUCTOR_DATA_REQUIRED}
+                )
+
+            course = serializer.save()
+        else:
+            course = serializer.save(
+                instructor=request.user.instructor_profile,
+            )
 
         course_serializer = BaseDetailSerializer(
             course, context={"serializer_class": CourseDataSerializer}
@@ -176,7 +250,7 @@ class CourseViewSet(BaseModelViewSet):
 
     @extend_schema(
         description="Enroll a student in a course.",
-        request=None,
+        request=EnrollmentCreateOrEditSerializer,
         responses={
             200: BaseSuccessResponseSerializer,
             404: BaseBadRequestResponseSerializer,
@@ -190,18 +264,26 @@ class CourseViewSet(BaseModelViewSet):
         Args:
             request (HttpRequest): The current request object.
         """
+        serializer = EnrollmentCreateOrEditSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
         course = self.get_object()
 
-        if course.status != "activate" or not course.instructor:
-            return self.bad_request(ErrorMessage.COURSE_NOT_AVAILABLE)
+        if request.user.is_superuser:
+            if "student" not in request.data:
+                return self.bad_request({"student": ErrorMessage.STUDENT_DATA_REQUIRED})
+            student = request.data["student"]
+        else:
+            student = Student.objects.filter(user=request.user).first().uuid
 
-        student = Student.objects.get(user=request.user)
-
-        if student.enrollments.filter(course=course).exists():
-            return self.bad_request(ErrorMessage.ALREADY_ENROLLED)
-
-        Enrollment.objects.create(course=course, student=student)
+        enrollment_serializer = EnrollmentSerializer(
+            data={
+                "course": str(course.uuid),
+                "student": str(student),
+            }
+        )
+        enrollment_serializer.is_valid(raise_exception=True)
+        enrollment_serializer.save()
         enrollment_serializer = BaseSuccessResponseSerializer(
             {"data": {"success": True}}
         )
@@ -209,7 +291,7 @@ class CourseViewSet(BaseModelViewSet):
 
     @extend_schema(
         description="Leave a course.",
-        request=None,
+        request=EnrollmentCreateOrEditSerializer,
         responses={
             200: BaseSuccessResponseSerializer,
             400: BaseBadRequestResponseSerializer,
@@ -223,9 +305,16 @@ class CourseViewSet(BaseModelViewSet):
         This method allows a student to leave a course they are enrolled in.
         Instructors are not allowed to leave courses.
         """
+        serializer = EnrollmentCreateOrEditSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
         course = self.get_object()
-        student = Student.objects.filter(user=request.user).first()
+        if request.user.is_superuser:
+            if "student" not in request.data:
+                return self.bad_request({"student": ErrorMessage.STUDENT_DATA_REQUIRED})
+            student = Student.objects.filter(uuid=request.data["student"]).first()
+        else:
+            student = Student.objects.filter(user=request.user).first()
 
         if enrollment := student.enrollments.filter(course=course).first():
             enrollment.delete()
@@ -266,4 +355,18 @@ class CourseViewSet(BaseModelViewSet):
         return self.ok(serializer.data)
 
 
-apps = [CourseViewSet]
+class CategoryViewSet(BaseGenericViewSet, ListModelMixin):
+    """
+    Category view set
+    """
+
+    permission_classes = [AllowAny]
+    serializer_class = CategorySerializer
+    http_method_names = ["get"]
+    resource_name = "categories"
+
+    def get_queryset(self):
+        return Category.objects.all()
+
+
+apps = [CourseViewSet, CategoryViewSet]

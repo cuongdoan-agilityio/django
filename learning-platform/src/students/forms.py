@@ -12,8 +12,7 @@ from core.validators import (
     validate_phone_number,
 )
 from core.exceptions import ErrorMessage
-from courses.models import Course
-from enrollments.models import Enrollment
+from courses.models import Course, Enrollment
 
 from .models import Student
 
