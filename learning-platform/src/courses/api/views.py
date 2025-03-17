@@ -26,6 +26,8 @@ from .serializers import (
     CourseDataSerializer,
     CourseUpdateSerializer,
     CategorySerializer,
+    EnrollmentCreateSerializer,
+    EnrollmentSerializer,
 )
 
 
@@ -205,7 +207,7 @@ class CourseViewSet(BaseModelViewSet):
 
     @extend_schema(
         description="Enroll a student in a course.",
-        request=None,
+        request=EnrollmentCreateSerializer,
         responses={
             200: BaseSuccessResponseSerializer,
             404: BaseBadRequestResponseSerializer,
@@ -219,18 +221,26 @@ class CourseViewSet(BaseModelViewSet):
         Args:
             request (HttpRequest): The current request object.
         """
+        serializer = EnrollmentCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
         course = self.get_object()
 
-        if course.status != "activate" or not course.instructor:
-            return self.bad_request(ErrorMessage.COURSE_NOT_AVAILABLE)
+        if request.user.is_superuser:
+            if "student" not in request.data:
+                return self.bad_request({"student": ErrorMessage.STUDENT_DATA_REQUIRED})
+            student = request.data["student"]
+        else:
+            student = Student.objects.get(user=request.user).uuid
 
-        student = Student.objects.get(user=request.user)
-
-        if student.enrollments.filter(course=course).exists():
-            return self.bad_request(ErrorMessage.ALREADY_ENROLLED)
-
-        Enrollment.objects.create(course=course, student=student)
+        enrollment_serializer = EnrollmentSerializer(
+            data={
+                "course": str(course.uuid),
+                "student": str(student),
+            }
+        )
+        enrollment_serializer.is_valid(raise_exception=True)
+        enrollment_serializer.save()
         enrollment_serializer = BaseSuccessResponseSerializer(
             {"data": {"success": True}}
         )

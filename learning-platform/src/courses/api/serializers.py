@@ -69,6 +69,16 @@ class CourseCreateSerializer(serializers.ModelSerializer):
         return course
 
 
+class EnrollmentCreateSerializer(serializers.Serializer):
+    """
+    Serializer for handling enroll course.
+    """
+
+    student = serializers.UUIDField(
+        required=False, help_text="The UUID of the student."
+    )
+
+
 class CourseUpdateSerializer(serializers.Serializer):
     """
     Serializer for updating course data.
@@ -101,3 +111,42 @@ class EnrollmentSerializer(serializers.ModelSerializer):
             "course",
             "student",
         ]
+
+    def validate_course(self, instance):
+        """
+        Validates the course field.
+        """
+
+        if instance.status != "activate" or not instance.instructor:
+            raise serializers.ValidationError(ErrorMessage.COURSE_NOT_AVAILABLE)
+
+        return instance
+
+    def validate(self, data):
+        """
+        Validates the data before creating an enrollment.
+
+        Args:
+            data (dict): The data to validate.
+
+        Returns:
+            dict: The validated data.
+        """
+
+        course = data.get("course")
+        student = data.get("student")
+
+        if Enrollment.objects.filter(course=course, student=student).exists():
+            raise serializers.ValidationError(
+                {"student": ErrorMessage.ALREADY_ENROLLED}
+            )
+
+        return data
+
+    def create(self, validated_data):
+        """
+        Creates a new enrollment.
+        """
+
+        course = Enrollment.objects.create(**validated_data)
+        return course

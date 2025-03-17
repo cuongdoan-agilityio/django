@@ -22,10 +22,11 @@ class ErrorMessage:
     INVALID_DATE_OF_BIRTH = "Invalid date of birth."
     STUDENT_ALREADY_ENROLLED = "This student is already enrolled in this course."
     STUDENT_NOT_ENROLLED = "You are not enrolled in this course."
-    ALREADY_ENROLLED = "You are already enrolled in this course."
+    ALREADY_ENROLLED = "Student are already enrolled in this course."
     COURSE_NOT_AVAILABLE = "This course is not available for enrollment."
     COURSE_HAS_STUDENTS = (
         "Cannot disable a course that is in progress and has students enrolled."
     )
     COURSE_HAS_NO_INSTRUCTOR = "Cannot enroll in a course with no instructor."
     INSTRUCTOR_DATA_REQUIRED = "Instructor data is required."
+    STUDENT_DATA_REQUIRED = "Student data is required."
