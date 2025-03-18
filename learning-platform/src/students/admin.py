@@ -114,6 +114,7 @@ class StudentAdmin(admin.ModelAdmin):
 
     inlines = [EnrollmentInline]
     list_per_page = settings.ADMIN_PAGE_SIZE
+    ordering = ["modified"]
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
