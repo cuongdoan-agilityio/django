@@ -159,6 +159,10 @@ class StudentAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
     def get_queryset(self, request):
+        """
+        Customize the queryset for the Students admin interface.
+        """
+
         queryset = super().get_queryset(request)
         return queryset.select_related("user")
 

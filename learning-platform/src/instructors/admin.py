@@ -1,10 +1,14 @@
 from django.contrib import admin
 from django.conf import settings
+from django.contrib.auth import get_user_model
 
 from core.filters import GenderFilter
 
 from .models import Instructor, Subject
-from .forms import InstructorCreationForm, InstructorEditForm
+from .forms import InstructorBaseForm, InstructorEditForm
+
+
+User = get_user_model()
 
 
 @admin.register(Subject)
@@ -87,7 +91,7 @@ class InstructorAdmin(admin.ModelAdmin):
         """
 
         if obj is None:
-            kwargs["form"] = InstructorCreationForm
+            kwargs["form"] = InstructorBaseForm
         else:
             kwargs["form"] = InstructorEditForm
         return super().get_form(request, obj, **kwargs)
@@ -99,3 +103,41 @@ class InstructorAdmin(admin.ModelAdmin):
 
         queryset = super().get_queryset(request)
         return queryset.select_related("user").prefetch_related("subjects")
+
+    def save_model(self, request, obj, form, change):
+        """
+        Save the Instructor and update the associated user with the provided data.
+
+        Returns:
+            Instructor: The Instructor instance.
+        """
+
+        cleaned_data = form.cleaned_data
+
+        if change:
+            user = obj.user
+            user.first_name = cleaned_data["first_name"]
+            user.last_name = cleaned_data["last_name"]
+            user.phone_number = cleaned_data["phone_number"]
+            user.date_of_birth = cleaned_data["date_of_birth"]
+            user.gender = cleaned_data["gender"]
+
+            password = cleaned_data.get("password")
+            if password:
+                user.set_password(password)
+
+            user.save()
+        else:
+            user = User.objects.create_user(
+                username=cleaned_data["username"],
+                first_name=cleaned_data["first_name"],
+                last_name=cleaned_data["last_name"],
+                email=cleaned_data["email"],
+                phone_number=cleaned_data["phone_number"],
+                date_of_birth=cleaned_data["date_of_birth"],
+                gender=cleaned_data["gender"],
+                password=cleaned_data["password"],
+            )
+            obj.user = user
+
+        super().save_model(request, obj, form, change)
