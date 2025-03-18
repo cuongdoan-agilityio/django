@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
+import datetime
 
 from .constants import SPECIAL_CHARACTER
 from .exceptions import ErrorMessage
@@ -78,3 +79,19 @@ def validate_phone_number(phone_number):
     if len(phone_number) < 10 or len(phone_number) > 11:
         raise ValidationError(ErrorMessage.PHONE_NUMBER_INVALID_LENGTH)
     return phone_number
+
+
+def validate_date_of_birth(dob, is_student=False):
+    """
+    Validate the date of birth to ensure it is not in the future.
+    """
+
+    if not dob:
+        return
+
+    today = datetime.date.today()
+    age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+    if (is_student and age < 6) or (not is_student and age < 18) or age > 100:
+        raise ValidationError(ErrorMessage.INVALID_DATE_OF_BIRTH)
+
+    return dob

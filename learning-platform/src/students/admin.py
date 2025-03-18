@@ -1,15 +1,18 @@
 from django.contrib import admin
 from django.conf import settings
+from django.contrib.auth import get_user_model
 
 from core.filters import GenderFilter
 
 from courses.models import Enrollment
 from .forms import (
-    StudentCreationForm,
+    StudentBaseForm,
     StudentEditForm,
     EnrollmentInlineFormSet,
 )
 from .models import Student
+
+User = get_user_model()
 
 
 class ScholarshipFilter(admin.SimpleListFilter):
@@ -117,6 +120,44 @@ class StudentAdmin(admin.ModelAdmin):
     list_per_page = settings.ADMIN_PAGE_SIZE
     ordering = ["modified"]
 
+    def save_model(self, request, obj, form, change):
+        """
+        Save the student and update the associated user with the provided data.
+
+        Returns:
+            Student: The student instance.
+        """
+
+        cleaned_data = form.cleaned_data
+
+        if change:
+            user = obj.user
+            user.first_name = cleaned_data["first_name"]
+            user.last_name = cleaned_data["last_name"]
+            user.phone_number = cleaned_data["phone_number"]
+            user.date_of_birth = cleaned_data["date_of_birth"]
+            user.gender = cleaned_data["gender"]
+
+            password = cleaned_data.get("password")
+            if password:
+                user.set_password(password)
+
+            user.save()
+        else:
+            user = User.objects.create_user(
+                username=cleaned_data["username"],
+                first_name=cleaned_data["first_name"],
+                last_name=cleaned_data["last_name"],
+                email=cleaned_data["email"],
+                phone_number=cleaned_data["phone_number"],
+                date_of_birth=cleaned_data["date_of_birth"],
+                gender=cleaned_data["gender"],
+                password=cleaned_data["password"],
+            )
+            obj.user = user
+
+        super().save_model(request, obj, form, change)
+
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         return queryset.select_related("user")
@@ -135,7 +176,7 @@ class StudentAdmin(admin.ModelAdmin):
         """
 
         if obj is None:
-            kwargs["form"] = StudentCreationForm
+            kwargs["form"] = StudentBaseForm
         else:
             kwargs["form"] = StudentEditForm
         return super().get_form(request, obj, **kwargs)

@@ -2,7 +2,13 @@ from django import forms
 from django.contrib.auth import get_user_model
 
 from core.constants import Gender
-from core.validators import validate_password, validate_phone_number
+from core.validators import (
+    validate_password,
+    validate_phone_number,
+    validate_date_of_birth,
+    validate_username,
+    validate_email,
+)
 
 
 User = get_user_model()
@@ -62,3 +68,36 @@ class UserBaseForm(forms.ModelForm):
         password = self.cleaned_data.get("password")
 
         return validate_password(password)
+
+    def clean_date_of_birth(self):
+        """
+        Validate the date of birth to ensure it represents a valid age.
+        """
+
+        dob = self.cleaned_data.get("date_of_birth")
+
+        return validate_date_of_birth(dob, is_student=True)
+
+    def clean_username(self):
+        """
+        Validate that the username is unique.
+        """
+
+        username = self.cleaned_data.get("username")
+        instance = getattr(self, "instance", None)
+        if instance and instance._state.adding:
+            return validate_username(username)
+
+        return username
+
+    def clean_email(self):
+        """
+        Validate that the email is unique.
+        """
+
+        email = self.cleaned_data.get("email")
+        instance = getattr(self, "instance", None)
+        if instance and instance._state.adding:
+            return validate_email(email)
+
+        return email
