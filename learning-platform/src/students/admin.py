@@ -1,8 +1,14 @@
 from django.contrib import admin
+from django.conf import settings
 
 from core.filters import GenderFilter
 
-from .forms import StudentCreationForm, StudentEditForm
+from courses.models import Enrollment
+from .forms import (
+    StudentCreationForm,
+    StudentEditForm,
+    EnrollmentInlineFormSet,
+)
 from .models import Student
 
 
@@ -18,7 +24,7 @@ class ScholarshipFilter(admin.SimpleListFilter):
     """
 
     title = "Scholarship"
-    parameter_name = "scholarship"  # url parameter
+    parameter_name = "scholarship"
 
     def lookups(self, request, model_admin):
         """
@@ -62,6 +68,20 @@ class ScholarshipFilter(admin.SimpleListFilter):
         return queryset.filter(scholarship=self.value())
 
 
+class EnrollmentInline(admin.TabularInline):
+    """
+    Inline admin class for the Enrollment model.
+
+    This allows managing enrollments directly from the Student admin interface.
+    """
+
+    model = Enrollment
+    extra = 0
+    fields = ["course", "student"]
+    readonly_fields = ["student"]
+    formset = EnrollmentInlineFormSet
+
+
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
     """
@@ -91,6 +111,9 @@ class StudentAdmin(admin.ModelAdmin):
         "user__phone_number",
         "user__email",
     ]
+
+    inlines = [EnrollmentInline]
+    list_per_page = settings.ADMIN_PAGE_SIZE
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)

@@ -1,18 +1,15 @@
 import datetime
 
 from django import forms
+from django.forms import BaseInlineFormSet
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from core.constants import Gender, ScholarshipChoices, Status
-from core.validators import (
-    validate_password,
-    validate_email,
-    validate_username,
-    validate_phone_number,
-)
+from accounts.forms import UserBaseForm
+from core.constants import ScholarshipChoices, Status
+from core.validators import validate_email, validate_username
 from core.exceptions import ErrorMessage
-from courses.models import Course, Enrollment
+from courses.models import Enrollment
 
 from .models import Student
 
@@ -20,7 +17,7 @@ from .models import Student
 User = get_user_model()
 
 
-class StudentBaseForm(forms.ModelForm):
+class StudentBaseForm(UserBaseForm):
     """
     Base form for student-related forms, including fields for creating or editing a user.
 
@@ -36,24 +33,8 @@ class StudentBaseForm(forms.ModelForm):
         scholarship (ChoiceField): The scholarship amount for the student.
     """
 
-    username = forms.CharField(max_length=100)
-    first_name = forms.CharField(max_length=50, required=False)
-    last_name = forms.CharField(max_length=50, required=False)
-    email = forms.EmailField()
-    phone_number = forms.CharField(required=False)
-    date_of_birth = forms.DateField(required=False)
-    gender = forms.ChoiceField(choices=Gender.choices(), required=False)
-    password = forms.CharField(widget=forms.PasswordInput, min_length=8, max_length=128)
     scholarship = forms.ChoiceField(
         choices=ScholarshipChoices.choices(), required=False
-    )
-    courses = forms.ModelMultipleChoiceField(
-        queryset=Course.objects.filter(
-            instructor__isnull=False, status=Status.ACTIVATE.value
-        ),
-        required=False,
-        widget=forms.CheckboxSelectMultiple,
-        help_text="Select courses to assign to this instructor.",
     )
 
     class Meta:
@@ -70,15 +51,6 @@ class StudentBaseForm(forms.ModelForm):
             "scholarship",
         )
 
-    def clean_phone_number(self):
-        """
-        Validate the phone number to ensure it contains only digits and is of valid length.
-        """
-
-        phone = self.cleaned_data.get("phone_number")
-
-        return validate_phone_number(phone)
-
     def clean_date_of_birth(self):
         """
         Validate the date of birth to ensure it represents a valid age.
@@ -94,15 +66,6 @@ class StudentBaseForm(forms.ModelForm):
         if age < 6 or age > 100:
             raise ValidationError(ErrorMessage.INVALID_DATE_OF_BIRTH)
         return dob
-
-    def clean_password(self):
-        """
-        Validate the password to ensure it meets complexity requirements.
-        """
-
-        password = self.cleaned_data.get("password")
-
-        return validate_password(password)
 
 
 class StudentCreationForm(StudentBaseForm):
@@ -195,12 +158,6 @@ class StudentEditForm(StudentBaseForm):
         max_length=128,
         required=False,
     )
-    courses = forms.ModelMultipleChoiceField(
-        queryset=Course.objects.none(),
-        required=False,
-        widget=forms.CheckboxSelectMultiple,
-        help_text="Select courses to assign to this student.",
-    )
 
     def __init__(self, *args, **kwargs):
         """
@@ -217,12 +174,6 @@ class StudentEditForm(StudentBaseForm):
             self.fields["date_of_birth"].initial = self.instance.user.date_of_birth
             self.fields["gender"].initial = self.instance.user.gender
             self.fields["password"].initial = self.instance.user.password
-            self.fields["courses"].queryset = Course.objects.filter(
-                status=Status.ACTIVATE.value, instructor__isnull=False
-            )
-            self.fields["courses"].initial = Course.objects.filter(
-                enrollments__student=self.instance
-            ).distinct()
 
     def save(self, commit=True):
         """
@@ -249,17 +200,40 @@ class StudentEditForm(StudentBaseForm):
             user.set_password(password)
 
         user.save()
-        courses = self.cleaned_data.get("courses")
-        if courses:
-            for course in courses:
-                if not Enrollment.objects.filter(student=student, course=course):
-                    Enrollment.objects.create(
-                        student=student,
-                        course=course,
-                    )
-
-        Enrollment.objects.filter(student=student).exclude(course__in=courses).delete()
 
         if commit:
             student.save()
         return student
+
+
+class EnrollmentInlineFormSet(BaseInlineFormSet):
+    """
+    A custom inline formset for managing enrollments in the admin interface.
+    """
+
+    def clean(self):
+        """
+        Validate the formset to ensure that:
+            - A student is not enrolled in the same course multiple times.
+            - The course being enrolled in is active and has an instructor.
+        """
+
+        super().clean()
+        course_ids = []
+
+        for form in self.forms:
+            if form.cleaned_data and not form.cleaned_data.get("DELETE", False):
+                if course := form.cleaned_data.get("course"):
+                    course_id = course.uuid
+                    if course_id in course_ids:
+                        raise ValidationError(
+                            ErrorMessage.ENROLLED_SAME_COURSE.format(course=course)
+                        )
+                    if not course.instructor or (
+                        course.status != Status.ACTIVATE.value
+                    ):
+                        raise ValidationError(
+                            ErrorMessage.COURSE_NOT_AVAILABLE.format(course=course)
+                        )
+
+                    course_ids.append(course_id)
