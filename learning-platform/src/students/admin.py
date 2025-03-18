@@ -96,13 +96,13 @@ class StudentAdmin(admin.ModelAdmin):
 
     list_display = [
         "uuid",
-        "username",
-        "first_name",
-        "last_name",
-        "email",
-        "phone_number",
-        "date_of_birth",
-        "gender",
+        "user__username",
+        "user__first_name",
+        "user__last_name",
+        "user__email",
+        "user__phone_number",
+        "user__date_of_birth",
+        "user__gender",
         "scholarship",
         "modified",
     ]
@@ -118,7 +118,7 @@ class StudentAdmin(admin.ModelAdmin):
 
     inlines = [EnrollmentInline]
     list_per_page = settings.ADMIN_PAGE_SIZE
-    ordering = ["modified"]
+    ordering = ["user__username", "modified"]
 
     def save_model(self, request, obj, form, change):
         """
@@ -180,52 +180,3 @@ class StudentAdmin(admin.ModelAdmin):
         else:
             kwargs["form"] = StudentEditForm
         return super().get_form(request, obj, **kwargs)
-
-    def username(self, obj):
-        """
-        Returns the username of the user associated with the student.
-        """
-
-        return obj.user.username
-
-    def first_name(self, obj):
-        """
-        Returns the first name of the user associated with the student.
-        """
-
-        return obj.user.first_name
-
-    def last_name(self, obj):
-        """
-        Returns the last name of the user associated with the student.
-        """
-
-        return obj.user.last_name
-
-    def email(self, obj):
-        """
-        Returns the email of the user associated with the student.
-        """
-
-        return obj.user.email
-
-    def phone_number(self, obj):
-        """
-        Returns the phone number of the user associated with the student.
-        """
-
-        return obj.user.phone_number
-
-    def date_of_birth(self, obj):
-        """
-        Returns the date of birth of the user associated with the student.
-        """
-
-        return obj.user.date_of_birth
-
-    def gender(self, obj):
-        """
-        Returns the gender of the user associated with the student.
-        """
-
-        return obj.user.gender
