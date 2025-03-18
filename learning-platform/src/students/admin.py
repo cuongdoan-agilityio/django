@@ -1,9 +1,18 @@
 from django.contrib import admin
+from django.conf import settings
+from django.contrib.auth import get_user_model
 
 from core.filters import GenderFilter
 
-from .forms import StudentCreationForm, StudentEditForm
+from courses.models import Enrollment
+from .forms import (
+    StudentBaseForm,
+    StudentEditForm,
+    EnrollmentInlineFormSet,
+)
 from .models import Student
+
+User = get_user_model()
 
 
 class ScholarshipFilter(admin.SimpleListFilter):
@@ -18,7 +27,7 @@ class ScholarshipFilter(admin.SimpleListFilter):
     """
 
     title = "Scholarship"
-    parameter_name = "scholarship"  # url parameter
+    parameter_name = "scholarship"
 
     def lookups(self, request, model_admin):
         """
@@ -62,6 +71,21 @@ class ScholarshipFilter(admin.SimpleListFilter):
         return queryset.filter(scholarship=self.value())
 
 
+class EnrollmentInline(admin.TabularInline):
+    """
+    Inline admin class for the Enrollment model.
+
+    This allows managing enrollments directly from the Student admin interface.
+    """
+
+    model = Enrollment
+    extra = 0
+    fields = ["course", "student"]
+    readonly_fields = ["student"]
+    formset = EnrollmentInlineFormSet
+    autocomplete_fields = ["course"]
+
+
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
     """
@@ -71,14 +95,16 @@ class StudentAdmin(admin.ModelAdmin):
     """
 
     list_display = [
-        "username",
-        "first_name",
-        "last_name",
-        "email",
-        "phone_number",
-        "date_of_birth",
-        "gender",
+        "uuid",
+        "user__username",
+        "user__first_name",
+        "user__last_name",
+        "user__email",
+        "user__phone_number",
+        "user__date_of_birth",
+        "user__gender",
         "scholarship",
+        "modified",
     ]
 
     list_filter = [GenderFilter, ScholarshipFilter]
@@ -89,6 +115,52 @@ class StudentAdmin(admin.ModelAdmin):
         "user__phone_number",
         "user__email",
     ]
+
+    inlines = [EnrollmentInline]
+    list_per_page = settings.ADMIN_PAGE_SIZE
+    ordering = ["user__username", "modified"]
+
+    def save_model(self, request, obj, form, change):
+        """
+        Save the student and update the associated user with the provided data.
+
+        Returns:
+            Student: The student instance.
+        """
+
+        cleaned_data = form.cleaned_data
+
+        if change:
+            user = obj.user
+            user.first_name = cleaned_data["first_name"]
+            user.last_name = cleaned_data["last_name"]
+            user.phone_number = cleaned_data["phone_number"]
+            user.date_of_birth = cleaned_data["date_of_birth"]
+            user.gender = cleaned_data["gender"]
+
+            password = cleaned_data.get("password")
+            if password:
+                user.set_password(password)
+
+            user.save()
+        else:
+            user = User.objects.create_user(
+                username=cleaned_data["username"],
+                first_name=cleaned_data["first_name"],
+                last_name=cleaned_data["last_name"],
+                email=cleaned_data["email"],
+                phone_number=cleaned_data["phone_number"],
+                date_of_birth=cleaned_data["date_of_birth"],
+                gender=cleaned_data["gender"],
+                password=cleaned_data["password"],
+            )
+            obj.user = user
+
+        super().save_model(request, obj, form, change)
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.select_related("user")
 
     def get_form(self, request, obj=None, **kwargs):
         """
@@ -104,56 +176,7 @@ class StudentAdmin(admin.ModelAdmin):
         """
 
         if obj is None:
-            kwargs["form"] = StudentCreationForm
+            kwargs["form"] = StudentBaseForm
         else:
             kwargs["form"] = StudentEditForm
         return super().get_form(request, obj, **kwargs)
-
-    def username(self, obj):
-        """
-        Returns the username of the user associated with the student.
-        """
-
-        return obj.user.username
-
-    def first_name(self, obj):
-        """
-        Returns the first name of the user associated with the student.
-        """
-
-        return obj.user.first_name
-
-    def last_name(self, obj):
-        """
-        Returns the last name of the user associated with the student.
-        """
-
-        return obj.user.last_name
-
-    def email(self, obj):
-        """
-        Returns the email of the user associated with the student.
-        """
-
-        return obj.user.email
-
-    def phone_number(self, obj):
-        """
-        Returns the phone number of the user associated with the student.
-        """
-
-        return obj.user.phone_number
-
-    def date_of_birth(self, obj):
-        """
-        Returns the date of birth of the user associated with the student.
-        """
-
-        return obj.user.date_of_birth
-
-    def gender(self, obj):
-        """
-        Returns the gender of the user associated with the student.
-        """
-
-        return obj.user.gender

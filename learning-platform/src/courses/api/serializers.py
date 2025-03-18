@@ -118,7 +118,7 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         """
 
         if instance.status != "activate" or not instance.instructor:
-            raise serializers.ValidationError(ErrorMessage.COURSE_NOT_AVAILABLE)
+            raise serializers.ValidationError(ErrorMessage.INACTIVE_COURSE)
 
         return instance
 

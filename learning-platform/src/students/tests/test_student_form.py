@@ -1,15 +1,22 @@
+import random
+from faker import Faker
 from django.test import TestCase
-from students.forms import StudentCreationForm, StudentEditForm
+
+from students.forms import StudentBaseForm, StudentEditForm
 from students.models import Student
 from students.factories import StudentFactory
 from accounts.factories import UserFactory
-from courses.factories import CourseFactory
-from core.constants import Gender, Status
+from core.constants import Gender, ScholarshipChoices
+from core.exceptions import ErrorMessage
+from utils.helpers import random_birthday, random_phone_number
 
 
-class StudentCreationFormTest(TestCase):
+fake = Faker()
+
+
+class StudentBaseFormTest(TestCase):
     """
-    Test case for the StudentCreationForm.
+    Test case for the StudentBaseForm.
     """
 
     def setUp(self):
@@ -17,36 +24,35 @@ class StudentCreationFormTest(TestCase):
         Set up the test case with sample data.
         """
 
-        self.course = CourseFactory(status=Status.ACTIVATE.value)
-        self.valid_data = {
-            "username": "Test User",
-            "first_name": "Test",
-            "last_name": "User",
-            "email": "testuser@example.com",
-            "phone_number": "1234567890",
-            "date_of_birth": "2000-01-01",
-            "gender": Gender.MALE.value,
+        self.gender = random.choice([gender.value for gender in Gender])
+        self.scholarship = random.choice(
+            [scholarship.value for scholarship in ScholarshipChoices]
+        )
+        self.create_data = {
+            "username": fake.user_name(),
+            "first_name": fake.first_name(),
+            "last_name": fake.last_name(),
+            "email": fake.email(),
+            "phone_number": random_phone_number(),
+            "date_of_birth": random_birthday(is_student=True),
+            "gender": self.gender,
             "password": "Testpassword@123",
-            "scholarship": 0,
-            "courses": [self.course.uuid],
+            "scholarship": self.scholarship,
         }
 
     def tearDown(self):
         Student.objects.all().delete()
         super().tearDown()
 
-    def test_create_student_ok(self):
+    def test_create_student_with_valid_data(self):
         """
         Test creating a student with valid data.
         """
 
-        student = StudentFactory()
-        form = StudentCreationForm(data=self.valid_data)
+        form = StudentBaseForm(data=self.create_data)
         self.assertTrue(form.is_valid())
-        student = form.save()
-        self.assertIsInstance(student, Student)
 
-    def test_create_student_invalid_username(self):
+    def test_create_student_with_invalid_username(self):
         """
         Test creating a student with an invalid username.
         """
@@ -55,12 +61,12 @@ class StudentCreationFormTest(TestCase):
         user = UserFactory(username=username)
         StudentFactory(user=user)
 
-        self.valid_data["username"] = username
-        form = StudentCreationForm(data=self.valid_data)
+        self.create_data["username"] = username
+        form = StudentBaseForm(data=self.create_data)
         self.assertFalse(form.is_valid())
         self.assertIn("username", form.errors)
 
-    def test_create_student_invalid_email(self):
+    def test_create_student_with_invalid_email(self):
         """
         Test creating a student with an invalid email.
         """
@@ -69,10 +75,48 @@ class StudentCreationFormTest(TestCase):
         user = UserFactory(email=email)
         StudentFactory(user=user)
 
-        self.valid_data["email"] = email
-        form = StudentCreationForm(data=self.valid_data)
+        self.create_data["email"] = email
+        form = StudentBaseForm(data=self.create_data)
         self.assertFalse(form.is_valid())
         self.assertIn("email", form.errors)
+
+    def test_invalid_phone_number(self):
+        """
+        Test form validation for an invalid phone number.
+        """
+
+        self.create_data["phone_number"] = "invalid_phone"
+
+        form = StudentBaseForm(data=self.create_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("phone_number", form.errors)
+        self.assertEqual(
+            form.errors["phone_number"][0], ErrorMessage.PHONE_NUMBER_ONLY_NUMBER
+        )
+
+    def test_invalid_date_of_birth(self):
+        """
+        Test form validation for an invalid date of birth.
+        """
+        self.create_data["date_of_birth"] = "2025-01-01"
+
+        form = StudentBaseForm(data=self.create_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("date_of_birth", form.errors)
+        self.assertEqual(
+            form.errors["date_of_birth"][0], ErrorMessage.INVALID_DATE_OF_BIRTH
+        )
+
+    def test_invalid_password(self):
+        """
+        Test form validation for an invalid password.
+        """
+        self.create_data["password"] = "1234567890"
+
+        form = StudentBaseForm(data=self.create_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("password", form.errors)
+        self.assertEqual(form.errors["password"][0], ErrorMessage.PASSWORD_LOWERCASE)
 
 
 class StudentEditFormTest(TestCase):
@@ -85,35 +129,87 @@ class StudentEditFormTest(TestCase):
         Set up the test case with sample data.
         """
 
+        self.gender = random.choice([gender.value for gender in Gender])
+        self.scholarship = random.choice(
+            [scholarship.value for scholarship in ScholarshipChoices]
+        )
         self.student = StudentFactory()
-        self.course = CourseFactory(status=Status.ACTIVATE.value)
-        self.valid_data = {
-            "first_name": "Updated",
-            "last_name": "User",
-            "phone_number": "0987654321",
-            "date_of_birth": "1999-01-01",
-            "gender": Gender.FEMALE.value,
+        self.update_data = {
+            "first_name": fake.first_name(),
+            "last_name": fake.first_name(),
+            "phone_number": random_phone_number(),
+            "date_of_birth": random_birthday(is_student=True),
+            "gender": self.gender,
             "password": "Newpassword@123",
-            "courses": [self.course.uuid],
+            "scholarship": self.scholarship,
         }
 
-    def test_edit_student_ok(self):
+    def test_edit_student_with_valid_data(self):
         """
         Test editing a student with valid data.
         """
 
-        form = StudentEditForm(instance=self.student, data=self.valid_data)
+        form = StudentEditForm(instance=self.student, data=self.update_data)
         self.assertTrue(form.is_valid())
-        student = form.save()
-        self.assertIsInstance(student, Student)
-        self.assertEqual(student.user.first_name, self.valid_data.get("first_name"))
 
-    def test_edit_student_invalid_data(self):
+    def test_edit_student_with_invalid_phone_number(self):
         """
-        Test editing a student with invalid data.
+        Test editing a student with an invalid phone number.
         """
 
-        self.valid_data["phone_number"] = "03256984572158"
-        form = StudentEditForm(instance=self.student, data=self.valid_data)
+        self.update_data["phone_number"] = "48789645468764564678"
+        form = StudentEditForm(instance=self.student, data=self.update_data)
         self.assertFalse(form.is_valid())
         self.assertIn("phone_number", form.errors)
+        self.assertEqual(
+            form.errors["phone_number"][0], ErrorMessage.PHONE_NUMBER_INVALID_LENGTH
+        )
+
+    def test_edit_student_with_invalid_date_of_birth(self):
+        """
+        Test editing a student with an invalid date of birth.
+        """
+
+        self.update_data["date_of_birth"] = "2025-01-01"
+        form = StudentEditForm(instance=self.student, data=self.update_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("date_of_birth", form.errors)
+        self.assertEqual(
+            form.errors["date_of_birth"][0], ErrorMessage.INVALID_DATE_OF_BIRTH
+        )
+
+    def test_edit_student_with_invalid_password(self):
+        """
+        Test editing a student with an invalid password.
+        """
+
+        self.update_data["password"] = "123456789"
+        form = StudentEditForm(instance=self.student, data=self.update_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("password", form.errors)
+        self.assertEqual(form.errors["password"][0], ErrorMessage.PASSWORD_LOWERCASE)
+
+    def test_edit_student_with_invalid_(self):
+        """
+        Test editing a student with an invalid password.
+        """
+
+        self.update_data["password"] = "123456789"
+        form = StudentEditForm(instance=self.student, data=self.update_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("password", form.errors)
+        self.assertEqual(form.errors["password"][0], ErrorMessage.PASSWORD_LOWERCASE)
+
+    def test_edit_student_with_invalid_scholarship(self):
+        """
+        Test editing a student with an invalid scholarship.
+        """
+
+        self.update_data["scholarship"] = 150
+        form = StudentEditForm(instance=self.student, data=self.update_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("scholarship", form.errors)
+        self.assertEqual(
+            form.errors["scholarship"][0],
+            "Select a valid choice. 150 is not one of the available choices.",
+        )
