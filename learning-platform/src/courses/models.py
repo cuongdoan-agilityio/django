@@ -74,7 +74,7 @@ class Enrollment(AbstractBaseModel):
         """
 
         if self.course.status != Status.ACTIVATE.value:
-            raise ValidationError(ErrorMessage.COURSE_NOT_AVAILABLE)
+            raise ValidationError(ErrorMessage.INACTIVE_COURSE)
 
         if not self.course.instructor:
             raise ValidationError(ErrorMessage.COURSE_HAS_NO_INSTRUCTOR)

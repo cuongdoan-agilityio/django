@@ -30,7 +30,7 @@ class EnrollmentForm(forms.ModelForm):
         student = cleaned_data.get("student")
 
         if course.status != Status.ACTIVATE.value:
-            self.add_error("course", ErrorMessage.COURSE_NOT_AVAILABLE)
+            self.add_error("course", ErrorMessage.INACTIVE_COURSE)
 
         if not course.instructor:
             self.add_error("course", ErrorMessage.COURSE_HAS_NO_INSTRUCTOR)
