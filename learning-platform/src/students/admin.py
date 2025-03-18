@@ -80,6 +80,7 @@ class EnrollmentInline(admin.TabularInline):
     fields = ["course", "student"]
     readonly_fields = ["student"]
     formset = EnrollmentInlineFormSet
+    autocomplete_fields = ["course"]
 
 
 @admin.register(Student)
