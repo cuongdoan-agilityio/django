@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.conf import settings
 
 from core.filters import GenderFilter
 
@@ -22,9 +23,11 @@ class SubjectAdmin(admin.ModelAdmin):
             through the admin search functionality.
     """
 
-    list_display = ["name"]
+    list_display = ["uuid", "name", "description", "modified"]
 
     search_fields = ["name"]
+    list_per_page = settings.ADMIN_PAGE_SIZE
+    ordering = ["name", "modified"]
 
 
 @admin.register(Instructor)
@@ -53,16 +56,17 @@ class InstructorAdmin(admin.ModelAdmin):
     """
 
     list_display = [
-        "username",
-        "first_name",
-        "last_name",
-        "email",
-        "phone_number",
-        "date_of_birth",
-        "gender",
+        "uuid",
+        "user__username",
+        "user__first_name",
+        "user__last_name",
+        "user__email",
+        "user__phone_number",
+        "user__date_of_birth",
+        "user__gender",
         "get_subjects",
-        "get_courses",
         "degree",
+        "modified",
     ]
 
     list_filter = [GenderFilter, "degree", "subjects"]
@@ -73,6 +77,9 @@ class InstructorAdmin(admin.ModelAdmin):
         "user__phone_number",
         "user__email",
     ]
+    ordering = ["user__username", "-modified"]
+    autocomplete_fields = ["subjects"]
+    list_per_page = settings.ADMIN_PAGE_SIZE
 
     def get_form(self, request, obj=None, **kwargs):
         """
@@ -85,51 +92,10 @@ class InstructorAdmin(admin.ModelAdmin):
             kwargs["form"] = InstructorEditForm
         return super().get_form(request, obj, **kwargs)
 
-    def username(self, obj):
+    def get_queryset(self, request):
         """
-        Returns the username of the user associated with the instructor.
-        """
-
-        return obj.user.username
-
-    def first_name(self, obj):
-        """
-        Returns the first name of the user associated with the instructor.
+        Customize the queryset for the Instructor admin interface.
         """
 
-        return obj.user.first_name
-
-    def last_name(self, obj):
-        """
-        Returns the last name of the user associated with the instructor.
-        """
-
-        return obj.user.last_name
-
-    def email(self, obj):
-        """
-        Returns the email of the user associated with the instructor.
-        """
-
-        return obj.user.email
-
-    def phone_number(self, obj):
-        """
-        Returns the phone number of the user associated with the instructor.
-        """
-
-        return obj.user.phone_number
-
-    def date_of_birth(self, obj):
-        """
-        Returns the date of birth of the user associated with the instructor.
-        """
-
-        return obj.user.date_of_birth
-
-    def gender(self, obj):
-        """
-        Returns the gender of the user associated with the instructor.
-        """
-
-        return obj.user.gender
+        queryset = super().get_queryset(request)
+        return queryset.select_related("user").prefetch_related("subjects")
