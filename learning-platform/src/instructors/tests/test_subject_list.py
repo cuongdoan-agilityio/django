@@ -1,14 +1,10 @@
 from rest_framework import status
-from rest_framework.test import APITestCase
 from instructors.models import Subject
 from instructors.factories import SubjectFactory
-from faker import Faker
+from core.tests.base import BaseTestCase
 
 
-fake = Faker()
-
-
-class SubjectViewSetTest(APITestCase):
+class SubjectViewSetTest(BaseTestCase):
     """
     Test case for the SubjectViewSet.
     """
@@ -17,12 +13,15 @@ class SubjectViewSetTest(APITestCase):
         """
         Set up the test case with sample subjects.
         """
-        self.subject_name = fake.sentence(nb_words=5)
-        self.another_subject_name = fake.sentence(nb_words=5)
+        super().setUp()
+
+        Subject.objects.all().delete()
+        self.subject_name = self.fake.sentence(nb_words=5)
+        self.another_subject_name = self.fake.sentence(nb_words=5)
         SubjectFactory(name=self.subject_name)
         SubjectFactory(name=self.another_subject_name)
 
-        self.url = "/api/v1/subjects/"
+        self.url = f"{self.root_url}subjects/"
 
     def test_list_subjects_ok(self):
         """
@@ -82,7 +81,7 @@ class SubjectViewSetTest(APITestCase):
         Test that the request to list subjects fails due to an invalid URL.
         """
 
-        invalid_url = "/api/v1/invalid_subjects/"
+        invalid_url = f"{self.root_url}invalid_subjects/"
         response = self.client.get(invalid_url)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

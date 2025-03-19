@@ -1,14 +1,9 @@
-from django.contrib.auth import get_user_model
-
 from factory.django import DjangoModelFactory as ModelFactory
 from factory import SubFactory, Iterator, Faker, Sequence, post_generation
 
 from accounts.factories import UserFactory
 from instructors.models import Instructor, Subject
 from core.constants import Degree
-
-
-User = get_user_model()
 
 
 class SubjectFactory(ModelFactory):

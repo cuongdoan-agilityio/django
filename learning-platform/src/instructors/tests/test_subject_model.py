@@ -1,15 +1,9 @@
-from django.test import TestCase
-from django.contrib.auth import get_user_model
 from instructors.models import Subject
 from instructors.factories import SubjectFactory
-from faker import Faker
+from core.tests.base import BaseTestCase
 
 
-fake = Faker()
-User = get_user_model()
-
-
-class SubjectModelTest(TestCase):
+class SubjectModelTest(BaseTestCase):
     """
     Test case for the Subject model.
     """
@@ -18,9 +12,10 @@ class SubjectModelTest(TestCase):
         """
         Set up the test case with a sample subject.
         """
+        super().setUp()
 
-        self.name = fake.sentence(nb_words=5)
-        self.description = fake.paragraph(nb_sentences=2)
+        self.name = self.fake.sentence(nb_words=5)
+        self.description = self.fake.paragraph(nb_sentences=2)
         self.subject = SubjectFactory(name=self.name, description=self.description)
 
     def test_subject_create_success(self):
@@ -44,8 +39,8 @@ class SubjectModelTest(TestCase):
         Test updating the name and description of a subject.
         """
 
-        new_name = fake.sentence(nb_words=5)
-        new_description = fake.paragraph(nb_sentences=2)
+        new_name = self.fake.sentence(nb_words=5)
+        new_description = self.fake.paragraph(nb_sentences=2)
         self.subject.name = new_name
         self.subject.description = new_description
         self.subject.save()
@@ -57,6 +52,7 @@ class SubjectModelTest(TestCase):
         """
         Test that a subject can be deleted successfully.
         """
+
         subject_id = self.subject.uuid
         self.subject.delete()
 
@@ -67,5 +63,6 @@ class SubjectModelTest(TestCase):
         """
         Test that the subject name must be unique.
         """
+
         with self.assertRaises(Exception):
             SubjectFactory(name=self.name)

@@ -1,19 +1,18 @@
 import random
-from faker import Faker
-from django.test import TestCase
 from django.contrib.auth import get_user_model
 
 from instructors.models import Instructor
 from instructors.factories import InstructorFactory, SubjectFactory
-from core.constants import Gender, Degree
+from core.constants import Degree
 from accounts.factories import UserFactory
+
+from core.tests.base import BaseTestCase
 
 
 User = get_user_model()
-fake = Faker()
 
 
-class InstructorModelTest(TestCase):
+class InstructorModelTest(BaseTestCase):
     """
     Test case for the Instructor model.
     """
@@ -22,10 +21,11 @@ class InstructorModelTest(TestCase):
         """
         Set up the test case with sample subjects and instructor.
         """
+        super().setUp()
 
-        self.gender = random.choice([gender.value for gender in Gender])
-        self.email = fake.email()
-        self.username = fake.user_name()
+        self.gender = self.random_gender()
+        self.email = self.fake.email()
+        self.username = self.fake.user_name()
         self.math_subject = SubjectFactory(name="Mathematics")
         self.physics_subject = SubjectFactory(name="Physics")
 

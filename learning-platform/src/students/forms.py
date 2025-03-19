@@ -1,6 +1,5 @@
 from django import forms
 from django.forms import BaseInlineFormSet
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
 from accounts.forms import UserBaseForm
@@ -9,9 +8,6 @@ from core.exceptions import ErrorMessage
 from courses.models import Course
 
 from .models import Student
-
-
-User = get_user_model()
 
 
 class StudentBaseForm(UserBaseForm):
