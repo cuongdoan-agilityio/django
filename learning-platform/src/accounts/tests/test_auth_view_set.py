@@ -1,8 +1,5 @@
 from rest_framework import status
-from django.contrib.auth import get_user_model
 from core.tests.base import BaseTestCase
-
-User = get_user_model()
 
 
 class AuthorViewSetTests(BaseTestCase):

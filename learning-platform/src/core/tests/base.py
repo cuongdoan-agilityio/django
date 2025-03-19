@@ -1,6 +1,5 @@
 import random
 from faker import Faker
-from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase, APIClient
 from rest_framework.authtoken.models import Token
 
@@ -13,7 +12,6 @@ from courses.factories import CategoryFactory
 
 
 fake = Faker()
-User = get_user_model()
 
 
 class BaseTestCase(APITestCase):
