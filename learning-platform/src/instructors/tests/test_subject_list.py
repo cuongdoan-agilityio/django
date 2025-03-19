@@ -2,6 +2,10 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from instructors.models import Subject
 from instructors.factories import SubjectFactory
+from faker import Faker
+
+
+fake = Faker()
 
 
 class SubjectViewSetTest(APITestCase):
@@ -13,19 +17,24 @@ class SubjectViewSetTest(APITestCase):
         """
         Set up the test case with sample subjects.
         """
-
-        SubjectFactory(name="Mathematics")
-        SubjectFactory(name="Physics")
+        self.subject_name = fake.sentence(nb_words=5)
+        self.another_subject_name = fake.sentence(nb_words=5)
+        SubjectFactory(name=self.subject_name)
+        SubjectFactory(name=self.another_subject_name)
 
         self.url = "/api/v1/subjects/"
 
-    def test_list_subjects(self):
+    def test_list_subjects_ok(self):
         """
         Test listing all subjects.
         """
 
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.data["data"]
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]["name"], self.subject_name)
+        self.assertEqual(data[1]["name"], self.another_subject_name)
 
     def test_list_subjects_empty(self):
         """
@@ -49,3 +58,31 @@ class SubjectViewSetTest(APITestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_subjects_with_limit_offset(self):
+        """
+        Test that subjects are listed in alphabetical order by default.
+        """
+
+        response = self.client.get(f"{self.url}?limit=5&offset=1")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data = response.data["data"]
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["name"], self.another_subject_name)
+
+        pagination = response.data["meta"]["pagination"]
+        self.assertEqual(pagination["limit"], 5)
+        self.assertEqual(pagination["offset"], 1)
+        self.assertEqual(pagination["total"], 2)
+
+    def test_list_subjects_failed(self):
+        """
+        Test that the request to list subjects fails due to an invalid URL.
+        """
+
+        invalid_url = "/api/v1/invalid_subjects/"
+        response = self.client.get(invalid_url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

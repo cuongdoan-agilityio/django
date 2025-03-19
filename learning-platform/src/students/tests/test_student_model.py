@@ -25,7 +25,6 @@ class StudentModelTest(TestCase):
         """
         self.username = fake.user_name()
         self.email = fake.email()
-        self.password = "Password@1234"
         self.scholarship = random.choice(
             [choice.value for choice in ScholarshipChoices]
         )
@@ -33,7 +32,6 @@ class StudentModelTest(TestCase):
         self.user = UserFactory(
             username=self.username,
             email=self.email,
-            password=self.password,
             gender=self.gender,
         )
         self.student = StudentFactory(user=self.user, scholarship=self.scholarship)

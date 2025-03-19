@@ -1,9 +1,15 @@
 from django.contrib import admin
+from django.conf import settings
+from django.contrib.auth import get_user_model
 
 from core.filters import GenderFilter
 
 from .models import Instructor, Subject
-from .forms import InstructorCreationForm, InstructorEditForm
+from .forms import InstructorBaseForm, InstructorEditForm, CourseInlineFormSet
+from courses.models import Course
+
+
+User = get_user_model()
 
 
 @admin.register(Subject)
@@ -22,9 +28,28 @@ class SubjectAdmin(admin.ModelAdmin):
             through the admin search functionality.
     """
 
-    list_display = ["name"]
+    list_display = ["uuid", "name", "description", "modified"]
 
     search_fields = ["name"]
+    list_per_page = settings.ADMIN_PAGE_SIZE
+    ordering = ["name", "modified"]
+
+
+class CourseInline(admin.TabularInline):
+    """
+    Inline admin class for the Course model.
+
+    This allows managing Course directly from the Student admin interface.
+    """
+
+    model = Course
+    extra = 0
+    fields = ["title", "description", "category", "status", "image_url"]
+    readonly_fields = ["instructor"]
+    formset = CourseInlineFormSet
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("category")
 
 
 @admin.register(Instructor)
@@ -53,16 +78,17 @@ class InstructorAdmin(admin.ModelAdmin):
     """
 
     list_display = [
-        "username",
-        "first_name",
-        "last_name",
-        "email",
-        "phone_number",
-        "date_of_birth",
-        "gender",
+        "uuid",
+        "user__username",
+        "user__first_name",
+        "user__last_name",
+        "user__email",
+        "user__phone_number",
+        "user__date_of_birth",
+        "user__gender",
         "get_subjects",
-        "get_courses",
         "degree",
+        "modified",
     ]
 
     list_filter = [GenderFilter, "degree", "subjects"]
@@ -73,6 +99,11 @@ class InstructorAdmin(admin.ModelAdmin):
         "user__phone_number",
         "user__email",
     ]
+    ordering = ["user__username", "-modified"]
+    autocomplete_fields = ["subjects"]
+    list_per_page = settings.ADMIN_PAGE_SIZE
+
+    inlines = [CourseInline]
 
     def get_form(self, request, obj=None, **kwargs):
         """
@@ -80,56 +111,53 @@ class InstructorAdmin(admin.ModelAdmin):
         """
 
         if obj is None:
-            kwargs["form"] = InstructorCreationForm
+            kwargs["form"] = InstructorBaseForm
         else:
             kwargs["form"] = InstructorEditForm
         return super().get_form(request, obj, **kwargs)
 
-    def username(self, obj):
+    def get_queryset(self, request):
         """
-        Returns the username of the user associated with the instructor.
-        """
-
-        return obj.user.username
-
-    def first_name(self, obj):
-        """
-        Returns the first name of the user associated with the instructor.
+        Customize the queryset for the Instructor admin interface.
         """
 
-        return obj.user.first_name
+        queryset = super().get_queryset(request)
+        return queryset.select_related("user").prefetch_related("subjects")
 
-    def last_name(self, obj):
+    def save_model(self, request, obj, form, change):
         """
-        Returns the last name of the user associated with the instructor.
-        """
+        Save the Instructor and update the associated user with the provided data.
 
-        return obj.user.last_name
-
-    def email(self, obj):
-        """
-        Returns the email of the user associated with the instructor.
+        Returns:
+            Instructor: The Instructor instance.
         """
 
-        return obj.user.email
+        cleaned_data = form.cleaned_data
 
-    def phone_number(self, obj):
-        """
-        Returns the phone number of the user associated with the instructor.
-        """
+        if change:
+            user = obj.user
+            user.first_name = cleaned_data["first_name"]
+            user.last_name = cleaned_data["last_name"]
+            user.phone_number = cleaned_data["phone_number"]
+            user.date_of_birth = cleaned_data["date_of_birth"]
+            user.gender = cleaned_data["gender"]
 
-        return obj.user.phone_number
+            password = cleaned_data.get("password")
+            if password:
+                user.set_password(password)
 
-    def date_of_birth(self, obj):
-        """
-        Returns the date of birth of the user associated with the instructor.
-        """
+            user.save()
+        else:
+            user = User.objects.create_user(
+                username=cleaned_data["username"],
+                first_name=cleaned_data["first_name"],
+                last_name=cleaned_data["last_name"],
+                email=cleaned_data["email"],
+                phone_number=cleaned_data["phone_number"],
+                date_of_birth=cleaned_data["date_of_birth"],
+                gender=cleaned_data["gender"],
+                password=cleaned_data["password"],
+            )
+            obj.user = user
 
-        return obj.user.date_of_birth
-
-    def gender(self, obj):
-        """
-        Returns the gender of the user associated with the instructor.
-        """
-
-        return obj.user.gender
+        super().save_model(request, obj, form, change)
