@@ -5,7 +5,8 @@ from django.contrib.auth import get_user_model
 from core.filters import GenderFilter
 
 from .models import Instructor, Subject
-from .forms import InstructorBaseForm, InstructorEditForm
+from .forms import InstructorBaseForm, InstructorEditForm, CourseInlineFormSet
+from courses.models import Course
 
 
 User = get_user_model()
@@ -32,6 +33,23 @@ class SubjectAdmin(admin.ModelAdmin):
     search_fields = ["name"]
     list_per_page = settings.ADMIN_PAGE_SIZE
     ordering = ["name", "modified"]
+
+
+class CourseInline(admin.TabularInline):
+    """
+    Inline admin class for the Enrollment model.
+
+    This allows managing enrollments directly from the Student admin interface.
+    """
+
+    model = Course
+    extra = 0
+    fields = ["title", "description", "category", "status", "image_url"]
+    readonly_fields = ["instructor"]
+    formset = CourseInlineFormSet
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("category")
 
 
 @admin.register(Instructor)
@@ -84,6 +102,8 @@ class InstructorAdmin(admin.ModelAdmin):
     ordering = ["user__username", "-modified"]
     autocomplete_fields = ["subjects"]
     list_per_page = settings.ADMIN_PAGE_SIZE
+
+    inlines = [CourseInline]
 
     def get_form(self, request, obj=None, **kwargs):
         """

@@ -4,6 +4,8 @@ from .models import Instructor
 from accounts.forms import UserBaseForm
 
 from core.validators import validate_date_of_birth
+from django.forms import BaseInlineFormSet
+from courses.models import Category
 
 
 User = get_user_model()
@@ -96,3 +98,21 @@ class InstructorEditForm(InstructorBaseForm):
             self.fields["phone_number"].initial = self.instance.user.phone_number
             self.fields["date_of_birth"].initial = self.instance.user.date_of_birth
             self.fields["gender"].initial = self.instance.user.gender
+
+
+class CourseInlineFormSet(BaseInlineFormSet):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.category_choices = [
+            (category.uuid, str(category))
+            for category in Category.objects.all().order_by("name")
+        ]
+
+    def _construct_form(self, i, **kwargs):
+        form = super()._construct_form(i, **kwargs)
+
+        if "category" in form.fields:
+            form.fields["category"].choices = [
+                ("", "-----------")
+            ] + self.category_choices
+        return form

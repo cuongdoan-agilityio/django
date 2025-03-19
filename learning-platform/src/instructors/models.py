@@ -3,7 +3,6 @@ from django.conf import settings
 
 from core.models import AbstractBaseModel
 from core.constants import Degree
-from courses.models import Course
 
 
 class Subject(AbstractBaseModel):
@@ -53,11 +52,6 @@ class Instructor(AbstractBaseModel):
 
     def get_subjects(self):
         return ", ".join([spec.name for spec in self.subjects.all()])
-
-    def get_courses(self):
-        return ", ".join(
-            [spec.title for spec in Course.objects.filter(instructor=self)]
-        )
 
     def __str__(self):
         return self.user.username
