@@ -1,8 +1,7 @@
 from django.contrib.auth import get_user_model
 
 from factory.django import DjangoModelFactory as ModelFactory
-from factory import Sequence, post_generation
-from factory import SubFactory, Iterator
+from factory import SubFactory, Iterator, Faker, Sequence, post_generation
 
 from accounts.factories import UserFactory
 from instructors.models import Instructor, Subject
@@ -18,6 +17,7 @@ class SubjectFactory(ModelFactory):
     """
 
     name = Sequence(lambda n: f"Subject_{n}")
+    description = Faker("words")
 
     class Meta:
         """

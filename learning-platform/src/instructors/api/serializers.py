@@ -88,4 +88,4 @@ class SubjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subject
-        fields = ["uuid", "name"]
+        fields = ["uuid", "name", "description"]

@@ -189,17 +189,6 @@ class StudentEditFormTest(TestCase):
         self.assertIn("password", form.errors)
         self.assertEqual(form.errors["password"][0], ErrorMessage.PASSWORD_LOWERCASE)
 
-    def test_edit_student_with_invalid_(self):
-        """
-        Test editing a student with an invalid password.
-        """
-
-        self.update_data["password"] = "123456789"
-        form = StudentEditForm(instance=self.student, data=self.update_data)
-        self.assertFalse(form.is_valid())
-        self.assertIn("password", form.errors)
-        self.assertEqual(form.errors["password"][0], ErrorMessage.PASSWORD_LOWERCASE)
-
     def test_edit_student_with_invalid_scholarship(self):
         """
         Test editing a student with an invalid scholarship.
