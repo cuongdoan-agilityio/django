@@ -1,20 +1,17 @@
-import random
-from faker import Faker
-from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
 from accounts.factories import UserFactory
-from core.constants import ScholarshipChoices, Gender
+from core.constants import ScholarshipChoices
 from students.models import Student
 from students.factories import StudentFactory
+from core.tests.base import BaseTestCase
 
 
 User = get_user_model()
-fake = Faker()
 
 
-class StudentModelTest(TestCase):
+class StudentModelTest(BaseTestCase):
     """
     Test case for the Student model.
     """
@@ -23,12 +20,13 @@ class StudentModelTest(TestCase):
         """
         Set up the test case with a sample user and student.
         """
-        self.username = fake.user_name()
-        self.email = fake.email()
-        self.scholarship = random.choice(
-            [choice.value for choice in ScholarshipChoices]
-        )
-        self.gender = random.choice([gender.value for gender in Gender])
+
+        super().setUp()
+
+        self.username = self.fake.user_name()
+        self.email = self.fake.email()
+        self.scholarship = self.random_scholarship()
+        self.gender = self.random_gender()
         self.user = UserFactory(
             username=self.username,
             email=self.email,

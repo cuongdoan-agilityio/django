@@ -1,17 +1,12 @@
 from django import forms
 from django.forms import BaseInlineFormSet
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
 from accounts.forms import UserBaseForm
 from core.constants import ScholarshipChoices, Status
 from core.exceptions import ErrorMessage
-from courses.models import Course
 
 from .models import Student
-
-
-User = get_user_model()
 
 
 class StudentBaseForm(UserBaseForm):
@@ -102,19 +97,6 @@ class EnrollmentInlineFormSet(BaseInlineFormSet):
     """
     A custom inline formset for managing enrollments in the admin interface.
     """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.course_choices = [
-            (course.uuid, str(course))
-            for course in Course.objects.all().order_by("title")
-        ]
-
-    def _construct_form(self, i, **kwargs):
-        form = super()._construct_form(i, **kwargs)
-        if "course" in form.fields:
-            form.fields["course"].choices = [("", "-----------")] + self.course_choices
-        return form
 
     def clean(self):
         """

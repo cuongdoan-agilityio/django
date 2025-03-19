@@ -1,12 +1,12 @@
-from django.test import TestCase
 from django.core.exceptions import ValidationError
 from courses.models import Enrollment
 from courses.factories import CourseFactory, EnrollmentFactory
 from students.factories import StudentFactory
 from core.constants import Status
+from core.tests.base import BaseTestCase
 
 
-class EnrollmentModelTest(TestCase):
+class EnrollmentModelTest(BaseTestCase):
     """
     Test case for the Enrollment model.
     """
@@ -15,6 +15,7 @@ class EnrollmentModelTest(TestCase):
         """
         Set up the test case with a sample enrollment.
         """
+        super().setUp()
 
         self.course = CourseFactory(status=Status.ACTIVATE.value)
         self.student = StudentFactory()

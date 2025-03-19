@@ -1,11 +1,11 @@
 from rest_framework import status
-from rest_framework.test import APITestCase
 from courses.models import Category
 from courses.factories import CategoryFactory
 from courses.api.serializers import CategorySerializer
+from core.tests.base import BaseTestCase
 
 
-class CategoryViewSetTest(APITestCase):
+class CategoryViewSetTest(BaseTestCase):
     """
     Test case for the CategoryViewSet.
     """
@@ -14,9 +14,10 @@ class CategoryViewSetTest(APITestCase):
         """
         Set up the test case with sample categories.
         """
+        super().setUp()
 
         CategoryFactory()
-        self.url = "/api/v1/categories/"
+        self.url = f"{self.root_url}categories/"
 
     def test_list_categories_success(self):
         """
@@ -55,6 +56,6 @@ class CategoryViewSetTest(APITestCase):
         Test listing categories with an incorrect endpoint.
         """
 
-        incorrect_url = "/api/v1/incorrect_categories/"
+        incorrect_url = f"{self.root_url}incorrect_categories/"
         response = self.client.get(incorrect_url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

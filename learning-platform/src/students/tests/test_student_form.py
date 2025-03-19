@@ -1,20 +1,12 @@
-import random
-from faker import Faker
-from django.test import TestCase
-
 from students.forms import StudentBaseForm, StudentEditForm
 from students.models import Student
 from students.factories import StudentFactory
 from accounts.factories import UserFactory
-from core.constants import Gender, ScholarshipChoices
 from core.exceptions import ErrorMessage
-from utils.helpers import random_birthday, random_phone_number
+from core.tests.base import BaseTestCase
 
 
-fake = Faker()
-
-
-class StudentBaseFormTest(TestCase):
+class StudentBaseFormTest(BaseTestCase):
     """
     Test case for the StudentBaseForm.
     """
@@ -23,18 +15,18 @@ class StudentBaseFormTest(TestCase):
         """
         Set up the test case with sample data.
         """
+        super().setUp()
 
-        self.gender = random.choice([gender.value for gender in Gender])
-        self.scholarship = random.choice(
-            [scholarship.value for scholarship in ScholarshipChoices]
-        )
+        self.gender = self.random_gender()
+        self.scholarship = self.random_scholarship()
+
         self.create_data = {
-            "username": fake.user_name(),
-            "first_name": fake.first_name(),
-            "last_name": fake.last_name(),
-            "email": fake.email(),
-            "phone_number": random_phone_number(),
-            "date_of_birth": random_birthday(is_student=True),
+            "username": self.fake.user_name(),
+            "first_name": self.fake.first_name(),
+            "last_name": self.fake.last_name(),
+            "email": self.fake.email(),
+            "phone_number": self.random_user_phone_number(),
+            "date_of_birth": self.random_date_of_birth(is_student=True),
             "gender": self.gender,
             "password": "Testpassword@123",
             "scholarship": self.scholarship,
@@ -119,7 +111,7 @@ class StudentBaseFormTest(TestCase):
         self.assertEqual(form.errors["password"][0], ErrorMessage.PASSWORD_LOWERCASE)
 
 
-class StudentEditFormTest(TestCase):
+class StudentEditFormTest(BaseTestCase):
     """
     Test case for the StudentEditForm.
     """
@@ -129,16 +121,16 @@ class StudentEditFormTest(TestCase):
         Set up the test case with sample data.
         """
 
-        self.gender = random.choice([gender.value for gender in Gender])
-        self.scholarship = random.choice(
-            [scholarship.value for scholarship in ScholarshipChoices]
-        )
+        super().setUp()
+
+        self.gender = self.random_gender()
+        self.scholarship = self.random_scholarship()
         self.student = StudentFactory()
         self.update_data = {
-            "first_name": fake.first_name(),
-            "last_name": fake.first_name(),
-            "phone_number": random_phone_number(),
-            "date_of_birth": random_birthday(is_student=True),
+            "first_name": self.fake.first_name(),
+            "last_name": self.fake.first_name(),
+            "phone_number": self.random_user_phone_number(),
+            "date_of_birth": self.random_date_of_birth(is_student=True),
             "gender": self.gender,
             "password": "Newpassword@123",
             "scholarship": self.scholarship,
