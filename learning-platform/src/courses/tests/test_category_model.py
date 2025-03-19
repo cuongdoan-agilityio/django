@@ -1,32 +1,21 @@
-from django.test import TestCase
 from django.core.exceptions import ValidationError
-from faker import Faker
 from courses.models import Category
 from courses.factories import CategoryFactory
+from core.tests.base import BaseTestCase
 
 
-class CategoryModelTest(TestCase):
+class CategoryModelTest(BaseTestCase):
     """
     Test case for the Category model.
     """
 
-    def setUp(self):
-        """
-        Set up the test case with a sample category.
-        """
-
-        fake = Faker()
-        self.name = fake.sentence(nb_words=6)
-        self.description = fake.paragraph(nb_sentences=2)
-        self.category = CategoryFactory(name=self.name, description=self.description)
-
-    def test_category_success(self):
+    def test_create_category_success(self):
         """
         Test created category successfully.
         """
 
-        self.assertEqual(self.category.name, self.name)
-        self.assertEqual(self.category.description, self.description)
+        self.assertEqual(self.category.name, self.category_name)
+        self.assertEqual(self.category.description, self.category_description)
         self.assertIsInstance(self.category, Category)
 
     def test_category_empty_name(self):
@@ -35,7 +24,7 @@ class CategoryModelTest(TestCase):
         """
 
         with self.assertRaises(ValidationError):
-            category = CategoryFactory(name="", description=self.description)
+            category = CategoryFactory(name="", description=self.category_description)
             category.full_clean()
 
     def test_category_str(self):
@@ -43,7 +32,7 @@ class CategoryModelTest(TestCase):
         Test the string representation of the category.
         """
 
-        self.assertEqual(str(self.category), self.name)
+        self.assertEqual(str(self.category), self.category_name)
 
     def test_category_name_unique(self):
         """
@@ -51,7 +40,10 @@ class CategoryModelTest(TestCase):
         """
 
         with self.assertRaises(Exception):
-            Category.objects.create(name=self.name)
+            Category.objects.create(
+                name=self.category_name,
+                description=self.category_description,
+            )
 
     def test_category_help_text(self):
         """

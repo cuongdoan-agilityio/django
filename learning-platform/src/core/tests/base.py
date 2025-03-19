@@ -9,6 +9,7 @@ from accounts.factories import UserFactory
 from utils.helpers import random_birthday, random_phone_number
 from instructors.factories import InstructorFactory, SubjectFactory
 from students.factories import StudentFactory
+from courses.factories import CategoryFactory
 
 
 fake = Faker()
@@ -54,6 +55,12 @@ class BaseTestCase(APITestCase):
         self.instructor_profile = InstructorFactory(
             user=self.instructor_user,
             degree=random.choice(self.degrees),
+        )
+
+        self.category_name = fake.sentence(nb_words=6)
+        self.category_description = fake.paragraph(nb_sentences=2)
+        self.category = CategoryFactory(
+            name=self.category_name, description=self.category_description
         )
 
     def random_gender(self):

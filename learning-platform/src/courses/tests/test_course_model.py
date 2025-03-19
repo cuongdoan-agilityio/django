@@ -1,13 +1,12 @@
-from django.test import TestCase
 from django.core.exceptions import ValidationError
-from faker import Faker
 from courses.models import Course
 from courses.factories import CourseFactory, CategoryFactory
 from instructors.factories import InstructorFactory
 from core.constants import Status
+from core.tests.base import BaseTestCase
 
 
-class CourseModelTest(TestCase):
+class CourseModelTest(BaseTestCase):
     """
     Test case for the Course model.
     """
@@ -16,8 +15,8 @@ class CourseModelTest(TestCase):
         """
         Set up the test case with a sample course.
         """
+        super().setUp()
 
-        self.fake = Faker()
         self.title = self.fake.sentence(nb_words=6)
         self.description = self.fake.paragraph(nb_sentences=3)
         self.course = CourseFactory(
