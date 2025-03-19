@@ -83,7 +83,9 @@ class EnrollmentInline(admin.TabularInline):
     fields = ["course", "student"]
     readonly_fields = ["student"]
     formset = EnrollmentInlineFormSet
-    autocomplete_fields = ["course"]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("course", "student__user")
 
 
 @admin.register(Student)
