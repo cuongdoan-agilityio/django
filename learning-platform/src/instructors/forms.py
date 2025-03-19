@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from .models import Instructor
 from accounts.forms import UserBaseForm
 
-from core.validators import validate_date_of_birth
+from accounts.validators import validate_date_of_birth
 from django.forms import BaseInlineFormSet
 from courses.models import Category
 

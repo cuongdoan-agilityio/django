@@ -2,13 +2,12 @@ from django import forms
 from django.contrib.auth import get_user_model
 
 from core.constants import Gender
-from core.validators import (
+from accounts.validators import (
     validate_password,
     validate_phone_number,
     validate_date_of_birth,
-    validate_username,
-    validate_email,
 )
+from core.validators import validate_username, validate_email
 
 
 User = get_user_model()
