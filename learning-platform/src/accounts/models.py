@@ -4,11 +4,13 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.core.validators import MinLengthValidator
 
 from core.constants import Gender
 from core.models import AbstractBaseModel
 from core.exceptions import ErrorMessage
-from django.contrib.auth.validators import UnicodeUsernameValidator
+from .validators import validate_phone_number, validate_password
 
 
 class UserManager(BaseUserManager):
@@ -143,7 +145,9 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
     first_name = models.CharField(max_length=30, blank=True, null=True)
     last_name = models.CharField(max_length=30, blank=True, null=True)
     email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    phone_number = models.CharField(
+        max_length=11, blank=True, null=True, validators=[MinLengthValidator(10)]
+    )
     date_of_birth = models.DateField(blank=True, null=True)
     gender = models.CharField(
         choices=Gender.choices(),
@@ -166,6 +170,23 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
 
     def __str__(self):
         return self.email
+
+    def clean(self):
+        """
+        Verify for phone_number and password fields.
+        """
+
+        super().clean()
+
+        if self.phone_number:
+            validate_phone_number(self.phone_number)
+
+        if self.password:
+            validate_password(self.password)
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
     @property
     def is_instructor(self):

@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 
 from core.constants import ScholarshipChoices, Degree
-from core.validators import validate_phone_number as check_phone_number
+from accounts.validators import validate_phone_number as check_phone_number
 from core.exceptions import ErrorMessage
 from students.models import Student
 from instructors.models import Subject
