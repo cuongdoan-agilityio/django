@@ -82,6 +82,7 @@ class EnrollmentInline(admin.TabularInline):
     extra = 0
     fields = ["course", "student"]
     readonly_fields = ["student"]
+    autocomplete_fields = ["course"]
     formset = EnrollmentInlineFormSet
 
     def get_queryset(self, request):
