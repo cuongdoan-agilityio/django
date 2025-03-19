@@ -62,7 +62,6 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django.contrib.admindocs",
     "config.apps.CustomAdminConfig",
 ]
 THIRD_PARTY_APPS = [
