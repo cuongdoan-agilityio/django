@@ -37,9 +37,9 @@ class SubjectAdmin(admin.ModelAdmin):
 
 class CourseInline(admin.TabularInline):
     """
-    Inline admin class for the Enrollment model.
+    Inline admin class for the Course model.
 
-    This allows managing enrollments directly from the Student admin interface.
+    This allows managing Course directly from the Student admin interface.
     """
 
     model = Course
