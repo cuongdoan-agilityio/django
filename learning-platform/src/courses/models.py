@@ -25,7 +25,7 @@ class Course(AbstractBaseModel):
     Course model
     """
 
-    title = models.CharField(help_text="Course title", max_length=255)
+    title = models.CharField(help_text="Course title", max_length=255, db_index=True)
     description = models.TextField(help_text="Course description")
     category = models.ForeignKey(
         Category,
@@ -46,6 +46,7 @@ class Course(AbstractBaseModel):
         help_text="Status of the course.",
         max_length=8,
         default=Status.ACTIVATE.value,
+        db_index=True,
     )
     image_url = models.URLField(help_text="Course image URL", blank=True, null=True)
 

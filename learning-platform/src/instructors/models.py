@@ -48,6 +48,7 @@ class Instructor(AbstractBaseModel):
         default=Degree.NO.value,
         help_text="The degree of the instructor.",
         max_length=9,
+        db_index=True,
     )
 
     def get_subjects(self):
