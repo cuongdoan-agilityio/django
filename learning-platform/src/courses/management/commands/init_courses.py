@@ -65,5 +65,5 @@ class Command(BaseCommand):
                 title=fake.sentence(nb_words=6),
                 description=fake.paragraph(nb_sentences=3),
                 status=status,
-                image=fake.image_url(),
+                image_url=fake.image_url(),
             )
