@@ -5,12 +5,18 @@ Develop a functional “Student Course Management System” by building, testing
 
 ## Timeline
 - Estimate: 12.5 days
+- Actual: 15.5 days
+- Refactor: 5 days
 
 ## Technical Stack
-- Python
-- Django
-- Django REST Framework
+- Python: 3.11.5
+- Django: 5.1
+- Django REST Framework: 3.15.2
 - SQlite
+- Ruff: 0.8.2
+- UV: 0.5.29
+- Drf-spectacular: 0.28.0
+- Faker: 36.1.1
 
 ## Description of Requirements
 - Admin Dashboard:
@@ -62,7 +68,7 @@ Develop a functional “Student Course Management System” by building, testing
 |
 +---documents
 |       issues.md
-|
+|       improve.md
 +---src
     |   .coverage
     |   db.sqlite3
@@ -83,7 +89,6 @@ Develop a functional “Student Course Management System” by building, testing
     |   +---migrations
     |   |
     |   +---tests
-    |
     +---config
     |   |   api_router.py
     |   |   asgi.py
@@ -112,7 +117,7 @@ Develop a functional “Student Course Management System” by building, testing
     |   |   factories.py
     |   |   models.py
     |   |   views.py
-    |   |
+    |
     |   +---api
     |   |   |   response_schema.py
     |   |   |   serializers.py
@@ -149,9 +154,8 @@ Develop a functional “Student Course Management System” by building, testing
     |   +---api
     |   |   |   serializers.py
     |   |   |   views.py
-    |   |
+    |
     |   +---migrations
-    |   |
     |   +---tests
 ```
 
@@ -204,6 +208,7 @@ Setup environments: create `.env` follow `.env.example` with your own settings
 - User
   - Get profile
     - GET: /api/v1/users/{uuid}/
+    - GET: /api/v1/users/me/
   - Update profile
     - PATCH: /api/v1/users/{uuid}/
 - Category
