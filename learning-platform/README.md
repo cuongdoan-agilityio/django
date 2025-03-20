@@ -84,21 +84,6 @@ Develop a functional “Student Course Management System” by building, testing
     |   |
     |   +---tests
     |
-    +---categories
-    |   |   admin.py
-    |   |   apps.py
-    |   |   factories.py
-    |   |   models.py
-    |   |   views.py
-    |   |
-    |   +---api
-    |   |   |   serializers.py
-    |   |   |   views.py
-    |   |
-    |   +---migrations
-    |   |
-    |   +---tests
-    |
     +---config
     |   |   api_router.py
     |   |   asgi.py
@@ -130,24 +115,6 @@ Develop a functional “Student Course Management System” by building, testing
     |   |
     |   +---api
     |   |   |   response_schema.py
-    |   |   |   serializers.py
-    |   |   |   views.py
-    |   |
-    |   +---migrations
-    |   |
-    |   +---tests
-    |   |   |   test_course_model.py
-    |   |   |   test_course_view_set.py
-    |
-    +---enrollments
-    |   |   admin.py
-    |   |   apps.py
-    |   |   factories.py
-    |   |   forms.py
-    |   |   models.py
-    |   |   views.py
-    |   |
-    |   +---api
     |   |   |   serializers.py
     |   |   |   views.py
     |   |

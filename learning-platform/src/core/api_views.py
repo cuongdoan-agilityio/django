@@ -1,8 +1,6 @@
-from django.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet, GenericViewSet
-from rest_framework.permissions import IsAuthenticated
 
 
 class CommonViewSet:
@@ -32,18 +30,6 @@ class CommonViewSet:
 
         return Response(data=data, status=status.HTTP_201_CREATED)
 
-    def no_content(self) -> Response:
-        """
-        Default response no content. Status code is 204
-        """
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def not_found(self) -> Response:
-        """
-        Default response not found. Status code is 404
-        """
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
     def forbidden(self, data: dict | None = None) -> Response:
         """
         Default response forbidden. Status code is 403
@@ -70,28 +56,6 @@ class CommonViewSet:
 
         return Response(data=response_data, status=status.HTTP_400_BAD_REQUEST)
 
-    def not_implemented(self):
-        """
-        Return not implemented response
-        """
-        return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
-
-    def not_allowed(self) -> Response:
-        """
-        Default response not allowed. Status code is 405
-        """
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def get_resource_uri(self):
-        """
-        Get resource URI
-        """
-        return f"{settings.DOMAIN}{settings.API_ROOT_ENDPOINT}{self.resource_name}/"
-
-
-class AuthenticatedViewSet:
-    permission_classes = [IsAuthenticated]
-
 
 class BaseViewSet(ViewSet, CommonViewSet):
     """
@@ -108,16 +72,4 @@ class BaseModelViewSet(ModelViewSet, CommonViewSet):
 class BaseGenericViewSet(CommonViewSet, GenericViewSet):
     """
     Base generic view set.
-    """
-
-
-class BaseAuthenticatedViewSet(BaseViewSet, AuthenticatedViewSet):
-    """
-    Base view set with authentication
-    """
-
-
-class BaseAuthenticatedModelViewSet(BaseModelViewSet, AuthenticatedViewSet):
-    """
-    Base view set for Django model with authentication
     """

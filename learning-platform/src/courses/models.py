@@ -73,13 +73,16 @@ class Enrollment(AbstractBaseModel):
         Override the save method to add custom validation logic.
         """
 
-        if self.course.status != Status.ACTIVATE.value:
-            raise ValidationError(ErrorMessage.INACTIVE_COURSE)
+        if self._state.adding:
+            if self.course.status != Status.ACTIVATE.value:
+                raise ValidationError(ErrorMessage.INACTIVE_COURSE)
 
-        if not self.course.instructor:
-            raise ValidationError(ErrorMessage.COURSE_HAS_NO_INSTRUCTOR)
+            if not self.course.instructor:
+                raise ValidationError(ErrorMessage.COURSE_HAS_NO_INSTRUCTOR)
 
-        if Enrollment.objects.filter(course=self.course, student=self.student).exists():
-            raise ValidationError(ErrorMessage.STUDENT_ALREADY_ENROLLED)
+            if Enrollment.objects.filter(
+                course=self.course, student=self.student
+            ).exists():
+                raise ValidationError(ErrorMessage.STUDENT_ALREADY_ENROLLED)
 
         super().save(*args, **kwargs)

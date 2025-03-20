@@ -174,8 +174,11 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         user = request.user
         pk = kwargs.get("uuid")
 
-        if pk not in ["me", str(user.uuid)]:
+        if not user.is_superuser and (pk not in ["me", str(user.uuid)]):
             return self.forbidden()
+
+        # if user.is_superuser:
+        user = user if pk == "me" else self.get_queryset().filter(uuid=pk).first()
 
         serializer = BaseDetailSerializer(
             user, context={"serializer_class": self.get_serializer_class()}
@@ -203,8 +206,11 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         user = request.user
 
         pk = kwargs.get("uuid")
-        if pk not in ["me", str(user.uuid)]:
+
+        if not user.is_superuser and (pk not in ["me", str(user.uuid)]):
             return self.forbidden()
+
+        user = user if pk == "me" else self.get_queryset().filter(uuid=pk).first()
 
         serializer = UserProfileUpdateSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)

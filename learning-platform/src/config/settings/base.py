@@ -157,29 +157,12 @@ TEMPLATES = [
     },
 ]
 
-# FIXTURES
-# ------------------------------------------------------------------------------
-# https://docs.djangoproject.com/en/dev/ref/settings/#fixture-dirs
-FIXTURE_DIRS = "/fixtures/"
-
-
-# EMAIL
-# ------------------------------------------------------------------------------
-# https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
-EMAIL_BACKEND = env(
-    "DJANGO_EMAIL_BACKEND",
-    default="django.core.mail.backends.smtp.EmailBackend",
-)
-# https://docs.djangoproject.com/en/dev/ref/settings/#email-timeout
-EMAIL_TIMEOUT = 5
-
 
 # django-rest-framework
 # -------------------------------------------------------------------------------
 # django-rest-framework - https://www.django-rest-framework.org/api-guide/settings/
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
@@ -196,7 +179,6 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "Learning platform web APIs",
     "DESCRIPTION": "This API provides documentation for the learning platform.",
     "VERSION": "0.0.1",
-    "SERVE_INCLUDE_SCHEMA": False,
 }
 
 
@@ -204,7 +186,6 @@ SPECTACULAR_SETTINGS = {
 # ------------------------------------------------------------------------------
 # Project settings example
 API_ROOT_ENDPOINT = env("API_ROOT_ENDPOINT", default="api/v1/")
-GOOGLE_API_KEY = env("GOOGLE_API_KEY")
 
 
 # Admin pagination settings

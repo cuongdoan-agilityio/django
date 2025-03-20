@@ -13,7 +13,6 @@ for local_app in settings.LOCAL_APPS:
     with contextlib.suppress(Exception):
         api_module = import_module(f"{local_app}.api.views", "apps")
         # Try to register API views
-        print("api_module.apps:", api_module.apps)
         for viewset in api_module.apps:
             api_routers.register(
                 viewset.resource_name,
