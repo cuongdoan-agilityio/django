@@ -177,6 +177,7 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "Learning platform web APIs",
     "DESCRIPTION": "This API provides documentation for the learning platform.",
     "VERSION": "0.0.1",
+    "SCHEMA_PATH_PREFIX": r"/api/v[0-9]",
 }
 
 

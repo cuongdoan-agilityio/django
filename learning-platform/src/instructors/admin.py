@@ -32,7 +32,7 @@ class SubjectAdmin(admin.ModelAdmin):
 
     search_fields = ["name"]
     list_per_page = settings.ADMIN_PAGE_SIZE
-    ordering = ["name", "modified"]
+    ordering = ["name", "-modified"]
 
 
 class CourseInline(admin.TabularInline):

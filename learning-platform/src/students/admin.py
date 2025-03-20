@@ -121,7 +121,7 @@ class StudentAdmin(admin.ModelAdmin):
 
     inlines = [EnrollmentInline]
     list_per_page = settings.ADMIN_PAGE_SIZE
-    ordering = ["user__username", "modified"]
+    ordering = ["user__username", "-modified"]
 
     def save_model(self, request, obj, form, change):
         """
