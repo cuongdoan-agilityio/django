@@ -61,6 +61,9 @@ class BaseTestCase(APITestCase):
             name=self.category_name, description=self.category_description
         )
 
+        self.student_token = Token.objects.create(user=self.student_user)
+        self.instructor_token = Token.objects.create(user=self.instructor_user)
+
     def random_gender(self):
         """
         Random gender.
@@ -95,3 +98,41 @@ class BaseTestCase(APITestCase):
         """
 
         return random_phone_number()
+
+    def authenticate_as_student(self):
+        """
+        Authenticate the test client as a student.
+        """
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.student_token.key}")
+
+    def authenticate_as_instructor(self):
+        """
+        Authenticate the test client as an instructor.
+        """
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.instructor_token.key}")
+
+    def get_json(self, url, email):
+        """
+        Perform a GET request with a token.
+        """
+
+        if email == self.instructor_email:
+            self.authenticate_as_instructor()
+        else:
+            self.authenticate_as_student()
+
+        return self.client.get(url, format="json")
+
+    def patch_json(self, url, data, email):
+        """
+        Perform a PATCH request with a token.
+        """
+
+        if email == self.instructor_email:
+            self.authenticate_as_instructor()
+        else:
+            self.authenticate_as_student()
+
+        return self.client.patch(url, data, format="json")
