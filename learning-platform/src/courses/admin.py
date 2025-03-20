@@ -70,7 +70,7 @@ class CourseAdmin(admin.ModelAdmin):
         "image_url",
     ]
     list_per_page = settings.ADMIN_PAGE_SIZE
-    list_filter = ["title", "category__name", "status"]
+    list_filter = ["category", "status"]
     search_fields = ["title", "category__name", "instructor__user__username"]
     ordering = ["title"]
     autocomplete_fields = ["category", "instructor"]
@@ -122,7 +122,7 @@ class EnrollmentAdmin(admin.ModelAdmin):
         "student__user__username",
         "modified",
     ]
-    list_filter = ["course__title"]
+    list_filter = ["course"]
     search_fields = [
         "course__title",
         "student__user__username",

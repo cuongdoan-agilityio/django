@@ -27,6 +27,12 @@ class Command(BaseCommand):
             student_day_of_birthday = random_birthday(is_student=True)
             student_gender = random.choice([gender.value for gender in Gender])
 
+            username = f"{student_first_name}.{student_last_name}"
+            if (User.objects.filter(username=username).exists()) or (
+                User.objects.filter(email=student_email).exists()
+            ):
+                return
+
             user_instance = User.objects.create_user(
                 username=f"{student_first_name}.{student_last_name}",
                 first_name=student_first_name,

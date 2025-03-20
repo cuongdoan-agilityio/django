@@ -16,6 +16,9 @@ class Category(AbstractBaseModel):
         help_text="Category description", blank=True, null=True
     )
 
+    class Meta:
+        verbose_name_plural = "Categories"
+
     def __str__(self):
         return self.name
 
