@@ -39,6 +39,7 @@ class BaseTestCase(APITestCase):
         self.student_token = Token.objects.filter(user=self.student_user).first()
 
         self.instructor_email = fake.email()
+        self.instructor_username = fake.user_name()
         self.subject = SubjectFactory(name=fake.sentence(nb_words=5))
 
         self.student_profile = StudentFactory(
@@ -47,6 +48,7 @@ class BaseTestCase(APITestCase):
         )
 
         self.instructor_user = UserFactory(
+            username=self.instructor_username,
             email=self.instructor_email,
             password=self.password,
         )
@@ -118,11 +120,7 @@ class BaseTestCase(APITestCase):
         Perform a GET request with a token.
         """
 
-        if email == self.instructor_email:
-            self.authenticate_as_instructor()
-        else:
-            self.authenticate_as_student()
-
+        self.authenticate(email)
         return self.client.get(url, format="json")
 
     def patch_json(self, url, data, email):
@@ -130,9 +128,23 @@ class BaseTestCase(APITestCase):
         Perform a PATCH request with a token.
         """
 
+        self.authenticate(email)
+        return self.client.patch(url, data, format="json")
+
+    def post_json(self, url, data, email):
+        """
+        Perform a POST request with a token.
+        """
+
+        self.authenticate(email)
+        return self.client.post(url, data)
+
+    def authenticate(self, email):
+        """
+        Authenticate the test client
+        """
+
         if email == self.instructor_email:
             self.authenticate_as_instructor()
         else:
             self.authenticate_as_student()
-
-        return self.client.patch(url, data, format="json")
