@@ -1,14 +1,8 @@
 from rest_framework import status
-
-from accounts.factories import UserFactory
 from core.constants import Status
 from courses.factories import CourseFactory, CategoryFactory
 from courses.models import Enrollment
-from instructors.factories import InstructorFactory
 from core.tests.base import BaseTestCase
-
-
-# fake = Faker()
 
 
 class CourseViewSetTest(BaseTestCase):
@@ -20,22 +14,14 @@ class CourseViewSetTest(BaseTestCase):
         """
         Set up the test case with sample data.
         """
+
         super().setUp()
 
-        self.instructor_email = self.fake.email()
-        self.instructor_username = self.fake.user_name()
         self.course_title = self.fake.sentence(nb_words=6)
         self.course_description = self.fake.paragraph(nb_sentences=2)
-
-        self.instructor_user = UserFactory(
-            username=self.instructor_username,
-            email=self.instructor_email,
-            password=self.password,
-        )
-        self.instructor = InstructorFactory(user=self.instructor_user)
         self.course = CourseFactory(
             title=self.course_title,
-            instructor=self.instructor,
+            instructor=self.instructor_profile,
             status=Status.ACTIVATE.value,
             description=self.course_description,
         )
@@ -67,15 +53,17 @@ class CourseViewSetTest(BaseTestCase):
         Test creating a new course.
         """
 
-        self.client.login(email=self.instructor_email, password=self.password)
-
         data = {
             "title": self.fake.sentence(nb_words=6),
             "description": self.fake.paragraph(nb_sentences=2),
             "category": self.category.uuid,
         }
 
-        response = self.client.post(self.url_list, data)
+        response = self.post_json(
+            url=self.url_list,
+            data=data,
+            email=self.instructor_email,
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn("data", response.data)
         self.assertEqual(response.data["data"]["title"], data.get("title"))
@@ -92,8 +80,11 @@ class CourseViewSetTest(BaseTestCase):
             "description": self.fake.paragraph(nb_sentences=2),
             "category": self.category.uuid,
         }
-
-        response = self.client.post(self.url_list, data)
+        response = self.post_json(
+            url=self.url_list,
+            data=data,
+            email=self.email,
+        )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_partial_update_course_ok(self):
@@ -101,10 +92,12 @@ class CourseViewSetTest(BaseTestCase):
         Test partially updating a course.
         """
 
-        self.client.login(email=self.instructor_email, password=self.password)
-
         data = {"title": self.fake.sentence(nb_words=6)}
-        response = self.client.patch(self.url_detail, data)
+        response = self.patch_json(
+            url=self.url_detail,
+            data=data,
+            email=self.instructor_email,
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["data"]["title"], data.get("title"))
         self.assertEqual(response.data["data"]["status"], Status.ACTIVATE.value)
@@ -115,7 +108,11 @@ class CourseViewSetTest(BaseTestCase):
         """
 
         data = {"title": self.fake.sentence(nb_words=6)}
-        response = self.client.patch(self.url_detail, data)
+        response = self.patch_json(
+            url=self.url_detail,
+            data=data,
+            email=self.email,
+        )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_enroll_student_in_course(self):
@@ -123,9 +120,12 @@ class CourseViewSetTest(BaseTestCase):
         Test enrolling a student in a course.
         """
 
-        self.client.login(email=self.email, password=self.password)
+        response = self.post_json(
+            url=self.url_enroll,
+            data=None,
+            email=self.email,
+        )
 
-        response = self.client.post(self.url_enroll)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_enroll_student_in_course_unauthorized(self):
@@ -133,7 +133,11 @@ class CourseViewSetTest(BaseTestCase):
         Test enrolling a student in a course without logging in.
         """
 
-        response = self.client.post(self.url_enroll)
+        response = self.post_json(
+            url=self.url_enroll,
+            data=None,
+            email=self.instructor_email,
+        )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_leave_course(self):
@@ -141,10 +145,12 @@ class CourseViewSetTest(BaseTestCase):
         Test leaving a course.
         """
 
-        self.client.login(email=self.email, password=self.password)
-
         Enrollment.objects.create(course=self.course, student=self.student_profile)
-        response = self.client.post(self.url_leave)
+        response = self.post_json(
+            url=self.url_leave,
+            data=None,
+            email=self.email,
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_leave_course_unauthorized(self):
@@ -153,7 +159,11 @@ class CourseViewSetTest(BaseTestCase):
         """
 
         Enrollment.objects.create(course=self.course, student=self.student_profile)
-        response = self.client.post(self.url_leave)
+        response = self.post_json(
+            url=self.url_leave,
+            data=None,
+            email=self.instructor_email,
+        )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_list_students_in_course(self):
@@ -162,9 +172,10 @@ class CourseViewSetTest(BaseTestCase):
         """
 
         Enrollment.objects.create(course=self.course, student=self.student_profile)
-        self.client.login(email=self.instructor_email, password=self.password)
-
-        response = self.client.get(self.url_students)
+        response = self.get_json(
+            url=self.url_students,
+            email=self.instructor_email,
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("data", response.data)
         self.assertEqual(len(response.data["data"]), 1)
@@ -178,7 +189,10 @@ class CourseViewSetTest(BaseTestCase):
         """
 
         Enrollment.objects.create(course=self.course, student=self.student_profile)
-        response = self.client.get(self.url_students)
+        response = self.get_json(
+            url=self.url_students,
+            email=self.email,
+        )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_filter_courses_by_status_ok(self):

@@ -39,6 +39,7 @@ class BaseTestCase(APITestCase):
         self.student_token = Token.objects.filter(user=self.student_user).first()
 
         self.instructor_email = fake.email()
+        self.instructor_username = fake.user_name()
         self.subject = SubjectFactory(name=fake.sentence(nb_words=5))
 
         self.student_profile = StudentFactory(
@@ -47,6 +48,7 @@ class BaseTestCase(APITestCase):
         )
 
         self.instructor_user = UserFactory(
+            username=self.instructor_username,
             email=self.instructor_email,
             password=self.password,
         )
@@ -60,6 +62,9 @@ class BaseTestCase(APITestCase):
         self.category = CategoryFactory(
             name=self.category_name, description=self.category_description
         )
+
+        self.student_token = Token.objects.create(user=self.student_user)
+        self.instructor_token = Token.objects.create(user=self.instructor_user)
 
     def random_gender(self):
         """
@@ -95,3 +100,51 @@ class BaseTestCase(APITestCase):
         """
 
         return random_phone_number()
+
+    def authenticate_as_student(self):
+        """
+        Authenticate the test client as a student.
+        """
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.student_token.key}")
+
+    def authenticate_as_instructor(self):
+        """
+        Authenticate the test client as an instructor.
+        """
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.instructor_token.key}")
+
+    def get_json(self, url, email):
+        """
+        Perform a GET request with a token.
+        """
+
+        self.authenticate(email)
+        return self.client.get(url, format="json")
+
+    def patch_json(self, url, data, email):
+        """
+        Perform a PATCH request with a token.
+        """
+
+        self.authenticate(email)
+        return self.client.patch(url, data, format="json")
+
+    def post_json(self, url, data, email):
+        """
+        Perform a POST request with a token.
+        """
+
+        self.authenticate(email)
+        return self.client.post(url, data)
+
+    def authenticate(self, email):
+        """
+        Authenticate the test client
+        """
+
+        if email == self.instructor_email:
+            self.authenticate_as_instructor()
+        else:
+            self.authenticate_as_student()

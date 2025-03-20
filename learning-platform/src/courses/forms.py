@@ -25,9 +25,13 @@ class EnrollmentForm(forms.ModelForm):
         Raises:
             ValidationError: If the student is already enrolled in the selected course.
         """
+
         cleaned_data = super().clean()
         course = cleaned_data.get("course")
         student = cleaned_data.get("student")
+
+        if not course:
+            return
 
         if course.status != Status.ACTIVATE.value:
             self.add_error("course", ErrorMessage.INACTIVE_COURSE)

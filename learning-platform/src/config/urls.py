@@ -1,12 +1,10 @@
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
-from django.contrib.admindocs import urls as admindocs_urls
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 
 urlpatterns = [
-    path("admin-dashboard/doc/", include(admindocs_urls)),
     path("admin-dashboard/", admin.site.urls),
     path("docs/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
