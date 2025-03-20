@@ -160,7 +160,8 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         return User.objects.select_related("student_profile", "instructor_profile")
 
     @extend_schema(
-        description="Retrieve a user profile (Instructor or Student, admin)",
+        description="Retrieve a user profile (Instructor or Student, admin) by uuid. "
+        "Call `/api/v1/users/me` to get the authenticated user's profile.",
         responses={
             200: user_profile_response_schema,
             403: BaseForbiddenResponseSerializer,
@@ -177,7 +178,6 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         if not user.is_superuser and (pk not in ["me", str(user.uuid)]):
             return self.forbidden()
 
-        # if user.is_superuser:
         user = user if pk == "me" else self.get_queryset().filter(uuid=pk).first()
 
         serializer = BaseDetailSerializer(
