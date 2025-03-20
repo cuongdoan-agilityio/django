@@ -40,8 +40,14 @@ class Command(BaseCommand):
                 name=category_name, defaults={"description": subject_description}
             )
 
+            username = f"{instructor_first_name}.{instructor_last_name}"
+            if (User.objects.filter(username=username).exists()) or (
+                User.objects.filter(email=instructor_email).exists()
+            ):
+                return
+
             user_instance = User.objects.create_user(
-                username=f"{instructor_first_name}.{instructor_last_name}",
+                username=username,
                 first_name=instructor_first_name,
                 last_name=instructor_last_name,
                 phone_number=instructor_phone_number,
