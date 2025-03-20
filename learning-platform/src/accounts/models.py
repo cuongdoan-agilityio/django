@@ -142,11 +142,15 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
         unique=True,
         validators=[username_validator],
     )
-    first_name = models.CharField(max_length=30, blank=True, null=True)
-    last_name = models.CharField(max_length=30, blank=True, null=True)
+    first_name = models.CharField(max_length=30, blank=True, null=True, db_index=True)
+    last_name = models.CharField(max_length=30, blank=True, null=True, db_index=True)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(
-        max_length=11, blank=True, null=True, validators=[MinLengthValidator(10)]
+        max_length=11,
+        blank=True,
+        null=True,
+        validators=[MinLengthValidator(10)],
+        db_index=True,
     )
     date_of_birth = models.DateField(blank=True, null=True)
     gender = models.CharField(
@@ -155,6 +159,7 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
         max_length=6,
         blank=True,
         null=True,
+        db_index=True,
     )
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

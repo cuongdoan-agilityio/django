@@ -120,14 +120,12 @@ class EnrollmentAdmin(admin.ModelAdmin):
         "uuid",
         "course__title",
         "student__user__username",
-        "created",
         "modified",
     ]
     list_filter = ["course__title"]
     search_fields = [
         "course__title",
         "student__user__username",
-        "created",
     ]
     list_per_page = settings.ADMIN_PAGE_SIZE
     ordering = ["course__title"]

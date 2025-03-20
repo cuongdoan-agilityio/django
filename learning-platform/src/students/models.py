@@ -26,6 +26,7 @@ class Student(AbstractBaseModel):
         default=0,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="The scholarship amount for the student.",
+        db_index=True,
     )
 
     def __str__(self):

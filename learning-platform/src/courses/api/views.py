@@ -253,7 +253,7 @@ class CourseViewSet(BaseModelViewSet):
         request=EnrollmentCreateOrEditSerializer,
         responses={
             200: BaseSuccessResponseSerializer,
-            404: BaseBadRequestResponseSerializer,
+            400: BaseBadRequestResponseSerializer,
         },
     )
     @action(detail=True, methods=["post"])
