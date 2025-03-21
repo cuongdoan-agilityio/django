@@ -32,9 +32,10 @@ class Course(AbstractBaseModel):
     description = models.TextField(help_text="Course description")
     category = models.ForeignKey(
         Category,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         help_text="Course category.",
         related_name="courses",
+        null=True,
     )
     instructor = models.ForeignKey(
         "instructors.Instructor",
@@ -49,7 +50,6 @@ class Course(AbstractBaseModel):
         help_text="Status of the course.",
         max_length=8,
         default=Status.ACTIVATE.value,
-        db_index=True,
     )
     image_url = models.URLField(help_text="Course image URL", blank=True, null=True)
 
