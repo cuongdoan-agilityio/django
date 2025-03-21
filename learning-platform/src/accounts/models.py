@@ -159,7 +159,6 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
         max_length=6,
         blank=True,
         null=True,
-        db_index=True,
     )
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
