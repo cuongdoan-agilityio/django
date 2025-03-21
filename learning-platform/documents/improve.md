@@ -7,3 +7,6 @@
 - Check again if the two models `Student` and `Instructor` are necessary
 - Change the model pk to `ID`, [MR link](https://gitlab.asoft-python.com/cuong.doan/django-training/-/merge_requests/14)
 - Apply django [signals](https://docs.djangoproject.com/en/5.1/topics/signals/)
+- Model Validation
+  - Should use Django password validation rules then extend only if not meet your requirements. [Ref](https://docs.djangoproject.com/en/5.1/topics/auth/passwords/#module-django.contrib.auth.password_validation)
+  - Should write custom validator instead of separate function to validate (use both in form and model fields). [Ref](https://docs.djangoproject.com/en/5.1/topics/auth/passwords/#writing-your-own-validator)
