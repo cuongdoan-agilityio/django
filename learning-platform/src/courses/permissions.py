@@ -24,7 +24,7 @@ class CoursePermission(BasePermission):
                 request.user, "student_profile"
             )
 
-        return True
+        return False
 
     def has_object_permission(self, request, view, obj):
         """
@@ -35,8 +35,6 @@ class CoursePermission(BasePermission):
             return True
 
         if view.action in ["partial_update", "students"]:
-            return request.user.is_superuser or (
-                obj.instructor == request.user.instructor_profile
-            )
+            return obj.instructor == request.user.instructor_profile
 
-        return True
+        return False
