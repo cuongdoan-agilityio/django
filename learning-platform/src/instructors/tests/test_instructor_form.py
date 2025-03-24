@@ -3,7 +3,7 @@ from accounts.factories import UserFactory
 from core.constants import Gender
 from instructors.forms import InstructorBaseForm, InstructorEditForm
 from instructors.factories import InstructorFactory
-from core.exceptions import ErrorMessage
+from core.error_messages import ErrorMessage
 from core.tests.base import BaseTestCase
 
 

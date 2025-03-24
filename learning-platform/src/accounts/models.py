@@ -9,7 +9,7 @@ from django.core.validators import MinLengthValidator
 
 from core.constants import Gender
 from core.models import AbstractBaseModel
-from core.exceptions import ErrorMessage
+from core.error_messages import ErrorMessage
 from .validators import validate_phone_number, validate_password
 
 

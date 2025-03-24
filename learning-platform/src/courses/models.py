@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 
 from core.models import AbstractBaseModel
 from core.constants import Status
-from core.exceptions import ErrorMessage
+from core.error_messages import ErrorMessage
 
 
 class Category(AbstractBaseModel):

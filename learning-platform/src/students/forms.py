@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 
 from accounts.forms import UserBaseForm
 from core.constants import ScholarshipChoices, Status
-from core.exceptions import ErrorMessage
+from core.error_messages import ErrorMessage
 
 from .models import Student
 

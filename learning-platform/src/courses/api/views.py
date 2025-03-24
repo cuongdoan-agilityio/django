@@ -13,7 +13,7 @@ from core.serializers import (
     BaseDetailSerializer,
     BaseBadRequestResponseSerializer,
 )
-from core.exceptions import ErrorMessage
+from core.error_messages import ErrorMessage
 from courses.permissions import CoursePermission
 from students.models import Student
 from students.api.serializers import StudentBaseSerializer
@@ -329,8 +329,8 @@ class CourseViewSet(BaseModelViewSet):
         description="View all students enrolled in a course.",
         responses={200: student_list_response_schema},
     )
-    @action(detail=True, methods=["get"])
-    def students(self, request, **kwargs):
+    @action(detail=True, methods=["get"], url_path="students")
+    def get_students(self, request, **kwargs):
         """
         View all students enrolled in a course.
 

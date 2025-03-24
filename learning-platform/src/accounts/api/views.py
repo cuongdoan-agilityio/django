@@ -17,7 +17,7 @@ from core.serializers import (
     BaseForbiddenResponseSerializer,
     BaseDetailSerializer,
 )
-from core.exceptions import ErrorMessage
+from core.error_messages import ErrorMessage
 
 from instructors.api.serializers import InstructorProfileDataSerializer
 from students.api.serializers import StudentProfileDataSerializer

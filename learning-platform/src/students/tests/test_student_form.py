@@ -2,7 +2,7 @@ from students.forms import StudentBaseForm, StudentEditForm
 from students.models import Student
 from students.factories import StudentFactory
 from accounts.factories import UserFactory
-from core.exceptions import ErrorMessage
+from core.error_messages import ErrorMessage
 from core.tests.base import BaseTestCase
 
 
