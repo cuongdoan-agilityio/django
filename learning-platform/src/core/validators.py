@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 
-from .exceptions import ErrorMessage
+from .error_messages import ErrorMessage
 
 
 User = get_user_model()
