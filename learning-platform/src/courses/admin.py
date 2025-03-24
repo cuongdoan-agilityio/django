@@ -1,7 +1,8 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.conf import settings
 
 from core.constants import Status
+from core.error_messages import ErrorMessage
 
 from .models import Course, Category, Enrollment
 from .forms import EnrollmentForm
@@ -52,8 +53,14 @@ class CourseAdmin(admin.ModelAdmin):
             queryset (QuerySet): The queryset of selected courses.
         """
 
-        queryset.update(status=Status.INACTIVE.value)
-        self.message_user(request, CourseAdminMessage.DEACTIVATE_ALL)
+        selected_ids = queryset.values_list("uuid", flat=True)
+        if Enrollment.objects.filter(course__uuid__in=selected_ids).exists():
+            self.message_user(
+                request, ErrorMessage.COURSE_HAS_STUDENTS, level=messages.ERROR
+            )
+        else:
+            queryset.update(status=Status.INACTIVE.value)
+            self.message_user(request, CourseAdminMessage.DEACTIVATE_ALL)
 
     def get_queryset(self, request):
         query_set = super().get_queryset(request)

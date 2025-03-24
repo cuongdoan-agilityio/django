@@ -84,9 +84,10 @@ class Enrollment(AbstractBaseModel):
             if not self.course.instructor:
                 raise ValidationError(ErrorMessage.COURSE_HAS_NO_INSTRUCTOR)
 
-            if Enrollment.objects.filter(
-                course=self.course, student=self.student
-            ).exists():
+            if (
+                self.student
+                and self.student.enrollments.filter(course=self.course).exists()
+            ):
                 raise ValidationError(ErrorMessage.STUDENT_ALREADY_ENROLLED)
 
         super().save(*args, **kwargs)
