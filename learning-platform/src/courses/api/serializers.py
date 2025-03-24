@@ -136,7 +136,7 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         course = data.get("course")
         student = data.get("student")
 
-        if Enrollment.objects.filter(course=course, student=student).exists():
+        if student and student.enrollments.filter(course=course).exists():
             raise serializers.ValidationError(
                 {"student": ErrorMessage.ALREADY_ENROLLED}
             )

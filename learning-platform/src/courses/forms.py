@@ -39,7 +39,7 @@ class EnrollmentForm(forms.ModelForm):
         if not course.instructor:
             self.add_error("course", ErrorMessage.COURSE_HAS_NO_INSTRUCTOR)
 
-        if Enrollment.objects.filter(course=course, student=student).exists():
+        if student and student.enrollments.filter(course=course).exists():
             self.add_error("student", ErrorMessage.STUDENT_ALREADY_ENROLLED)
 
         return cleaned_data
