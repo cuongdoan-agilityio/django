@@ -20,7 +20,7 @@ from students.api.serializers import StudentBaseSerializer
 
 from .response_schema import course_response_schema, student_list_response_schema
 
-from ..models import Course, Category, Enrollment
+from ..models import Course, Category
 from .serializers import (
     CourseCreateSerializer,
     CourseDataSerializer,
@@ -235,9 +235,7 @@ class CourseViewSet(BaseModelViewSet):
 
         # Check if the course is in progress and has students enrolled
         if "status" in serializer_data and serializer_data["status"] == "inactive":
-            if Enrollment.objects.filter(
-                course=instance, course__status="activate"
-            ).exists():
+            if instance.enrollments.exists():
                 return self.bad_request(ErrorMessage.COURSE_HAS_STUDENTS)
 
         serializer = self.get_serializer(instance, data=request.data, partial=True)
@@ -343,7 +341,7 @@ class CourseViewSet(BaseModelViewSet):
 
         course = self.get_object()
 
-        enrollments = Enrollment.objects.filter(course=course)
+        enrollments = course.enrollments.all()
         users = [enrollment.student.user for enrollment in enrollments]
 
         paginator = self.paginator
