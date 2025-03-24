@@ -28,10 +28,6 @@ DEBUG = env.bool("DJANGO_DEBUG", False)
 TIME_ZONE = "UTC"
 # https://docs.djangoproject.com/en/dev/ref/settings/#language-code
 LANGUAGE_CODE = "en-us"
-# https://docs.djangoproject.com/en/dev/ref/settings/#use-i18n
-USE_I18N = True
-# https://docs.djangoproject.com/en/dev/ref/settings/#use-tz
-USE_TZ = True
 
 
 # DATABASE

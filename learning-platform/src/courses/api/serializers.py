@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from core.constants import Status
-from core.exceptions import ErrorMessage
+from core.error_messages import ErrorMessage
 from courses.models import Course, Category, Enrollment
 
 from instructors.api.serializers import InstructorBaseSerializer

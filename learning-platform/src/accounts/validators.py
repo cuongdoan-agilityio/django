@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 import datetime
 
 from core.constants import SPECIAL_CHARACTER
-from core.exceptions import ErrorMessage
+from core.error_messages import ErrorMessage
 
 
 def validate_password(password):

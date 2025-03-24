@@ -2,7 +2,7 @@ from django import forms
 from .models import Enrollment
 
 from core.constants import Status
-from core.exceptions import ErrorMessage
+from core.error_messages import ErrorMessage
 
 
 class EnrollmentForm(forms.ModelForm):
