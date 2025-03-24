@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 from students.models import Student
 from core.constants import ScholarshipChoices, Gender
 from django.contrib.auth import get_user_model
-from utils.helpers import random_birthday, random_phone_number
+from core.tests.utils.helpers import random_birthday, random_phone_number
 
 
 User = get_user_model()

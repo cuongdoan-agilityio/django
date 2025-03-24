@@ -5,7 +5,7 @@ from courses.models import Course, Category
 from instructors.models import Instructor, Subject
 from core.constants import Degree, Status, Gender
 from django.contrib.auth import get_user_model
-from utils.helpers import random_birthday, random_phone_number
+from core.tests.utils.helpers import random_birthday, random_phone_number
 
 
 User = get_user_model()

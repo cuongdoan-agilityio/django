@@ -5,7 +5,7 @@ from rest_framework.authtoken.models import Token
 
 from core.constants import Gender, ScholarshipChoices, Degree
 from accounts.factories import UserFactory
-from utils.helpers import random_birthday, random_phone_number
+from core.tests.utils.helpers import random_birthday, random_phone_number
 from instructors.factories import InstructorFactory, SubjectFactory
 from students.factories import StudentFactory
 from courses.factories import CategoryFactory
