@@ -1,5 +1,5 @@
 from django.db import models
-from models.mixin import TimeStampedMixin
+from .mixin import TimeStampedMixin
 
 
 class SuperHero(TimeStampedMixin):

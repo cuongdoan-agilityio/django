@@ -1,6 +1,6 @@
 from django.db import models
-from models.superhero import SuperHero
-from models.mixin import TimeStampedMixin
+from .superhero import SuperHero
+from .mixin import TimeStampedMixin
 
 
 class ActivePostManager(models.Manager):
