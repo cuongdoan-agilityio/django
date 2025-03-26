@@ -1,0 +1,15 @@
+{% extends "posts/base.html" %}
+{% block title %}
+    Post list
+{% endblock title %}
+{% block content %}
+    <div>
+        {% for p in post_list %}
+            <div class="card mt-3 p-3">
+                <p>Hero name: {{ p.hero.name }}</p>
+                <p>Post content: {{ p.content }}</p>
+                <p>Post likes: {{ p.likes }}</p>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock content %}
