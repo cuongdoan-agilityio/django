@@ -2,10 +2,22 @@
 {% block title %}
     Post list
 {% endblock title %}
+{% block nav_actions %}
+    <div class="flex-end">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'posts:adds' %}">Create Post</a>
+            </li>
+        </ul>
+    </div>
+{% endblock nav_actions %}
 {% block content %}
     <div>
         {% for p in post_list %}
             <div class="card mt-3 p-3">
+                <p>
+                    Post title: <a href="{% url 'posts:detail' p.id %}">{{ p.title }}</a>
+                </p>
                 <p>Hero name: {{ p.hero.name }}</p>
                 <p>Post content: {{ p.content }}</p>
                 <p>Post likes: {{ p.likes }}</p>
