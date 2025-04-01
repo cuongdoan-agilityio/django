@@ -8,6 +8,7 @@ from posts.models.post import Post
 from posts.forms import PostForm
 from posts.serializers import PostSerializer
 from posts.pagination import PostPagination
+from posts.tasks import sent_notification
 
 
 class PostListView(ListView):
@@ -54,6 +55,7 @@ class PostView(generics.ListCreateAPIView):
             return Response({"post_list": result_page}, template_name="posts/list.html")
 
         serializer = PostSerializer(result_page, many=True)
+        sent_notification.delay()
         return paginator.get_paginated_response(serializer.data)
 
 
