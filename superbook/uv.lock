@@ -235,6 +235,7 @@ dependencies = [
     { name = "django-redis" },
     { name = "djangorestframework" },
     { name = "factory-boy" },
+    { name = "faker" },
     { name = "flower" },
 ]
 
@@ -257,6 +258,7 @@ requires-dist = [
     { name = "django-redis", specifier = ">=5.4.0" },
     { name = "djangorestframework", specifier = ">=3.15.2" },
     { name = "factory-boy", specifier = ">=3.3.3" },
+    { name = "faker", specifier = ">=37.1.0" },
     { name = "flower", specifier = ">=2.0.1" },
 ]
 
