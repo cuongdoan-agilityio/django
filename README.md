@@ -1,0 +1,2 @@
+# django
+Django training repostory
