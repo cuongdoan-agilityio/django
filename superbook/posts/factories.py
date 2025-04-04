@@ -10,8 +10,8 @@ class SuperHeroFactory(ModelFactory):
     Factory for creating SuperHero instances.
     """
 
-    name = Faker("words")
-    power = Faker("words")
+    name = Faker("name")
+    power = Faker("random_int", min=1, max=100)
 
     class Meta:
         """
@@ -27,7 +27,7 @@ class PostFactory(ModelFactory):
     """
 
     hero = SubFactory(SuperHeroFactory)
-    content = Faker("words")
+    content = Faker("paragraph")
     likes = Iterator(range(1, 1000))
 
     class Meta:
