@@ -1,4 +1,6 @@
 from django.views.generic import ListView, FormView, UpdateView
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from django.core.cache import cache
 from rest_framework import generics
 from rest_framework.renderers import TemplateHTMLRenderer, JSONRenderer
@@ -11,6 +13,7 @@ from posts.pagination import PostPagination
 from posts.tasks import sent_notification
 
 
+@method_decorator(cache_page(60), name="dispatch")
 class PostListView(ListView):
     """
     PostListView
@@ -83,5 +86,4 @@ class PostDetailView(UpdateView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        cache.delete(self.cache_key)
         return response
