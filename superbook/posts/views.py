@@ -21,13 +21,6 @@ class PostListView(ListView):
     context_object_name = "post_list"
     cache_key = "post_list"
 
-    def get_queryset(self):
-        post_list = cache.get(self.cache_key)
-        if not post_list:
-            post_list = Post.objects.all().order_by("-updated_at")
-            cache.set(self.cache_key, post_list, timeout=60)
-        return post_list
-
 
 class PostView(generics.ListCreateAPIView):
     """
@@ -87,7 +80,6 @@ class PostDetailView(UpdateView):
     model = Post
     context_object_name = "post"
     success_url = "/posts/"
-    cache_key = "post_list"
 
     def form_valid(self, form):
         response = super().form_valid(form)

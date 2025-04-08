@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "django.middleware.cache.UpdateCacheMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -54,6 +55,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.middleware.cache.FetchFromCacheMiddleware",
 ]
 
 ROOT_URLCONF = "superbook.urls"
@@ -129,13 +131,16 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# settings.py
+# Caching
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://127.0.0.1:6379/1",
     }
 }
+CACHE_MIDDLEWARE_ALIAS = "default"
+CACHE_MIDDLEWARE_SECONDS = 120
+CACHE_MIDDLEWARE_KEY_PREFIX = "superbook"
 
 
 LIST_PER_PAGE = 20
