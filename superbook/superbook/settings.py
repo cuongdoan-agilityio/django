@@ -141,6 +141,19 @@ CACHES = {
 }
 
 
+# Throttling
+REST_FRAMEWORK = {
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.UserRateThrottle",
+        "rest_framework.throttling.AnonRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "user": "10/day",
+        "anon": "100/hour",
+    },
+}
+
+
 LIST_PER_PAGE = 20
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
