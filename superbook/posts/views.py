@@ -10,7 +10,6 @@ from posts.models.post import Post
 from posts.forms import PostForm
 from posts.serializers import PostSerializer
 from posts.pagination import PostPagination
-from posts.tasks import sent_notification
 
 
 @method_decorator(cache_page(60), name="dispatch")
@@ -25,34 +24,32 @@ class PostListView(ListView):
     cache_key = "post_list"
 
 
-class PostView(generics.ListCreateAPIView):
+class PostView(generics.ListAPIView):
     """
     PostListView
     """
 
+    queryset = Post.objects.all()
     renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
     serializer_class = PostSerializer
     pagination_class = PostPagination
     cache_key = "post_list"
+    ordering = "-updated_at"
 
-    def get_queryset(self):
-        post_list = cache.get(self.cache_key)
-        if not post_list:
-            post_list = Post.objects.all().order_by("-updated_at")
-            cache.set(self.cache_key, post_list, timeout=60)
-        return post_list
-
+    @method_decorator(cache_page(60, key_prefix="product_list"))
     def get(self, request, *args, **kwargs):
-        post_list = self.get_queryset()
-        paginator = self.pagination_class()
-        result_page = paginator.paginate_queryset(post_list, request)
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
 
-        if request.accepted_renderer.format == "html":
-            return Response({"post_list": result_page}, template_name="posts/list.html")
+        if page is not None:
+            if request.accepted_renderer.format == "html":
+                return Response({"post_list": page}, template_name="posts/list.html")
 
-        serializer = PostSerializer(result_page, many=True)
-        sent_notification.delay()
-        return paginator.get_paginated_response(serializer.data)
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class PostCreateView(FormView):
