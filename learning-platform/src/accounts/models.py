@@ -1,15 +1,16 @@
 from django.db import models
 from django.contrib.auth.models import (
-    AbstractBaseUser,
+    AbstractUser,
     BaseUserManager,
-    PermissionsMixin,
 )
-from django.contrib.auth.validators import UnicodeUsernameValidator
-from django.core.validators import MinLengthValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 from core.constants import Gender
 from core.models import AbstractBaseModel
+from core.constants import ScholarshipChoices
+from core.constants import Degree
 from core.error_messages import ErrorMessage
+from instructors.models import Subject
 from .validators import validate_phone_number, validate_password
 
 
@@ -118,7 +119,7 @@ class UserManager(BaseUserManager):
         return user
 
 
-class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
+class User(AbstractUser, AbstractBaseModel):
     """
     Custom user model.
 
@@ -135,13 +136,6 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
         is_staff (BooleanField): Whether the user is staff.
     """
 
-    username_validator = UnicodeUsernameValidator()
-
-    username = models.CharField(
-        max_length=150,
-        unique=True,
-        validators=[username_validator],
-    )
     first_name = models.CharField(max_length=30, blank=True, null=True, db_index=True)
     last_name = models.CharField(max_length=30, blank=True, null=True, db_index=True)
     email = models.EmailField(unique=True)
@@ -149,7 +143,7 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
         max_length=11,
         blank=True,
         null=True,
-        validators=[MinLengthValidator(10)],
+        validators=[validate_phone_number],
         db_index=True,
     )
     date_of_birth = models.DateField(blank=True, null=True)
@@ -160,9 +154,25 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
         blank=True,
         null=True,
     )
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-    is_superuser = models.BooleanField(default=False)
+    scholarship = models.IntegerField(
+        choices=ScholarshipChoices.choices(),
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="The scholarship amount for the student.",
+        db_index=True,
+    )
+    subjects = models.ManyToManyField(
+        Subject,
+        related_name="instructors",
+        help_text="The subjects that the instructor specializes in.",
+    )
+    degree = models.CharField(
+        choices=Degree.choices(),
+        default=Degree.NO.value,
+        help_text="The degree of the instructor.",
+        max_length=9,
+        db_index=True,
+    )
 
     objects = UserManager()
 
