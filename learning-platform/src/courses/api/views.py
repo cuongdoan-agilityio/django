@@ -33,7 +33,7 @@ from .serializers import (
 
 class CustomFilter(django_filters.FilterSet):
     status = django_filters.CharFilter(method="filter_status")
-    category = django_filters.UUIDFilter(field_name="category__uuid")
+    category = django_filters.UUIDFilter(field_name="category__id")
 
     def filter_status(self, queryset, name, value):
         status_list = value.split(",")
@@ -272,11 +272,11 @@ class CourseViewSet(BaseModelViewSet):
                 return self.bad_request({"student": ErrorMessage.STUDENT_DATA_REQUIRED})
             student = request.data["student"]
         else:
-            student = Student.objects.filter(user=request.user).first().uuid
+            student = Student.objects.filter(user=request.user).first().id
 
         enrollment_serializer = EnrollmentSerializer(
             data={
-                "course": str(course.uuid),
+                "course": str(course.id),
                 "student": str(student),
             }
         )
@@ -310,7 +310,7 @@ class CourseViewSet(BaseModelViewSet):
         if request.user.is_superuser:
             if "student" not in request.data:
                 return self.bad_request({"student": ErrorMessage.STUDENT_DATA_REQUIRED})
-            student = Student.objects.filter(uuid=request.data["student"]).first()
+            student = Student.objects.filter(id=request.data["student"]).first()
         else:
             student = Student.objects.filter(user=request.user).first()
 

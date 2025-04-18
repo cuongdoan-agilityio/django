@@ -28,7 +28,7 @@ class SubjectAdmin(admin.ModelAdmin):
             through the admin search functionality.
     """
 
-    list_display = ["uuid", "name", "description", "modified"]
+    list_display = ["id", "name", "description", "modified"]
 
     search_fields = ["name"]
     list_per_page = settings.ADMIN_PAGE_SIZE
@@ -78,7 +78,7 @@ class InstructorAdmin(admin.ModelAdmin):
     """
 
     list_display = [
-        "uuid",
+        "id",
         "user__username",
         "user__first_name",
         "user__last_name",

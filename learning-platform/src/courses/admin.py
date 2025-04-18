@@ -53,8 +53,8 @@ class CourseAdmin(admin.ModelAdmin):
             queryset (QuerySet): The queryset of selected courses.
         """
 
-        selected_ids = queryset.values_list("uuid", flat=True)
-        if Enrollment.objects.filter(course__uuid__in=selected_ids).exists():
+        selected_ids = queryset.values_list("id", flat=True)
+        if Enrollment.objects.filter(course__id__in=selected_ids).exists():
             self.message_user(
                 request, ErrorMessage.COURSE_HAS_STUDENTS, level=messages.ERROR
             )
@@ -67,7 +67,7 @@ class CourseAdmin(admin.ModelAdmin):
         return query_set.select_related("category", "instructor", "instructor__user")
 
     list_display = [
-        "uuid",
+        "id",
         "title",
         "description",
         "category",
@@ -97,7 +97,7 @@ class CategoryAdmin(admin.ModelAdmin):
             through the admin search functionality.
     """
 
-    list_display = ["uuid", "name", "description", "modified"]
+    list_display = ["id", "name", "description", "modified"]
     list_per_page = settings.ADMIN_PAGE_SIZE
     search_fields = ["name"]
     ordering = ["name"]
@@ -124,7 +124,7 @@ class EnrollmentAdmin(admin.ModelAdmin):
     """
 
     list_display = [
-        "uuid",
+        "id",
         "course__title",
         "student__user__username",
         "modified",

@@ -111,7 +111,7 @@ class EnrollmentInlineFormSet(BaseInlineFormSet):
         for form in self.forms:
             if form.cleaned_data and not form.cleaned_data.get("DELETE", False):
                 if course := form.cleaned_data.get("course"):
-                    course_id = course.uuid
+                    course_id = course.id
                     if course_id in course_ids:
                         raise ValidationError(
                             ErrorMessage.ENROLLED_SAME_COURSE.format(course=course)

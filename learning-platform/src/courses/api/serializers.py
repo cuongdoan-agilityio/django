@@ -14,7 +14,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ["uuid", "name", "description"]
+        fields = ["id", "name", "description"]
 
 
 class CourseDataSerializer(serializers.ModelSerializer):
@@ -22,7 +22,7 @@ class CourseDataSerializer(serializers.ModelSerializer):
     Serializer for course data.
 
     Fields:
-        uuid (UUIDField): The UUID of the course.
+        id (UUIDField): The UUID of the course.
         title (CharField): The title of the course.
         description (CharField): The description of the course.
         category (CharField): The category of the course.
@@ -35,7 +35,7 @@ class CourseDataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ["uuid", "title", "description", "category", "instructor", "status"]
+        fields = ["id", "title", "description", "category", "instructor", "status"]
         read_only_fields = ["instructor"]
 
 
@@ -94,7 +94,7 @@ class CourseUpdateSerializer(serializers.Serializer):
         Validates the category field.
         """
 
-        if not Category.objects.filter(uuid=value).exists():
+        if not Category.objects.filter(id=value).exists():
             raise serializers.ValidationError(ErrorMessage.CATEGORY_NOT_EXIST)
 
         return value

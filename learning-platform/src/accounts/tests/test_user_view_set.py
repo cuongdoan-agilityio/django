@@ -46,7 +46,7 @@ class UserViewSetTests(BaseTestCase):
         }
 
         response = self.patch_json(
-            url=f"{self.root_url}users/{self.student_user.uuid}/",
+            url=f"{self.root_url}users/{self.student_user.id}/",
             email=self.email,
             data=data,
         )
@@ -64,7 +64,7 @@ class UserViewSetTests(BaseTestCase):
         }
 
         response = self.patch_json(
-            url=f"{self.root_url}users/{self.student_user.uuid}/",
+            url=f"{self.root_url}users/{self.student_user.id}/",
             email=self.email,
             data=data,
         )
@@ -79,11 +79,11 @@ class UserViewSetTests(BaseTestCase):
             "phone_number": self.random_user_phone_number(),
             "degree": self.random_degree(),
             "date_of_birth": self.random_date_of_birth(is_student=False),
-            "subjects": [self.subject.uuid],
+            "subjects": [self.subject.id],
         }
 
         response = self.patch_json(
-            url=f"{self.root_url}users/{self.instructor_user.uuid}/",
+            url=f"{self.root_url}users/{self.instructor_user.id}/",
             email=self.instructor_email,
             data=data,
         )
@@ -102,7 +102,7 @@ class UserViewSetTests(BaseTestCase):
         }
 
         response = self.patch_json(
-            url=f"{self.root_url}users/{self.instructor_user.uuid}/",
+            url=f"{self.root_url}users/{self.instructor_user.id}/",
             email=self.instructor_email,
             data=data,
         )

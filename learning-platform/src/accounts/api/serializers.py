@@ -109,7 +109,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         """
 
         for subject in value:
-            if not Subject.objects.filter(uuid=subject).exists():
+            if not Subject.objects.filter(id=subject).exists():
                 raise serializers.ValidationError(ErrorMessage.SUBJECT_NOT_EXIST)
         return value
 
@@ -186,7 +186,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            "uuid",
+            "id",
             "username",
             "first_name",
             "last_name",

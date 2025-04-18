@@ -123,7 +123,7 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
     Custom user model.
 
     Attributes:
-        uuid (UUIDField): The UUID of the user.
+        id (UUIDField): The UUID of the user.
         username (CharField): The username of the user.
         first_name (CharField): The first name of the user.
         last_name (CharField): The last name of the user.

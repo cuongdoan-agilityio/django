@@ -6,11 +6,11 @@ from django_extensions.db.models import TimeStampedModel
 
 class AbstractBaseModel(TimeStampedModel, models.Model):
     """
-    Base abstract model that includes "uuid" instead of "id"
+    Base abstract model that includes "id"
     and includes "created", "modified" timestamp fields.
     """
 
-    uuid = models.UUIDField(
+    id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, unique=True, editable=False
     )
 
