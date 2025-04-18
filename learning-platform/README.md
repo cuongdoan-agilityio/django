@@ -207,10 +207,10 @@ Setup environments: create `.env` follow `.env.example` with your own settings
     - POST: /api/v1/auth/signup/
 - User
   - Get profile
-    - GET: /api/v1/users/{uuid}/
+    - GET: /api/v1/users/{id}/
     - GET: /api/v1/users/me/
   - Update profile
-    - PATCH: /api/v1/users/{uuid}/
+    - PATCH: /api/v1/users/{id}/
 - Category
   - Get category
     - GET: /api/v1/categories/
@@ -221,15 +221,15 @@ Setup environments: create `.env` follow `.env.example` with your own settings
   - Get courses
     - GET: /api/v1/courses/
   - Get course detail
-    - GET: /api/v1/courses/{uuid}/
+    - GET: /api/v1/courses/{id}/
   - Update course
-    - PATCH: /api/v1/courses/{uuid}/
+    - PATCH: /api/v1/courses/{id}/
   - Enroll course
-    - POST: /api/v1/courses/{uuid}/enroll/
+    - POST: /api/v1/courses/{id}/enroll/
   - Leave course
-    - POST: /api/v1/courses/{uuid}/leave/
+    - POST: /api/v1/courses/{id}/leave/
   - Get course student
-    - GET: /api/v1/courses/{uuid}/students/
+    - GET: /api/v1/courses/{id}/students/
 
 ## Issues
 - [Issues document](./documents/issues.md)
