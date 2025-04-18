@@ -28,7 +28,7 @@ class InstructorBaseFormTest(BaseTestCase):
             "date_of_birth": self.random_date_of_birth(is_student=False),
             "gender": self.random_gender(),
             "password": "Testpassword@123",
-            "subjects": [str(self.subject.uuid)],
+            "subjects": [str(self.subject.id)],
             "degree": self.random_degree(),
         }
 
@@ -124,7 +124,7 @@ class InstructorEditFormTest(BaseTestCase):
             "date_of_birth": self.random_date_of_birth(is_student=False),
             "gender": self.random_gender(),
             "password": "Newpassword@123",
-            "subjects": [str(self.subject.uuid)],
+            "subjects": [str(self.subject.id)],
             "degree": self.random_degree(),
         }
 

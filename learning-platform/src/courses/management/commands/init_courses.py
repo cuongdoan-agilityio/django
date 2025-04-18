@@ -62,7 +62,7 @@ class Command(BaseCommand):
                 user=user_instance,
                 degree=degree,
             )
-            instructor_instance.subjects.set([str(subject.uuid)])
+            instructor_instance.subjects.set([str(subject.id)])
 
             status = random.choice([status.value for status in Status])
             Course.objects.create(

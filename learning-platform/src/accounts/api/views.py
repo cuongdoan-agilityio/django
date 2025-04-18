@@ -160,7 +160,7 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         return User.objects.select_related("student_profile", "instructor_profile")
 
     @extend_schema(
-        description="Retrieve a user profile (Instructor or Student, admin) by uuid. "
+        description="Retrieve a user profile (Instructor or Student, admin) by id. "
         "Call `/api/v1/users/me` to get the authenticated user's profile.",
         responses={
             200: user_profile_response_schema,
@@ -173,12 +173,12 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         """
 
         user = request.user
-        pk = kwargs.get("uuid")
+        pk = kwargs.get("id")
 
-        if not user.is_superuser and (pk not in ["me", str(user.uuid)]):
+        if not user.is_superuser and (pk not in ["me", str(user.id)]):
             return self.forbidden()
 
-        user = user if pk == "me" else self.get_queryset().filter(uuid=pk).first()
+        user = user if pk == "me" else self.get_queryset().filter(id=pk).first()
 
         serializer = BaseDetailSerializer(
             user, context={"serializer_class": self.get_serializer_class()}
@@ -205,18 +205,18 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         """
         user = request.user
 
-        pk = kwargs.get("uuid")
+        pk = kwargs.get("id")
 
-        if not user.is_superuser and (pk not in ["me", str(user.uuid)]):
+        if not user.is_superuser and (pk not in ["me", str(user.id)]):
             return self.forbidden()
 
-        user = user if pk == "me" else self.get_queryset().filter(uuid=pk).first()
+        user = user if pk == "me" else self.get_queryset().filter(id=pk).first()
 
         serializer = UserProfileUpdateSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        updated_user = self.get_queryset().get(uuid=user.uuid)
+        updated_user = self.get_queryset().get(id=user.id)
         response_serializer = BaseDetailSerializer(
             updated_user, context={"serializer_class": self.get_serializer_class()}
         )

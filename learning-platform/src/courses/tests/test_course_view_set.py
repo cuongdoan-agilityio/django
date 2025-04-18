@@ -27,10 +27,10 @@ class CourseViewSetTest(BaseTestCase):
         )
 
         self.url_list = f"{self.root_url}courses/"
-        self.url_detail = f"{self.root_url}courses/{self.course.uuid}/"
-        self.url_enroll = f"{self.root_url}courses/{self.course.uuid}/enroll/"
-        self.url_leave = f"{self.root_url}courses/{self.course.uuid}/leave/"
-        self.url_students = f"{self.root_url}courses/{self.course.uuid}/students/"
+        self.url_detail = f"{self.root_url}courses/{self.course.id}/"
+        self.url_enroll = f"{self.root_url}courses/{self.course.id}/enroll/"
+        self.url_leave = f"{self.root_url}courses/{self.course.id}/leave/"
+        self.url_students = f"{self.root_url}courses/{self.course.id}/students/"
 
     def test_list_courses_ok(self):
         """
@@ -56,7 +56,7 @@ class CourseViewSetTest(BaseTestCase):
         data = {
             "title": self.fake.sentence(nb_words=6),
             "description": self.fake.paragraph(nb_sentences=2),
-            "category": self.category.uuid,
+            "category": self.category.id,
         }
 
         response = self.post_json(
@@ -78,7 +78,7 @@ class CourseViewSetTest(BaseTestCase):
         data = {
             "title": self.fake.sentence(nb_words=6),
             "description": self.fake.paragraph(nb_sentences=2),
-            "category": self.category.uuid,
+            "category": self.category.id,
         }
         response = self.post_json(
             url=self.url_list,
@@ -180,7 +180,7 @@ class CourseViewSetTest(BaseTestCase):
         self.assertIn("data", response.data)
         self.assertEqual(len(response.data["data"]), 1)
         self.assertEqual(
-            response.data["data"][0]["uuid"], str(self.student_profile.user.uuid)
+            response.data["data"][0]["id"], str(self.student_profile.user.id)
         )
 
     def test_list_students_in_course_unauthorized(self):
@@ -238,11 +238,11 @@ class CourseViewSetTest(BaseTestCase):
         new_category = CategoryFactory()
         CourseFactory(title="New Category Course", category=new_category)
 
-        response = self.client.get(self.url_list, {"category": new_category.uuid})
+        response = self.client.get(self.url_list, {"category": new_category.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["data"]), 1)
         self.assertEqual(
-            response.data["data"][0]["category"]["uuid"], str(new_category.uuid)
+            response.data["data"][0]["category"]["id"], str(new_category.id)
         )
 
     def test_filter_courses_by_enrolled_ok(self):

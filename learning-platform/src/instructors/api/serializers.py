@@ -19,7 +19,7 @@ class InstructorProfileDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            "uuid",
+            "id",
             "username",
             "first_name",
             "last_name",
@@ -43,7 +43,7 @@ class InstructorProfileDataSerializer(serializers.ModelSerializer):
         Retrieves the instructor subjects.
         """
 
-        return [subject.uuid for subject in obj.instructor_profile.subjects.all()]
+        return [subject.id for subject in obj.instructor_profile.subjects.all()]
 
 
 class InstructorBaseSerializer(serializers.ModelSerializer):
@@ -57,7 +57,7 @@ class InstructorBaseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Instructor
-        fields = ["uuid", "first_name", "last_name", "email"]
+        fields = ["id", "first_name", "last_name", "email"]
 
     def get_first_name(self, obj) -> str | None:
         """
@@ -88,4 +88,4 @@ class SubjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subject
-        fields = ["uuid", "name", "description"]
+        fields = ["id", "name", "description"]

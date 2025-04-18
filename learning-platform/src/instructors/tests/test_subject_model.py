@@ -53,11 +53,11 @@ class SubjectModelTest(BaseTestCase):
         Test that a subject can be deleted successfully.
         """
 
-        subject_id = self.subject.uuid
+        subject_id = self.subject.id
         self.subject.delete()
 
         with self.assertRaises(Subject.DoesNotExist):
-            Subject.objects.get(uuid=subject_id)
+            Subject.objects.get(id=subject_id)
 
     def test_subject_unique_name(self):
         """

@@ -98,7 +98,7 @@ class StudentAdmin(admin.ModelAdmin):
     """
 
     list_display = [
-        "uuid",
+        "id",
         "user__username",
         "user__first_name",
         "user__last_name",
