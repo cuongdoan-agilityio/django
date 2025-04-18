@@ -14,6 +14,7 @@ class ErrorMessage:
     PASSWORD_LOWERCASE = "Password must contain at least one lowercase letter."
     PASSWORD_UPPERCASE = "Password must contain at least one uppercase letter."
     PASSWORD_NUMBER = "Password must contain at least one number."
+    COMPLEX_PASSWORD = "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character."
     PASSWORD_SPECIAL_CHAR = "Password must contain at least one special character."
     EMAIL_EXISTS = "Email already exists. Please choose another one."
     USERNAME_EXISTS = "Username already exists. Please choose another one."
