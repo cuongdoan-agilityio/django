@@ -39,6 +39,7 @@ class Course(AbstractBaseModel):
     )
     instructor = models.ForeignKey(
         "instructors.Instructor",
+        # settings.AUTH_USER_MODEL,
         help_text="Course Instructor.",
         related_name="courses",
         on_delete=models.SET_NULL,
@@ -66,7 +67,9 @@ class Enrollment(AbstractBaseModel):
         "courses.Course", on_delete=models.CASCADE, related_name="enrollments"
     )
     student = models.ForeignKey(
-        "students.Student", on_delete=models.CASCADE, related_name="enrollments"
+        "students.Student",
+        on_delete=models.CASCADE,
+        related_name="enrollments",
     )
 
     def __str__(self):

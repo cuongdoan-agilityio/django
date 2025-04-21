@@ -4,22 +4,24 @@ from django.conf import settings
 from core.models import AbstractBaseModel
 from core.constants import Degree
 
+from accounts.models import Subject
 
-class Subject(AbstractBaseModel):
-    """
-    Subject model representing a subject that an instructor can specialize in.
 
-    Attributes:
-        name (CharField): The name of the subject.
-    """
+# class Subject(AbstractBaseModel):
+#     """
+#     Subject model representing a subject that an instructor can specialize in.
 
-    name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(
-        help_text="Subject description", blank=True, null=True
-    )
+#     Attributes:
+#         name (CharField): The name of the subject.
+#     """
 
-    def __str__(self):
-        return self.name
+#     name = models.CharField(max_length=100, unique=True)
+#     description = models.TextField(
+#         help_text="Subject description", blank=True, null=True
+#     )
+
+#     def __str__(self):
+#         return self.name
 
 
 class Instructor(AbstractBaseModel):

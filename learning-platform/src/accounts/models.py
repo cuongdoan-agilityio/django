@@ -5,13 +5,29 @@ from django.contrib.auth.models import (
 )
 from django.core.validators import MinValueValidator, MaxValueValidator
 
-from core.constants import Gender
+from core.constants import Gender, Role
 from core.models import AbstractBaseModel
 from core.constants import ScholarshipChoices
 from core.constants import Degree
 from core.error_messages import ErrorMessage
-from instructors.models import Subject
-from .validators import validate_phone_number, validate_password
+from .validators import validate_phone_number, validate_date_of_birth
+
+
+class Subject(AbstractBaseModel):
+    """
+    Subject model representing a subject that an instructor can specialize in.
+
+    Attributes:
+        name (CharField): The name of the subject.
+    """
+
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(
+        help_text="Subject description", blank=True, null=True
+    )
+
+    def __str__(self):
+        return self.name
 
 
 class UserManager(BaseUserManager):
@@ -136,17 +152,27 @@ class User(AbstractUser, AbstractBaseModel):
         is_staff (BooleanField): Whether the user is staff.
     """
 
-    first_name = models.CharField(max_length=30, blank=True, null=True, db_index=True)
-    last_name = models.CharField(max_length=30, blank=True, null=True, db_index=True)
-    email = models.EmailField(unique=True)
+    first_name = models.CharField(
+        help_text="First name", max_length=150, blank=True, null=True, db_index=True
+    )
+    last_name = models.CharField(
+        help_text="Last name", max_length=150, blank=True, null=True, db_index=True
+    )
+    email = models.EmailField(help_text="email address", unique=True)
     phone_number = models.CharField(
+        help_text="Phone number",
         max_length=11,
         blank=True,
         null=True,
         validators=[validate_phone_number],
         db_index=True,
     )
-    date_of_birth = models.DateField(blank=True, null=True)
+    date_of_birth = models.DateField(
+        help_text="Date of birth",
+        blank=True,
+        null=True,
+        validators=[validate_date_of_birth],
+    )
     gender = models.CharField(
         choices=Gender.choices(),
         help_text="Male or Female",
@@ -159,12 +185,15 @@ class User(AbstractUser, AbstractBaseModel):
         default=0,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="The scholarship amount for the student.",
+        blank=True,
+        null=True,
         db_index=True,
     )
     subjects = models.ManyToManyField(
         Subject,
-        related_name="instructors",
+        related_name="user",
         help_text="The subjects that the instructor specializes in.",
+        blank=True,
     )
     degree = models.CharField(
         choices=Degree.choices(),
@@ -172,6 +201,15 @@ class User(AbstractUser, AbstractBaseModel):
         help_text="The degree of the instructor.",
         max_length=9,
         db_index=True,
+        null=True,
+        blank=True,
+    )
+
+    role = models.CharField(
+        choices=Role.choices(),
+        default=Role.STUDENT.value,
+        max_length=10,
+        help_text="The role of the user.",
     )
 
     objects = UserManager()
@@ -185,21 +223,8 @@ class User(AbstractUser, AbstractBaseModel):
     def __str__(self):
         return self.email
 
-    def clean(self):
-        """
-        Verify for phone_number and password fields.
-        """
-
-        super().clean()
-
-        if self.phone_number:
-            validate_phone_number(self.phone_number)
-
-        if self.password:
-            validate_password(self.password)
-
     def save(self, *args, **kwargs):
-        self.clean()
+        self.full_clean()
         super().save(*args, **kwargs)
 
     @property
@@ -210,7 +235,7 @@ class User(AbstractUser, AbstractBaseModel):
         Returns:
             bool: True if the user is an instructor, False otherwise.
         """
-        return hasattr(self, "instructor_profile")
+        return self.role == Role.INSTRUCTOR.value
 
     @property
     def is_student(self):
@@ -220,4 +245,4 @@ class User(AbstractUser, AbstractBaseModel):
         Returns:
             bool: True if the user is an student, False otherwise.
         """
-        return hasattr(self, "student_profile")
+        return self.role == Role.STUDENT.value
