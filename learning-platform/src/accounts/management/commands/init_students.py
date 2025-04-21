@@ -1,7 +1,6 @@
 import random
 from faker import Faker
 from django.core.management.base import BaseCommand
-from students.models import Student
 from core.constants import ScholarshipChoices, Gender
 from django.contrib.auth import get_user_model
 from core.tests.utils.helpers import random_birthday, random_phone_number
@@ -37,7 +36,7 @@ class Command(BaseCommand):
                 [scholarship.value for scholarship in ScholarshipChoices]
             )
 
-            user_instance = User.objects.create_user(
+            User.objects.create_user(
                 username=f"{student_first_name}.{student_last_name}",
                 first_name=student_first_name,
                 last_name=student_last_name,
@@ -46,13 +45,5 @@ class Command(BaseCommand):
                 gender=student_gender,
                 email=student_email,
                 password="Password@123",
-                scholarship=scholarship,
-            )
-
-            scholarship = random.choice(
-                [scholarship.value for scholarship in ScholarshipChoices]
-            )
-            Student.objects.create(
-                user=user_instance,
                 scholarship=scholarship,
             )
