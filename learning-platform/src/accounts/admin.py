@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 
 
 from accounts.models import Subject
+from accounts.forms import UserBaseForm, UserEditForm
 from core.filters import GenderFilter
 
 User = get_user_model()
@@ -30,6 +31,62 @@ class SubjectAdmin(admin.ModelAdmin):
     search_fields = ["name"]
     list_per_page = settings.ADMIN_PAGE_SIZE
     ordering = ["name", "-modified"]
+
+
+class ScholarshipFilter(admin.SimpleListFilter):
+    """
+    Custom filter for the scholarship field in the Student model.
+
+    This filter allows the admin to filter students based on their scholarship status.
+
+    Attributes:
+        title (str): The title of the filter displayed in the admin interface.
+        parameter_name (str): The URL parameter used for the filter.
+    """
+
+    title = "Scholarship"
+    parameter_name = "scholarship"
+
+    def lookups(self, request, model_admin):
+        """
+        Returns the list of filter options.
+
+        Args:
+            request (HttpRequest): The current request object.
+            model_admin (ModelAdmin): The current model admin instance.
+
+        Returns:
+            list: A list of tuples containing the filter options.
+        """
+
+        return [
+            ("no_scholarship", "No scholarship"),
+            (25, "25%"),
+            (50, "50%"),
+            (75, "75%"),
+            (100, "100%"),
+            ("has_scholarship", "Has scholarship"),
+        ]
+
+    def queryset(self, request, queryset):
+        """
+        Returns the filtered queryset based on the selected filter option.
+
+        Args:
+            request (HttpRequest): The current request object.
+            queryset (QuerySet): The original queryset.
+
+        Returns:
+            QuerySet: The filtered queryset.
+        """
+
+        if not self.value():
+            return queryset
+        if self.value() == "no_scholarship":
+            return queryset.filter(scholarship=0)
+        if self.value() == "has_scholarship":
+            return queryset.exclude(scholarship=0)
+        return queryset.filter(scholarship=self.value())
 
 
 @admin.register(User)
@@ -66,9 +123,11 @@ class UserAdmin(admin.ModelAdmin):
         "phone_number",
         "date_of_birth",
         "gender",
+        "scholarship",
+        "modified",
     ]
 
-    list_filter = [GenderFilter]
+    list_filter = [GenderFilter, ScholarshipFilter]
     search_fields = [
         "username",
         "first_name",
@@ -78,3 +137,22 @@ class UserAdmin(admin.ModelAdmin):
     ]
     ordering = ["username", "-modified"]
     list_per_page = settings.ADMIN_PAGE_SIZE
+
+    def get_form(self, request, obj=None, **kwargs):
+        """
+        Returns the appropriate form for creating or editing a student.
+
+        Args:
+            request (HttpRequest): The current request object.
+            obj (Student, optional): The student instance being edited. Defaults to None.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            ModelForm: The form instance to be used in the admin interface.
+        """
+
+        if obj is None:
+            kwargs["form"] = UserBaseForm
+        else:
+            kwargs["form"] = UserEditForm
+        return super().get_form(request, obj, **kwargs)
