@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 
-from core.constants import Gender
+from core.constants import Gender, ScholarshipChoices, Role
 from accounts.validators import (
     validate_password,
     validate_phone_number,
@@ -36,6 +36,10 @@ class UserBaseForm(forms.ModelForm):
     date_of_birth = forms.DateField(required=False)
     gender = forms.ChoiceField(choices=Gender.choices(), required=False)
     password = forms.CharField(widget=forms.PasswordInput, min_length=8, max_length=128)
+    role = forms.ChoiceField(choices=Role.choices(), required=True)
+    scholarship = forms.ChoiceField(
+        choices=ScholarshipChoices.choices(), required=False
+    )
 
     class Meta:
         model = User
@@ -48,6 +52,8 @@ class UserBaseForm(forms.ModelForm):
             "date_of_birth",
             "gender",
             "password",
+            "role",
+            "scholarship",
         )
 
     def clean_phone_number(self):
@@ -100,3 +106,43 @@ class UserBaseForm(forms.ModelForm):
             return validate_email(email)
 
         return email
+
+
+class UserEditForm(UserBaseForm):
+    """
+    A form for editing existing user.
+
+    Fields:
+        username (CharField): The username of the user.
+        first_name (CharField): The first name of the user.
+        last_name (CharField): The last name of the user.
+        email (EmailField): The email of the user.
+        phone_number (CharField): The phone number of the user.
+        date_of_birth (DateField): The birth date of the user.
+        gender (ChoiceField): The gender of the user.
+        password (CharField): The password of the user.
+    """
+
+    username = forms.CharField(disabled=True)
+    email = forms.EmailField(
+        disabled=True,
+        required=False,
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(
+            attrs={
+                "placeholder": "********",
+                "autocomplete": "new-password",
+            }
+        ),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the form with the instance data.
+        """
+
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.is_student:
+            self.fields["role"].disabled = True
