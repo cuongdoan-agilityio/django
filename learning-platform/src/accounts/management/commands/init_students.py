@@ -1,7 +1,7 @@
 import random
 from faker import Faker
 from django.core.management.base import BaseCommand
-from core.constants import ScholarshipChoices, Gender
+from core.constants import ScholarshipChoices, Gender, Role
 from django.contrib.auth import get_user_model
 from core.tests.utils.helpers import random_birthday, random_phone_number
 
@@ -46,4 +46,5 @@ class Command(BaseCommand):
                 email=student_email,
                 password="Password@123",
                 scholarship=scholarship,
+                role=Role.STUDENT.value,
             )
