@@ -4,7 +4,8 @@ from django.contrib.auth import get_user_model
 
 from core.filters import GenderFilter
 
-from .models import Instructor, Subject
+from .models import Instructor
+from accounts.models import Subject
 from .forms import InstructorBaseForm, InstructorEditForm
 from courses.models import Course
 

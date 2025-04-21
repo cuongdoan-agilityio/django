@@ -2,7 +2,8 @@ from factory.django import DjangoModelFactory as ModelFactory
 from factory import SubFactory, Iterator, Faker, Sequence, post_generation
 
 from accounts.factories import UserFactory
-from instructors.models import Instructor, Subject
+from instructors.models import Instructor
+from accounts.models import Subject
 from core.constants import Degree
 
 

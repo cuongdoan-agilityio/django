@@ -1,4 +1,4 @@
-from instructors.models import Subject
+from accounts.models import Subject
 from instructors.factories import SubjectFactory
 from core.tests.base import BaseTestCase
 

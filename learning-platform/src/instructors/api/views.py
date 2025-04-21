@@ -2,7 +2,7 @@ from rest_framework.mixins import ListModelMixin
 from rest_framework.permissions import AllowAny
 
 from core.api_views import BaseGenericViewSet
-from instructors.models import Subject
+from accounts.models import Subject
 
 from .serializers import SubjectSerializer
 

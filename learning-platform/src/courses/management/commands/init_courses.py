@@ -2,7 +2,8 @@ import random
 from faker import Faker
 from django.core.management.base import BaseCommand
 from courses.models import Course, Category
-from instructors.models import Instructor, Subject
+from instructors.models import Instructor
+from accounts.models import Subject
 from core.constants import Degree, Status, Gender
 from django.contrib.auth import get_user_model
 from core.tests.utils.helpers import random_birthday, random_phone_number
@@ -28,23 +29,23 @@ class Command(BaseCommand):
             instructor_first_name = fake.first_name()
             instructor_last_name = fake.last_name()
             instructor_email = fake.email()
-            instructor_phone_number = random_phone_number()
-            instructor_day_of_birthday = random_birthday()
-            instructor_gender = random.choice([gender.value for gender in Gender])
-
-            category, _ = Category.objects.get_or_create(
-                name=category_name, defaults={"description": category_description}
-            )
-
-            subject, _ = Subject.objects.get_or_create(
-                name=category_name, defaults={"description": subject_description}
-            )
 
             username = f"{instructor_first_name}.{instructor_last_name}"
             if (User.objects.filter(username=username).exists()) or (
                 User.objects.filter(email=instructor_email).exists()
             ):
                 return
+
+            instructor_phone_number = random_phone_number()
+            instructor_day_of_birthday = random_birthday()
+            instructor_gender = random.choice([gender.value for gender in Gender])
+            category, _ = Category.objects.get_or_create(
+                name=category_name, defaults={"description": category_description}
+            )
+            subject, _ = Subject.objects.get_or_create(
+                name=category_name, defaults={"description": subject_description}
+            )
+            degree = random.choice([degree.value for degree in Degree])
 
             user_instance = User.objects.create_user(
                 username=username,
@@ -55,14 +56,15 @@ class Command(BaseCommand):
                 gender=instructor_gender,
                 email=instructor_email,
                 password="Password@123",
+                degree=degree,
             )
+            user_instance.subjects.set([str(subject.id)])
 
-            degree = random.choice([degree.value for degree in Degree])
             instructor_instance = Instructor.objects.create(
                 user=user_instance,
                 degree=degree,
             )
-            instructor_instance.subjects.set([str(subject.id)])
+            user_instance.subjects.set([str(subject.id)])
 
             status = random.choice([status.value for status in Status])
             Course.objects.create(

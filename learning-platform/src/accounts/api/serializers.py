@@ -6,7 +6,7 @@ from core.constants import ScholarshipChoices, Degree
 from accounts.validators import validate_phone_number as check_phone_number
 from core.error_messages import ErrorMessage
 from students.models import Student
-from instructors.models import Subject
+from accounts.models import Subject
 from datetime import date
 
 User = get_user_model()

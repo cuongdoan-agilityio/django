@@ -23,15 +23,19 @@ class Command(BaseCommand):
             student_first_name = fake.first_name()
             student_last_name = fake.last_name()
             student_email = fake.email()
-            student_phone_number = random_phone_number()
-            student_day_of_birthday = random_birthday(is_student=True)
-            student_gender = random.choice([gender.value for gender in Gender])
 
             username = f"{student_first_name}.{student_last_name}"
             if (User.objects.filter(username=username).exists()) or (
                 User.objects.filter(email=student_email).exists()
             ):
                 return
+
+            student_phone_number = random_phone_number()
+            student_day_of_birthday = random_birthday()
+            student_gender = random.choice([gender.value for gender in Gender])
+            scholarship = random.choice(
+                [scholarship.value for scholarship in ScholarshipChoices]
+            )
 
             user_instance = User.objects.create_user(
                 username=f"{student_first_name}.{student_last_name}",
@@ -42,6 +46,7 @@ class Command(BaseCommand):
                 gender=student_gender,
                 email=student_email,
                 password="Password@123",
+                scholarship=scholarship,
             )
 
             scholarship = random.choice(
