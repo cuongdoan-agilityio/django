@@ -5,52 +5,52 @@ from django.contrib.auth import get_user_model
 from core.filters import GenderFilter
 
 from .models import Instructor
-from accounts.models import Subject
+
+# from accounts.models import Subject
 from .forms import InstructorBaseForm, InstructorEditForm
-from courses.models import Course
 
 
 User = get_user_model()
 
+# TODO: Need remove code.
+# @admin.register(Subject)
+# class SubjectAdmin(admin.ModelAdmin):
+#     """
+#     Admin configuration for the Subject model.
 
-@admin.register(Subject)
-class SubjectAdmin(admin.ModelAdmin):
-    """
-    Admin configuration for the Subject model.
+#     This class defines how the Subject model is displayed and managed
+#     within the Django admin interface. It provides features for listing
+#     and searching Subject instances.
 
-    This class defines how the Subject model is displayed and managed
-    within the Django admin interface. It provides features for listing
-    and searching Subject instances.
+#     Attributes:
+#         list_display (list): A list of model fields to be displayed in the
+#             admin list view.
+#         search_fields (list): A list of model fields that can be searched
+#             through the admin search functionality.
+#     """
 
-    Attributes:
-        list_display (list): A list of model fields to be displayed in the
-            admin list view.
-        search_fields (list): A list of model fields that can be searched
-            through the admin search functionality.
-    """
+#     list_display = ["id", "name", "description", "modified"]
 
-    list_display = ["id", "name", "description", "modified"]
-
-    search_fields = ["name"]
-    list_per_page = settings.ADMIN_PAGE_SIZE
-    ordering = ["name", "-modified"]
+#     search_fields = ["name"]
+#     list_per_page = settings.ADMIN_PAGE_SIZE
+#     ordering = ["name", "-modified"]
 
 
-class CourseInline(admin.TabularInline):
-    """
-    Inline admin class for the Course model.
+# class CourseInline(admin.TabularInline):
+#     """
+#     Inline admin class for the Course model.
 
-    This allows managing Course directly from the Student admin interface.
-    """
+#     This allows managing Course directly from the Student admin interface.
+#     """
 
-    model = Course
-    extra = 0
-    fields = ["title", "description", "category", "status", "image_url"]
-    readonly_fields = ["instructor"]
-    autocomplete_fields = ["category"]
+#     model = Course
+#     extra = 0
+#     fields = ["title", "description", "category", "status", "image_url"]
+#     readonly_fields = ["instructor"]
+#     autocomplete_fields = ["category"]
 
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related("category")
+#     def get_queryset(self, request):
+#         return super().get_queryset(request).select_related("category")
 
 
 @admin.register(Instructor)
@@ -104,7 +104,7 @@ class InstructorAdmin(admin.ModelAdmin):
     autocomplete_fields = ["subjects"]
     list_per_page = settings.ADMIN_PAGE_SIZE
 
-    inlines = [CourseInline]
+    # inlines = [CourseInline]
 
     def get_form(self, request, obj=None, **kwargs):
         """

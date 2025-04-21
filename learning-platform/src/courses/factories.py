@@ -4,7 +4,6 @@ from factory.django import DjangoModelFactory as ModelFactory
 from accounts.factories import UserFactory
 from courses.models import Course, Category, Enrollment
 from core.constants import Status
-from students.factories import StudentFactory
 
 
 class CategoryFactory(ModelFactory):
@@ -48,4 +47,4 @@ class EnrollmentFactory(ModelFactory):
         model = Enrollment
 
     course = SubFactory(CourseFactory)
-    student = SubFactory(StudentFactory)
+    student = SubFactory(UserFactory)

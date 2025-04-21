@@ -67,13 +67,13 @@ class Enrollment(AbstractBaseModel):
         "courses.Course", on_delete=models.CASCADE, related_name="enrollments"
     )
     student = models.ForeignKey(
-        "students.Student",
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="enrollments",
     )
 
     def __str__(self):
-        return f"{self.student.user.first_name} enrolled in {self.course.title}"
+        return f"{self.student.first_name} enrolled in {self.course.title}"
 
     def save(self, *args, **kwargs):
         """

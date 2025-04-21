@@ -4,11 +4,9 @@ from django.contrib.auth import get_user_model
 
 from core.filters import GenderFilter
 
-from courses.models import Enrollment
 from .forms import (
     StudentBaseForm,
     StudentEditForm,
-    EnrollmentInlineFormSet,
 )
 from .models import Student
 
@@ -71,22 +69,23 @@ class ScholarshipFilter(admin.SimpleListFilter):
         return queryset.filter(scholarship=self.value())
 
 
-class EnrollmentInline(admin.TabularInline):
-    """
-    Inline admin class for the Enrollment model.
+# TODO: Need remove
+# class EnrollmentInline(admin.TabularInline):
+#     """
+#     Inline admin class for the Enrollment model.
 
-    This allows managing enrollments directly from the Student admin interface.
-    """
+#     This allows managing enrollments directly from the Student admin interface.
+#     """
 
-    model = Enrollment
-    extra = 0
-    fields = ["course", "student"]
-    readonly_fields = ["student"]
-    autocomplete_fields = ["course"]
-    formset = EnrollmentInlineFormSet
+#     model = Enrollment
+#     extra = 0
+#     fields = ["course", "student"]
+#     readonly_fields = ["student"]
+#     autocomplete_fields = ["course"]
+#     formset = EnrollmentInlineFormSet
 
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related("course", "student__user")
+#     def get_queryset(self, request):
+#         return super().get_queryset(request).select_related("course", "student__user")
 
 
 @admin.register(Student)
@@ -119,7 +118,7 @@ class StudentAdmin(admin.ModelAdmin):
         "user__email",
     ]
 
-    inlines = [EnrollmentInline]
+    # inlines = [EnrollmentInline]
     list_per_page = settings.ADMIN_PAGE_SIZE
     ordering = ["user__username", "-modified"]
 
