@@ -2,9 +2,8 @@ import random
 from faker import Faker
 from django.core.management.base import BaseCommand
 from courses.models import Course, Category
-from instructors.models import Instructor
 from accounts.models import Subject
-from core.constants import Degree, Status, Gender
+from core.constants import Degree, Status, Gender, Role
 from django.contrib.auth import get_user_model
 from core.tests.utils.helpers import random_birthday, random_phone_number
 
@@ -57,19 +56,14 @@ class Command(BaseCommand):
                 email=instructor_email,
                 password="Password@123",
                 degree=degree,
-            )
-            user_instance.subjects.set([str(subject.id)])
-
-            instructor_instance = Instructor.objects.create(
-                user=user_instance,
-                degree=degree,
+                role=Role.INSTRUCTOR.value,
             )
             user_instance.subjects.set([str(subject.id)])
 
             status = random.choice([status.value for status in Status])
             Course.objects.create(
                 category=category,
-                instructor=instructor_instance,
+                instructor=user_instance,
                 title=fake.sentence(nb_words=6),
                 description=fake.paragraph(nb_sentences=3),
                 status=status,

@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from core.models import AbstractBaseModel
 from core.constants import Status
 from core.error_messages import ErrorMessage
+from django.conf import settings
 
 
 class Category(AbstractBaseModel):
@@ -38,8 +39,7 @@ class Course(AbstractBaseModel):
         null=True,
     )
     instructor = models.ForeignKey(
-        "instructors.Instructor",
-        # settings.AUTH_USER_MODEL,
+        settings.AUTH_USER_MODEL,
         help_text="Course Instructor.",
         related_name="courses",
         on_delete=models.SET_NULL,

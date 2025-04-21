@@ -1,6 +1,7 @@
 from factory import Faker, SubFactory, Iterator, Sequence
 from factory.django import DjangoModelFactory as ModelFactory
-from instructors.factories import InstructorFactory
+
+from accounts.factories import UserFactory
 from courses.models import Course, Category, Enrollment
 from core.constants import Status
 from students.factories import StudentFactory
@@ -31,7 +32,7 @@ class CourseFactory(ModelFactory):
     title = Faker("words")
     description = Faker("words")
     category = SubFactory(CategoryFactory)
-    instructor = SubFactory(InstructorFactory)
+    instructor = SubFactory(UserFactory)
     status = Iterator(Status.values())
 
     class Meta:
