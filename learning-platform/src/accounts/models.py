@@ -4,6 +4,8 @@ from django.contrib.auth.models import (
     BaseUserManager,
 )
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
+from django.contrib.auth.hashers import make_password
 
 from core.constants import Gender, Role
 from core.models import AbstractBaseModel
@@ -127,6 +129,7 @@ class UserManager(BaseUserManager):
             phone_number=phone_number,
             date_of_birth=date_of_birth,
             gender=gender,
+            role=Role.ADMIN.value,
             **extra_fields,
         )
         user.is_staff = True
@@ -182,7 +185,7 @@ class User(AbstractUser, AbstractBaseModel):
     )
     scholarship = models.IntegerField(
         choices=ScholarshipChoices.choices(),
-        default=0,
+        default=None,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="The scholarship amount for the student.",
         blank=True,
@@ -223,9 +226,35 @@ class User(AbstractUser, AbstractBaseModel):
     def __str__(self):
         return self.email
 
+    def clean(self):
+        """
+        Clean the user data before saving.
+        """
+        if self.role == Role.STUDENT.value:
+            if self.scholarship not in ScholarshipChoices.values():
+                raise ValidationError(ErrorMessage.REQUIRED_FIELD)
+            self.degree = None
+            self.subjects.clear()
+
+        if self.role == Role.INSTRUCTOR.value:
+            if self.degree not in Degree.values():
+                raise ValidationError("Invalid degree.")
+            if not self.subjects.exists():
+                raise ValidationError("Invalid subject.")
+            self.scholarship = None
+
     def save(self, *args, **kwargs):
-        self.full_clean()
+        if self.password:
+            self.password = make_password(self.password)
+
+        if not self._state.adding and not self._password:
+            user = User.objects.get(pk=self.pk)
+            self.password = user.password
+
         super().save(*args, **kwargs)
+
+    def get_subjects(self):
+        return ", ".join([spec.name for spec in self.subjects.all()])
 
     @property
     def is_instructor(self):

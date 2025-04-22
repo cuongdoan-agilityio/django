@@ -8,6 +8,7 @@ from accounts.validators import (
     validate_date_of_birth,
 )
 from core.validators import validate_username, validate_email
+from core.error_messages import ErrorMessage
 
 
 User = get_user_model()
@@ -54,6 +55,8 @@ class UserBaseForm(forms.ModelForm):
             "password",
             "role",
             "scholarship",
+            "subjects",
+            "degree",
         )
 
     def clean_phone_number(self):
@@ -107,6 +110,17 @@ class UserBaseForm(forms.ModelForm):
 
         return email
 
+    def clean(self):
+        if self.cleaned_data.get("role") == Role.STUDENT.value:
+            if not self.cleaned_data.get("scholarship"):
+                raise forms.ValidationError(ErrorMessage.SCHOLARSHIP_REQUIRED)
+        if self.cleaned_data.get("role") == Role.INSTRUCTOR.value:
+            if not self.cleaned_data.get("degree"):
+                raise forms.ValidationError(ErrorMessage.DEGREE_REQUIRED)
+            if not self.cleaned_data.get("subjects"):
+                raise forms.ValidationError(ErrorMessage.SUBJECT_REQUIRED)
+        return super().clean()
+
 
 class UserEditForm(UserBaseForm):
     """
@@ -128,6 +142,10 @@ class UserEditForm(UserBaseForm):
         disabled=True,
         required=False,
     )
+    role = forms.ChoiceField(
+        choices=Role.choices(),
+        disabled=True,
+    )
     password = forms.CharField(
         widget=forms.PasswordInput(
             attrs={
@@ -145,4 +163,7 @@ class UserEditForm(UserBaseForm):
 
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.is_student:
-            self.fields["role"].disabled = True
+            self.fields["degree"].disabled = True
+            self.fields["subjects"].disabled = True
+        if self.instance and self.instance.is_instructor:
+            self.fields["scholarship"].disabled = True
