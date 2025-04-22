@@ -34,4 +34,8 @@ class ErrorMessage:
     ENROLLED_SAME_COURSE = (
         "Student cannot enroll in the same course: {course} more than once."
     )
+    REQUIRED_FIELD = "This field is required."
     INACTIVE_COURSE = "This course is currently inactive and cannot be enrolled in."
+    SCHOLARSHIP_REQUIRED = "Scholarship is required for students."
+    DEGREE_REQUIRED = "Degree is required for instructors."
+    SUBJECT_REQUIRED = "Subjects is required for instructors."
