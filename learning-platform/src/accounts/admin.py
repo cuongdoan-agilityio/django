@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from accounts.models import Subject
 from accounts.forms import UserBaseForm, UserEditForm
 from core.filters import GenderFilter
+from core.constants import Role
 
 User = get_user_model()
 
@@ -89,6 +90,51 @@ class ScholarshipFilter(admin.SimpleListFilter):
         return queryset.filter(scholarship=self.value())
 
 
+class RoleFilter(admin.SimpleListFilter):
+    """
+    Custom filter for the role field in the User model.
+
+    This filter allows the admin to filter users based on their role.
+
+    Attributes:
+        title (str): The title of the filter displayed in the admin interface.
+        parameter_name (str): The URL parameter used for the filter.
+    """
+
+    title = "Role"
+    parameter_name = "role"
+
+    def lookups(self, request, model_admin):
+        """
+        Returns the list of filter options.
+
+        Args:
+            request (HttpRequest): The current request object.
+            model_admin (ModelAdmin): The current model admin instance.
+
+        Returns:
+            list: A list of tuples containing the filter options.
+        """
+
+        return [(role.value, role.name) for role in Role]
+
+    def queryset(self, request, queryset):
+        """
+        Returns the filtered queryset based on the selected filter option.
+
+        Args:
+            request (HttpRequest): The current request object.
+            queryset (QuerySet): The original queryset.
+
+        Returns:
+            QuerySet: The filtered queryset.
+        """
+
+        if not self.value():
+            return queryset
+        return queryset.filter(role=self.value())
+
+
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     """
@@ -124,10 +170,12 @@ class UserAdmin(admin.ModelAdmin):
         "date_of_birth",
         "gender",
         "scholarship",
+        "get_subjects",
+        "degree",
         "modified",
     ]
 
-    list_filter = [GenderFilter, ScholarshipFilter]
+    list_filter = [GenderFilter, ScholarshipFilter, RoleFilter, "degree", "subjects"]
     search_fields = [
         "username",
         "first_name",
@@ -136,7 +184,16 @@ class UserAdmin(admin.ModelAdmin):
         "email",
     ]
     ordering = ["username", "-modified"]
+    autocomplete_fields = ["subjects"]
     list_per_page = settings.ADMIN_PAGE_SIZE
+
+    def get_queryset(self, request):
+        """
+        Customize the queryset for the Instructor admin interface.
+        """
+
+        queryset = super().get_queryset(request)
+        return queryset.prefetch_related("subjects")
 
     def get_form(self, request, obj=None, **kwargs):
         """
