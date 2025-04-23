@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-SPECIAL_CHARACTER_REGEX = r'!@#$%^&*()_+=-"'
+SPECIAL_CHARACTER_REGEX = r'[!-@#$%^&*()_+="]'
 
 
 class BaseChoiceEnum(Enum):
