@@ -275,12 +275,12 @@ class CourseViewSet(BaseModelViewSet):
                 return self.bad_request({"student": ErrorMessage.STUDENT_DATA_REQUIRED})
             student = request.data["student"]
         else:
-            student = Student.objects.filter(user=request.user).first().id
+            student = request.user
 
         enrollment_serializer = EnrollmentSerializer(
             data={
                 "course": str(course.id),
-                "student": str(student),
+                "student": str(student.id),
             }
         )
         enrollment_serializer.is_valid(raise_exception=True)
@@ -315,7 +315,7 @@ class CourseViewSet(BaseModelViewSet):
                 return self.bad_request({"student": ErrorMessage.STUDENT_DATA_REQUIRED})
             student = Student.objects.filter(id=request.data["student"]).first()
         else:
-            student = Student.objects.filter(user=request.user).first()
+            student = request.user
 
         if enrollment := student.enrollments.filter(course=course).first():
             enrollment.delete()
