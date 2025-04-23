@@ -239,8 +239,6 @@ class User(AbstractUser, AbstractBaseModel):
         if self.role == Role.INSTRUCTOR.value:
             if self.degree not in Degree.values():
                 raise ValidationError("Invalid degree.")
-            if not self.subjects.exists():
-                raise ValidationError("Invalid subject.")
             self.scholarship = None
 
     def save(self, *args, **kwargs):
