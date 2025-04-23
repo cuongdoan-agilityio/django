@@ -21,7 +21,6 @@ from core.serializers import (
 from core.error_messages import ErrorMessage
 
 from instructors.api.serializers import InstructorProfileDataSerializer
-from students.api.serializers import StudentProfileDataSerializer
 
 from .response_schema import (
     user_profile_response_schema,
@@ -34,6 +33,7 @@ from .serializers import (
     UserProfileUpdateSerializer,
     UserSerializer,
     SubjectSerializer,
+    UserProfileDataSerializer,
 )
 
 
@@ -131,7 +131,7 @@ class AuthenticationViewSet(BaseViewSet):
         user_instance = serializer.save()
 
         response_serializer = BaseDetailSerializer(
-            user_instance, context={"serializer_class": StudentProfileDataSerializer}
+            user_instance, context={"serializer_class": UserProfileDataSerializer}
         )
 
         return self.created(response_serializer.data)
@@ -146,14 +146,14 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
     """
 
     permission_classes = [IsAuthenticated]
-    serializer_class = StudentProfileDataSerializer
+    serializer_class = UserProfileDataSerializer
     http_method_names = ["get", "patch"]
     resource_name = "users"
 
     def get_serializer_class(self):
         user = self.request.user
         if user and hasattr(user, "student_profile"):
-            return StudentProfileDataSerializer
+            return UserProfileDataSerializer
         if user and hasattr(user, "instructor_profile"):
             return InstructorProfileDataSerializer
         return UserSerializer
