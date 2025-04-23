@@ -31,6 +31,6 @@ class CoursePermission(BasePermission):
             return True
 
         if view.action in ["partial_update", "students"]:
-            return obj.instructor == request.user.is_instructor
+            return obj.instructor == request.user
 
         return False
