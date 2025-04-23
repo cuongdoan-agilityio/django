@@ -1,26 +1,9 @@
 from factory.django import DjangoModelFactory as ModelFactory
-from factory import SubFactory, Iterator, Faker, Sequence, post_generation
+from factory import SubFactory, Iterator, post_generation
 
 from accounts.factories import UserFactory
 from instructors.models import Instructor
-from accounts.models import Subject
 from core.constants import Degree
-
-
-class SubjectFactory(ModelFactory):
-    """
-    Faker for Subject model.
-    """
-
-    name = Sequence(lambda n: f"Subject_{n}")
-    description = Faker("words")
-
-    class Meta:
-        """
-        Meta class
-        """
-
-        model = Subject
 
 
 class InstructorFactory(ModelFactory):
