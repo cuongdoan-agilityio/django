@@ -157,17 +157,14 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             User: The updated user instance.
         """
 
-        if "scholarship" in validated_data and hasattr(instance, "student_profile"):
-            instance.student_profile.scholarship = validated_data["scholarship"]
-            instance.student_profile.save()
+        if "scholarship" in validated_data and instance.is_student:
+            instance.scholarship = validated_data["scholarship"]
 
-        if "degree" in validated_data and hasattr(instance, "instructor_profile"):
-            instance.instructor_profile.degree = validated_data["degree"]
-            instance.instructor_profile.save()
+        if "degree" in validated_data and instance.is_instructor:
+            instance.degree = validated_data["degree"]
 
-        if "subjects" in validated_data and hasattr(instance, "instructor_profile"):
-            instance.instructor_profile.subjects.set(validated_data["subjects"])
-            instance.instructor_profile.save()
+        if "subjects" in validated_data and instance.is_instructor:
+            instance.subjects.set(validated_data["subjects"])
 
         instance.phone_number = validated_data.get(
             "phone_number", instance.phone_number
@@ -244,4 +241,7 @@ class UserProfileDataSerializer(UserBaseSerializer):
             "date_of_birth",
             "gender",
             "scholarship",
+            "role",
+            "degree",
+            "subjects",
         ]

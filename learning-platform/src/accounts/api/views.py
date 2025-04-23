@@ -20,8 +20,6 @@ from core.serializers import (
 )
 from core.error_messages import ErrorMessage
 
-from instructors.api.serializers import InstructorProfileDataSerializer
-
 from .response_schema import (
     user_profile_response_schema,
     student_profile_response_schema,
@@ -31,7 +29,6 @@ from .serializers import (
     LoginResponseSerializer,
     RegisterSerializer,
     UserProfileUpdateSerializer,
-    UserSerializer,
     SubjectSerializer,
     UserProfileDataSerializer,
 )
@@ -150,14 +147,6 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
     http_method_names = ["get", "patch"]
     resource_name = "users"
 
-    def get_serializer_class(self):
-        user = self.request.user
-        if user and hasattr(user, "student_profile"):
-            return UserProfileDataSerializer
-        if user and hasattr(user, "instructor_profile"):
-            return InstructorProfileDataSerializer
-        return UserSerializer
-
     def get_queryset(self):
         return User.objects.select_related("student_profile", "instructor_profile")
 
@@ -175,7 +164,7 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         """
 
         user = request.user
-        pk = kwargs.get("id")
+        pk = kwargs.get("pk")
 
         if not user.is_superuser and (pk not in ["me", str(user.id)]):
             return self.forbidden()
@@ -207,7 +196,7 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         """
         user = request.user
 
-        pk = kwargs.get("id")
+        pk = kwargs.get("pk")
 
         if not user.is_superuser and (pk not in ["me", str(user.id)]):
             return self.forbidden()
