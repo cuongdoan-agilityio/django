@@ -5,7 +5,6 @@ from django.contrib.auth.password_validation import validate_password
 from core.constants import ScholarshipChoices, Degree
 from accounts.validators import validate_phone_number as check_phone_number
 from core.error_messages import ErrorMessage
-from students.models import Student
 from accounts.models import Subject
 from datetime import date
 
@@ -74,8 +73,14 @@ class RegisterSerializer(serializers.ModelSerializer):
             User: The created user instance.
         """
 
-        user = User.objects.create_user(**validated_data)
-        Student.objects.create(user=user, scholarship=ScholarshipChoices.ZERO.value)
+        user = User(
+            username=validated_data["username"],
+            email=validated_data["email"],
+            scholarship=ScholarshipChoices.ZERO.value,
+            password=validated_data["password"],
+        )
+        user.full_clean()
+        user.save()
         return user
 
 
@@ -205,3 +210,38 @@ class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subject
         fields = ["id", "name", "description"]
+
+
+class UserBaseSerializer(serializers.ModelSerializer):
+    """
+    Base serializer for student data.
+    """
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+        ]
+
+
+class UserProfileDataSerializer(UserBaseSerializer):
+    """
+    Serializer for user profile data.
+    """
+
+    class Meta(UserBaseSerializer.Meta):
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "phone_number",
+            "date_of_birth",
+            "gender",
+            "scholarship",
+        ]
