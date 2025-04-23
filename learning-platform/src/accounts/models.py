@@ -85,9 +85,9 @@ class UserManager(BaseUserManager):
             phone_number=phone_number,
             date_of_birth=date_of_birth,
             gender=gender,
+            password=password,
             **extra_fields,
         )
-        user.set_password(password)
         user.save(using=self._db)
         return user
 
@@ -247,7 +247,7 @@ class User(AbstractUser, AbstractBaseModel):
         if self.password:
             self.password = make_password(self.password)
 
-        if not self._state.adding and not self._password:
+        if not self._state.adding and not self.password:
             user = User.objects.get(pk=self.pk)
             self.password = user.password
 
