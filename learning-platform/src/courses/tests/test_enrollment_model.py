@@ -1,7 +1,6 @@
 from django.core.exceptions import ValidationError
 from courses.models import Enrollment
 from courses.factories import CourseFactory, EnrollmentFactory
-from students.factories import StudentFactory
 from core.constants import Status
 from core.tests.base import BaseTestCase
 
@@ -18,8 +17,9 @@ class EnrollmentModelTest(BaseTestCase):
         super().setUp()
 
         self.course = CourseFactory(status=Status.ACTIVATE.value)
-        self.student = StudentFactory()
-        self.enrollment = EnrollmentFactory(course=self.course, student=self.student)
+        self.enrollment = EnrollmentFactory(
+            course=self.course, student=self.student_user
+        )
 
     def test_enrollment_success(self):
         """
@@ -40,7 +40,7 @@ class EnrollmentModelTest(BaseTestCase):
         Test the relationship between Enrollment and Student.
         """
 
-        self.assertEqual(self.enrollment.student, self.student)
+        self.assertEqual(self.enrollment.student, self.student_user)
 
     def test_enrollment_without_course(self):
         """
