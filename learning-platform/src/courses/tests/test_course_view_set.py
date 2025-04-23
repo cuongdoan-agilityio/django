@@ -21,7 +21,7 @@ class CourseViewSetTest(BaseTestCase):
         self.course_description = self.fake.paragraph(nb_sentences=2)
         self.course = CourseFactory(
             title=self.course_title,
-            instructor=self.instructor_profile,
+            instructor=self.instructor_user,
             status=Status.ACTIVATE.value,
             description=self.course_description,
         )
@@ -145,7 +145,7 @@ class CourseViewSetTest(BaseTestCase):
         Test leaving a course.
         """
 
-        Enrollment.objects.create(course=self.course, student=self.student_profile)
+        Enrollment.objects.create(course=self.course, student=self.student_user)
         response = self.post_json(
             url=self.url_leave,
             data=None,
@@ -158,7 +158,7 @@ class CourseViewSetTest(BaseTestCase):
         Test leaving a course without logging in.
         """
 
-        Enrollment.objects.create(course=self.course, student=self.student_profile)
+        Enrollment.objects.create(course=self.course, student=self.student_user)
         response = self.post_json(
             url=self.url_leave,
             data=None,
@@ -171,7 +171,7 @@ class CourseViewSetTest(BaseTestCase):
         Test listing all students enrolled in a course.
         """
 
-        Enrollment.objects.create(course=self.course, student=self.student_profile)
+        Enrollment.objects.create(course=self.course, student=self.student_user)
         response = self.get_json(
             url=self.url_students,
             email=self.instructor_email,
@@ -179,16 +179,14 @@ class CourseViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("data", response.data)
         self.assertEqual(len(response.data["data"]), 1)
-        self.assertEqual(
-            response.data["data"][0]["id"], str(self.student_profile.user.id)
-        )
+        self.assertEqual(response.data["data"][0]["id"], str(self.student_user.id))
 
     def test_list_students_in_course_unauthorized(self):
         """
         Test listing all students enrolled in a course without logging in.
         """
 
-        Enrollment.objects.create(course=self.course, student=self.student_profile)
+        Enrollment.objects.create(course=self.course, student=self.student_user)
         response = self.get_json(
             url=self.url_students,
             email=self.email,
@@ -250,7 +248,7 @@ class CourseViewSetTest(BaseTestCase):
         Test filtering courses by enrollment status.
         """
 
-        Enrollment.objects.create(course=self.course, student=self.student_profile)
+        Enrollment.objects.create(course=self.course, student=self.student_user)
 
         self.client.login(email=self.email, password=self.password)
 

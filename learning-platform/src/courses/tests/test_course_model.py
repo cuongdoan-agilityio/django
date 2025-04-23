@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from courses.models import Course
 from courses.factories import CourseFactory, CategoryFactory
-from instructors.factories import InstructorFactory
+from accounts.factories import UserFactory
 from core.constants import Status
 from core.tests.base import BaseTestCase
 
@@ -62,9 +62,9 @@ class CourseModelTest(BaseTestCase):
         """
 
         username = self.fake.name()
-        instructor = InstructorFactory(user__username=username)
+        instructor = UserFactory(username=username)
         course = CourseFactory(instructor=instructor)
-        self.assertEqual(course.instructor.user.username, username)
+        self.assertEqual(course.instructor.username, username)
 
     def test_course_empty_title(self):
         """

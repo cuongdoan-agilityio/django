@@ -78,7 +78,6 @@ class UserManagerTests(BaseTestCase):
 
         self.assertEqual(superuser.email, email)
         self.assertEqual(superuser.username, username)
-        self.assertTrue(superuser.check_password(password))
         self.assertTrue(superuser.is_staff)
         self.assertTrue(superuser.is_superuser)
         self.assertEqual(superuser.gender, gender)

@@ -3,11 +3,10 @@ from faker import Faker
 from rest_framework.test import APITestCase, APIClient
 from rest_framework.authtoken.models import Token
 
-from core.constants import Gender, ScholarshipChoices, Degree
+from core.constants import Gender, ScholarshipChoices, Degree, Role
 from accounts.factories import UserFactory
 from core.tests.utils.helpers import random_birthday, random_phone_number
-from instructors.factories import InstructorFactory, SubjectFactory
-from students.factories import StudentFactory
+from accounts.factories import SubjectFactory
 from courses.factories import CategoryFactory
 
 
@@ -30,9 +29,11 @@ class BaseTestCase(APITestCase):
         self.email = fake.email()
 
         self.student_user = UserFactory(
+            password=self.password,
             username=self.username,
             email=self.email,
-            password=self.password,
+            scholarship=random.choice(self.scholarships),
+            role=Role.STUDENT.value,
         )
 
         self.user = self.student_user
@@ -42,19 +43,12 @@ class BaseTestCase(APITestCase):
         self.instructor_username = fake.user_name()
         self.subject = SubjectFactory(name=fake.sentence(nb_words=5))
 
-        self.student_profile = StudentFactory(
-            user=self.student_user,
-            scholarship=random.choice(self.scholarships),
-        )
-
         self.instructor_user = UserFactory(
+            password=self.password,
             username=self.instructor_username,
             email=self.instructor_email,
-            password=self.password,
-        )
-        self.instructor_profile = InstructorFactory(
-            user=self.instructor_user,
             degree=random.choice(self.degrees),
+            role=Role.INSTRUCTOR.value,
         )
 
         self.category_name = fake.sentence(nb_words=6)
