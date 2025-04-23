@@ -195,3 +195,13 @@ class UserSerializer(serializers.ModelSerializer):
             "date_of_birth",
             "gender",
         ]
+
+
+class SubjectSerializer(serializers.ModelSerializer):
+    """
+    Subject serializer
+    """
+
+    class Meta:
+        model = Subject
+        fields = ["id", "name", "description"]

@@ -3,13 +3,14 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin
+from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin, ListModelMixin
 from django.contrib.auth import authenticate, get_user_model
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
 )
 
+from accounts.models import Subject
 from core.api_views import BaseViewSet, BaseGenericViewSet
 from core.serializers import (
     BaseUnauthorizedResponseSerializer,
@@ -32,6 +33,7 @@ from .serializers import (
     RegisterSerializer,
     UserProfileUpdateSerializer,
     UserSerializer,
+    SubjectSerializer,
 )
 
 
@@ -223,4 +225,18 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         return self.ok(response_serializer.data)
 
 
-apps = [AuthenticationViewSet, UserViewSet]
+class SubjectViewSet(BaseGenericViewSet, ListModelMixin):
+    """
+    Subject view set.
+    """
+
+    permission_classes = [AllowAny]
+    serializer_class = SubjectSerializer
+    http_method_names = ["get"]
+    resource_name = "subjects"
+
+    def get_queryset(self):
+        return Subject.objects.all()
+
+
+apps = [AuthenticationViewSet, UserViewSet, SubjectViewSet]
