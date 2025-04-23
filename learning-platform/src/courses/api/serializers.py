@@ -4,7 +4,7 @@ from core.constants import Status
 from core.error_messages import ErrorMessage
 from courses.models import Course, Category, Enrollment
 
-from instructors.api.serializers import InstructorBaseSerializer
+from accounts.api.serializers import UserBaseSerializer
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -30,7 +30,7 @@ class CourseDataSerializer(serializers.ModelSerializer):
         status (CharField): The status of the course.
     """
 
-    instructor = InstructorBaseSerializer()
+    instructor = UserBaseSerializer()
     category = CategorySerializer()
 
     class Meta:

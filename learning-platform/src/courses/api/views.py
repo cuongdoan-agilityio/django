@@ -2,6 +2,7 @@ from rest_framework import filters
 import django_filters
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
+from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework.permissions import AllowAny
@@ -16,7 +17,7 @@ from core.serializers import (
 from core.error_messages import ErrorMessage
 from courses.permissions import CoursePermission
 from students.models import Student
-from students.api.serializers import StudentBaseSerializer
+from accounts.api.serializers import UserBaseSerializer
 
 from .response_schema import course_response_schema, student_list_response_schema
 
@@ -29,6 +30,9 @@ from .serializers import (
     EnrollmentCreateOrEditSerializer,
     EnrollmentSerializer,
 )
+
+
+User = get_user_model()
 
 
 class CustomFilter(django_filters.FilterSet):
@@ -84,8 +88,7 @@ class CourseViewSet(BaseModelViewSet):
             and self.request.user.is_authenticated
             and self.request.user.is_student
         ):
-            student = Student.objects.filter(user=self.request.user).first()
-            queryset = queryset.filter(enrollments__student=student)
+            queryset = queryset.filter(enrollments__student=self.request.user)
 
         return queryset
 
@@ -348,7 +351,7 @@ class CourseViewSet(BaseModelViewSet):
         page = paginator.paginate_queryset(users, request)
         serializer = BaseListSerializer(
             paginator.get_paginated_response(page).data,
-            context={"serializer_class": StudentBaseSerializer},
+            context={"serializer_class": UserBaseSerializer},
         )
         return self.ok(serializer.data)
 
