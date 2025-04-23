@@ -15,14 +15,10 @@ class CoursePermission(BasePermission):
             return True
 
         if view.action in ["create", "partial_update", "students"]:
-            return request.user.is_authenticated and hasattr(
-                request.user, "instructor_profile"
-            )
+            return request.user.is_authenticated and request.user.is_instructor
 
         if view.action in ["enroll", "leave"]:
-            return request.user.is_authenticated and hasattr(
-                request.user, "student_profile"
-            )
+            return request.user.is_authenticated and request.user.is_student
 
         return False
 
@@ -35,6 +31,6 @@ class CoursePermission(BasePermission):
             return True
 
         if view.action in ["partial_update", "students"]:
-            return obj.instructor == request.user.instructor_profile
+            return obj.instructor == request.user.is_instructor
 
         return False

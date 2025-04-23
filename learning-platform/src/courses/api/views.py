@@ -184,7 +184,7 @@ class CourseViewSet(BaseModelViewSet):
             course = serializer.save()
         else:
             course = serializer.save(
-                instructor=request.user.instructor_profile,
+                instructor=request.user,
             )
 
         course_serializer = BaseDetailSerializer(
