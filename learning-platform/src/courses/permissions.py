@@ -14,7 +14,7 @@ class CoursePermission(BasePermission):
         if request.user.is_superuser or view.action in ["list", "retrieve"]:
             return True
 
-        if view.action in ["create", "partial_update", "students"]:
+        if view.action in ["create", "partial_update", "get_students"]:
             return request.user.is_authenticated and request.user.is_instructor
 
         if view.action in ["enroll", "leave"]:
@@ -30,7 +30,7 @@ class CoursePermission(BasePermission):
         if request.user.is_superuser or view.action in ["retrieve"]:
             return True
 
-        if view.action in ["partial_update", "students"]:
+        if view.action in ["partial_update", "get_students"]:
             return obj.instructor == request.user
 
         return False

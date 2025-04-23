@@ -345,7 +345,7 @@ class CourseViewSet(BaseModelViewSet):
         course = self.get_object()
 
         enrollments = course.enrollments.all()
-        users = [enrollment.student.user for enrollment in enrollments]
+        users = [enrollment.student for enrollment in enrollments]
 
         paginator = self.paginator
         page = paginator.paginate_queryset(users, request)
