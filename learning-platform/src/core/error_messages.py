@@ -39,3 +39,4 @@ class ErrorMessage:
     SCHOLARSHIP_REQUIRED = "Scholarship is required for students."
     DEGREE_REQUIRED = "Degree is required for instructors."
     SUBJECT_REQUIRED = "Subjects is required for instructors."
+    INVALID_STUDENT_ID = "Invalid user ID."

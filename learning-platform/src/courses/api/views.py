@@ -16,7 +16,6 @@ from core.serializers import (
 )
 from core.error_messages import ErrorMessage
 from courses.permissions import CoursePermission
-from students.models import Student
 from accounts.api.serializers import UserBaseSerializer
 
 from .response_schema import course_response_schema, student_list_response_schema
@@ -273,7 +272,10 @@ class CourseViewSet(BaseModelViewSet):
         if request.user.is_superuser:
             if "student" not in request.data:
                 return self.bad_request({"student": ErrorMessage.STUDENT_DATA_REQUIRED})
-            student = request.data["student"]
+            try:
+                student = User.objects.get(id=request.data["student"])
+            except User.DoesNotExist:
+                return self.bad_request({"student": ErrorMessage.INVALID_STUDENT_ID})
         else:
             student = request.user
 
@@ -313,7 +315,10 @@ class CourseViewSet(BaseModelViewSet):
         if request.user.is_superuser:
             if "student" not in request.data:
                 return self.bad_request({"student": ErrorMessage.STUDENT_DATA_REQUIRED})
-            student = Student.objects.filter(id=request.data["student"]).first()
+            try:
+                student = User.objects.get(id=request.data["student"])
+            except User.DoesNotExist:
+                return self.bad_request({"student": ErrorMessage.INVALID_STUDENT_ID})
         else:
             student = request.user
 
