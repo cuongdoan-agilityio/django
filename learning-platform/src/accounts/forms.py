@@ -135,6 +135,10 @@ class UserEditForm(UserBaseForm):
         date_of_birth (DateField): The birth date of the user.
         gender (ChoiceField): The gender of the user.
         password (CharField): The password of the user.
+        role (ChoiceField): The role of the user.
+        scholarship (ChoiceField): The scholarship of the user.
+        degree (ChoiceField): The degree of the user.
+        specializations (ChoiceField): The specializations of the user.
     """
 
     username = forms.CharField(disabled=True)
