@@ -17,15 +17,16 @@ from .validators import validate_phone_number, validate_date_of_birth
 
 class Specialization(AbstractBaseModel):
     """
-    Subject model representing a subject that an instructor can specialize in.
+    Model representing a user specialization.
 
     Attributes:
-        name (CharField): The name of the subject.
+        name (CharField): The name of the specialization.
+        description (TextField): A description of the specialization.
     """
 
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(
-        help_text="Subject description", blank=True, null=True
+        help_text="Specialization description", blank=True, null=True
     )
 
     def __str__(self):
@@ -194,7 +195,7 @@ class User(AbstractUser, AbstractBaseModel):
     specializations = models.ManyToManyField(
         Specialization,
         related_name="user",
-        help_text="The subjects that the instructor specializes in.",
+        help_text="The specializations that the instructor specializes in.",
         blank=True,
     )
     degree = models.CharField(
