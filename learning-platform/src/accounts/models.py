@@ -130,11 +130,10 @@ class UserManager(BaseUserManager):
             date_of_birth=date_of_birth,
             gender=gender,
             role=Role.ADMIN.value,
+            is_staff=True,
+            is_superuser=True,
             **extra_fields,
         )
-        user.is_staff = True
-        user.is_superuser = True
-        user.save(using=self._db)
         return user
 
 
