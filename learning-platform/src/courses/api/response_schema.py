@@ -10,15 +10,15 @@ course_response_schema = OpenApiResponse(
             "Course Example",
             value={
                 "data": {
-                    "uuid": "e77fbdd1-b251-4b0b-8850-79c21ca2aced",
+                    "id": "e77fbdd1-b251-4b0b-8850-79c21ca2aced",
                     "title": "String",
                     "description": "String",
                     "category": {
-                        "uuid": "da544541-1511-4bad-8780-6dcd710a9abb",
+                        "id": "da544541-1511-4bad-8780-6dcd710a9abb",
                         "name": "String",
                     },
                     "instructor": {
-                        "uuid": "6e3ecf3d-7d0b-46ff-9d69-c081dfc096f8",
+                        "id": "6e3ecf3d-7d0b-46ff-9d69-c081dfc096f8",
                         "first_name": "String",
                         "last_name": "String",
                         "email": "instructor@example.com",
@@ -40,7 +40,7 @@ student_list_response_schema = OpenApiResponse(
             value={
                 "data": [
                     {
-                        "uuid": "f8fb076c-2622-431f-a414-b7f3216a7e15",
+                        "id": "f8fb076c-2622-431f-a414-b7f3216a7e15",
                         "username": "String",
                         "first_name": "String",
                         "last_name": "String",

@@ -53,8 +53,8 @@ class CourseAdmin(admin.ModelAdmin):
             queryset (QuerySet): The queryset of selected courses.
         """
 
-        selected_ids = queryset.values_list("uuid", flat=True)
-        if Enrollment.objects.filter(course__uuid__in=selected_ids).exists():
+        selected_ids = queryset.values_list("id", flat=True)
+        if Enrollment.objects.filter(course__id__in=selected_ids).exists():
             self.message_user(
                 request, ErrorMessage.COURSE_HAS_STUDENTS, level=messages.ERROR
             )
@@ -64,10 +64,10 @@ class CourseAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         query_set = super().get_queryset(request)
-        return query_set.select_related("category", "instructor", "instructor__user")
+        return query_set.select_related("category", "instructor")
 
     list_display = [
-        "uuid",
+        "id",
         "title",
         "description",
         "category",
@@ -78,7 +78,7 @@ class CourseAdmin(admin.ModelAdmin):
     ]
     list_per_page = settings.ADMIN_PAGE_SIZE
     list_filter = ["category", "status"]
-    search_fields = ["title", "category__name", "instructor__user__username"]
+    search_fields = ["title", "category__name", "instructor__username"]
     ordering = ["title"]
     autocomplete_fields = ["category", "instructor"]
 
@@ -97,7 +97,7 @@ class CategoryAdmin(admin.ModelAdmin):
             through the admin search functionality.
     """
 
-    list_display = ["uuid", "name", "description", "modified"]
+    list_display = ["id", "name", "description", "modified"]
     list_per_page = settings.ADMIN_PAGE_SIZE
     search_fields = ["name"]
     ordering = ["name"]
@@ -124,15 +124,15 @@ class EnrollmentAdmin(admin.ModelAdmin):
     """
 
     list_display = [
-        "uuid",
+        "id",
         "course__title",
-        "student__user__username",
+        "student__username",
         "modified",
     ]
     list_filter = ["course"]
     search_fields = [
         "course__title",
-        "student__user__username",
+        "student__username",
     ]
     list_per_page = settings.ADMIN_PAGE_SIZE
     ordering = ["course__title"]
@@ -152,4 +152,4 @@ class EnrollmentAdmin(admin.ModelAdmin):
         """
 
         queryset = super().get_queryset(request)
-        return queryset.select_related("course", "student__user")
+        return queryset.select_related("course", "student")

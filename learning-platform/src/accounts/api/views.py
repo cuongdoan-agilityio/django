@@ -3,13 +3,14 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin
+from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin, ListModelMixin
 from django.contrib.auth import authenticate, get_user_model
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
 )
 
+from accounts.models import Specialization
 from core.api_views import BaseViewSet, BaseGenericViewSet
 from core.serializers import (
     BaseUnauthorizedResponseSerializer,
@@ -18,9 +19,6 @@ from core.serializers import (
     BaseDetailSerializer,
 )
 from core.error_messages import ErrorMessage
-
-from instructors.api.serializers import InstructorProfileDataSerializer
-from students.api.serializers import StudentProfileDataSerializer
 
 from .response_schema import (
     user_profile_response_schema,
@@ -31,7 +29,8 @@ from .serializers import (
     LoginResponseSerializer,
     RegisterSerializer,
     UserProfileUpdateSerializer,
-    UserSerializer,
+    SpecializationSerializer,
+    UserProfileDataSerializer,
 )
 
 
@@ -129,7 +128,7 @@ class AuthenticationViewSet(BaseViewSet):
         user_instance = serializer.save()
 
         response_serializer = BaseDetailSerializer(
-            user_instance, context={"serializer_class": StudentProfileDataSerializer}
+            user_instance, context={"serializer_class": UserProfileDataSerializer}
         )
 
         return self.created(response_serializer.data)
@@ -144,23 +143,15 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
     """
 
     permission_classes = [IsAuthenticated]
-    serializer_class = StudentProfileDataSerializer
+    serializer_class = UserProfileDataSerializer
     http_method_names = ["get", "patch"]
     resource_name = "users"
 
-    def get_serializer_class(self):
-        user = self.request.user
-        if user and hasattr(user, "student_profile"):
-            return StudentProfileDataSerializer
-        if user and hasattr(user, "instructor_profile"):
-            return InstructorProfileDataSerializer
-        return UserSerializer
-
     def get_queryset(self):
-        return User.objects.select_related("student_profile", "instructor_profile")
+        return User.objects.all()
 
     @extend_schema(
-        description="Retrieve a user profile (Instructor or Student, admin) by uuid. "
+        description="Retrieve a user profile (Instructor or Student, admin) by id. "
         "Call `/api/v1/users/me` to get the authenticated user's profile.",
         responses={
             200: user_profile_response_schema,
@@ -173,12 +164,12 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         """
 
         user = request.user
-        pk = kwargs.get("uuid")
+        pk = kwargs.get("pk")
 
-        if not user.is_superuser and (pk not in ["me", str(user.uuid)]):
+        if not user.is_superuser and (pk not in ["me", str(user.id)]):
             return self.forbidden()
 
-        user = user if pk == "me" else self.get_queryset().filter(uuid=pk).first()
+        user = user if pk == "me" else self.get_queryset().filter(id=pk).first()
 
         serializer = BaseDetailSerializer(
             user, context={"serializer_class": self.get_serializer_class()}
@@ -205,22 +196,39 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         """
         user = request.user
 
-        pk = kwargs.get("uuid")
+        pk = kwargs.get("pk")
 
-        if not user.is_superuser and (pk not in ["me", str(user.uuid)]):
+        if not user.is_superuser and (pk not in ["me", str(user.id)]):
             return self.forbidden()
 
-        user = user if pk == "me" else self.get_queryset().filter(uuid=pk).first()
+        try:
+            user = user if pk == "me" else User.objects.get(id=pk)
+        except User.DoesNotExist:
+            return self.bad_request({"student": ErrorMessage.INVALID_USER_ID})
 
         serializer = UserProfileUpdateSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        updated_user = self.get_queryset().get(uuid=user.uuid)
+        updated_user = self.get_queryset().get(id=user.id)
         response_serializer = BaseDetailSerializer(
             updated_user, context={"serializer_class": self.get_serializer_class()}
         )
         return self.ok(response_serializer.data)
 
 
-apps = [AuthenticationViewSet, UserViewSet]
+class SpecializationViewSet(BaseGenericViewSet, ListModelMixin):
+    """
+    Specialization view set.
+    """
+
+    permission_classes = [AllowAny]
+    serializer_class = SpecializationSerializer
+    http_method_names = ["get"]
+    resource_name = "specializations"
+
+    def get_queryset(self):
+        return Specialization.objects.all()
+
+
+apps = [AuthenticationViewSet, UserViewSet, SpecializationViewSet]

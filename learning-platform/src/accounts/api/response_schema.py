@@ -11,7 +11,7 @@ user_profile_response_schema = OpenApiResponse(
             "Instructor Profile Example",
             value={
                 "data": {
-                    "uuid": "1e80d4c5-f612-4ead-a165-811b1466f03d",
+                    "id": "1e80d4c5-f612-4ead-a165-811b1466f03d",
                     "username": "String",
                     "first_name": "String",
                     "last_name": "String",
@@ -20,7 +20,7 @@ user_profile_response_schema = OpenApiResponse(
                     "date_of_birth": "1990-01-01",
                     "gender": "female",
                     "degree": "no",
-                    "subjects": [],
+                    "specializations": [],
                 }
             },
             response_only=True,
@@ -29,7 +29,7 @@ user_profile_response_schema = OpenApiResponse(
             "Student Profile Example",
             value={
                 "data": {
-                    "uuid": "1e80d4c5-f612-4ead-a165-811b1466f03d",
+                    "id": "1e80d4c5-f612-4ead-a165-811b1466f03d",
                     "username": "String",
                     "first_name": "String",
                     "last_name": "String",
@@ -46,7 +46,7 @@ user_profile_response_schema = OpenApiResponse(
             "Admin Profile Example",
             value={
                 "data": {
-                    "uuid": "deb00a3f-d4h8-2d74-asvb-bfda19ewf15f",
+                    "id": "deb00a3f-d4h8-2d74-asvb-bfda19ewf15f",
                     "username": "String",
                     "first_name": "String",
                     "last_name": "String",
@@ -69,7 +69,7 @@ student_profile_response_schema = OpenApiResponse(
             "Student Profile Example",
             value={
                 "data": {
-                    "uuid": "1e80d4c5-f612-4ead-a165-811b1466f03d",
+                    "id": "1e80d4c5-f612-4ead-a165-811b1466f03d",
                     "username": "String",
                     "first_name": "String",
                     "last_name": "String",

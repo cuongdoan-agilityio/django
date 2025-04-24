@@ -6,7 +6,7 @@ class ErrorMessage:
     INVALID_CREDENTIALS = "Invalid credentials."
     INVALID_STUDENT_AGE = "Student age must be between 6 and 100 years."
     INVALID_INSTRUCTOR_AGE = "Instructor age must be between 18 and 100 years."
-    SUBJECT_NOT_EXIST = "Subject does not exist."
+    SPECIALIZATION_NOT_EXIST = "Specialization does not exist."
     CATEGORY_NOT_EXIST = "Category does not exist."
     EMAIL_REQUIRED = "The Email must be set."
     PASSWORD_REQUIRED = "The Password must be set."
@@ -14,6 +14,7 @@ class ErrorMessage:
     PASSWORD_LOWERCASE = "Password must contain at least one lowercase letter."
     PASSWORD_UPPERCASE = "Password must contain at least one uppercase letter."
     PASSWORD_NUMBER = "Password must contain at least one number."
+    COMPLEX_PASSWORD = "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character."
     PASSWORD_SPECIAL_CHAR = "Password must contain at least one special character."
     EMAIL_EXISTS = "Email already exists. Please choose another one."
     USERNAME_EXISTS = "Username already exists. Please choose another one."
@@ -33,4 +34,10 @@ class ErrorMessage:
     ENROLLED_SAME_COURSE = (
         "Student cannot enroll in the same course: {course} more than once."
     )
+    REQUIRED_FIELD = "This field is required."
     INACTIVE_COURSE = "This course is currently inactive and cannot be enrolled in."
+    SCHOLARSHIP_REQUIRED = "Scholarship is required for students."
+    DEGREE_REQUIRED = "Degree is required for instructors."
+    SPECIALIZATION_REQUIRED = "Specializations is required for instructors."
+    INVALID_USER_ID = "Invalid user ID."
+    INVALID_DEGREE = "Invalid degree value."

@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-SPECIAL_CHARACTER = "!@#$%^&*()_+=-"
+SPECIAL_CHARACTER_REGEX = r'[!-@#$%^&*()_+="]'
 
 
 class BaseChoiceEnum(Enum):
@@ -94,3 +94,17 @@ class Status(BaseChoiceEnum):
 
     ACTIVATE = "activate"
     INACTIVE = "inactive"
+
+
+class Role(BaseChoiceEnum):
+    """
+    Role class representing different roles for users.
+    Attributes:
+        STUDENT (str): Represents student role.
+        INSTRUCTOR (str): Represents instructor role.
+        ADMIN (str): Represents admin role.
+    """
+
+    STUDENT = "student"
+    INSTRUCTOR = "instructor"
+    ADMIN = "admin"
