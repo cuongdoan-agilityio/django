@@ -168,6 +168,9 @@ class UserEditForm(UserBaseForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.is_student:
             self.fields["degree"].disabled = True
+            self.fields["degree"].widget = forms.HiddenInput()
             self.fields["specializations"].disabled = True
+            self.fields["specializations"].widget = forms.HiddenInput()
         if self.instance and self.instance.is_instructor:
             self.fields["scholarship"].disabled = True
+            self.fields["scholarship"].widget = forms.HiddenInput()
