@@ -3,10 +3,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 
 from core.constants import ScholarshipChoices, Degree
-from accounts.validators import validate_phone_number as check_phone_number
 from core.error_messages import ErrorMessage
 from accounts.models import Subject
-from datetime import date
 
 User = get_user_model()
 
@@ -116,33 +114,6 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         for subject in value:
             if not Subject.objects.filter(id=subject).exists():
                 raise serializers.ValidationError(ErrorMessage.SUBJECT_NOT_EXIST)
-        return value
-
-    def validate_phone_number(self, value):
-        """
-        Validates the phone_number field.
-        """
-
-        return check_phone_number(value)
-
-    def validate_date_of_birth(self, value):
-        """
-        Validates the date_of_birth field based on the user's.
-        """
-
-        today = date.today()
-        age = (
-            today.year
-            - value.year
-            - ((today.month, today.day) < (value.month, value.day))
-        )
-
-        if hasattr(self.instance, "student_profile"):
-            if age < 6 or age > 100:
-                raise serializers.ValidationError(ErrorMessage.INVALID_STUDENT_AGE)
-        elif hasattr(self.instance, "instructor_profile"):
-            if age < 18 or age > 100:
-                raise serializers.ValidationError(ErrorMessage.INVALID_INSTRUCTOR_AGE)
         return value
 
     def update(self, instance, validated_data):
