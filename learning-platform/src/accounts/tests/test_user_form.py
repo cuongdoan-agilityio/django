@@ -1,6 +1,5 @@
 import random
 from accounts.forms import UserBaseForm, UserEditForm
-from students.factories import StudentFactory
 from accounts.factories import UserFactory
 from core.error_messages import ErrorMessage
 from core.tests.base import BaseTestCase
@@ -101,8 +100,7 @@ class UserBaseFormTest(BaseTestCase):
         """
 
         email = "invalid.email@example.com"
-        user = UserFactory(email=email)
-        StudentFactory(user=user)
+        UserFactory(email=email)
 
         self.student_data["email"] = email
         form = UserBaseForm(data=self.student_data)
