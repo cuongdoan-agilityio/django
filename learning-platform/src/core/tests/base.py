@@ -27,6 +27,9 @@ class BaseTestCase(APITestCase):
         self.first_name = fake.first_name()
         self.last_name = fake.last_name()
         self.email = fake.email()
+        self.student_role = Role.STUDENT.value
+        self.instructor_role = Role.INSTRUCTOR.value
+        self.admin_role = Role.ADMIN.value
 
         self.student_user = UserFactory(
             password=self.password,

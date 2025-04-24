@@ -23,7 +23,7 @@ class UserManagerTests(BaseTestCase):
         self.assertTrue(self.user.check_password(self.password))
         self.assertEqual(self.user.username, self.username)
 
-    def test_create_user_without_email(self):
+    def test_create_student_without_email(self):
         """
         Test create a user without an email.
         """
@@ -33,11 +33,30 @@ class UserManagerTests(BaseTestCase):
                 username=self.fake.user_name(),
                 first_name=self.fake.first_name(),
                 last_name=self.fake.last_name(),
+                role=self.student_role,
                 email="",
                 password=self.password,
+                scholarship=self.random_scholarship(),
             )
 
-    def test_create_user_without_password(self):
+    def test_create_instructor_without_email(self):
+        """
+        Test create a user without an email.
+        """
+
+        with self.assertRaises(ValueError):
+            UserFactory(
+                username=self.fake.user_name(),
+                first_name=self.fake.first_name(),
+                last_name=self.fake.last_name(),
+                role=self.instructor_role,
+                email="",
+                password=self.password,
+                degree=self.random_degree(),
+                subject=self.subject,
+            )
+
+    def test_create_student_without_password(self):
         """
         Test create a user without a password.
         """
@@ -48,6 +67,25 @@ class UserManagerTests(BaseTestCase):
                 first_name=self.fake.first_name(),
                 last_name=self.fake.last_name(),
                 email=self.fake.email(),
+                role=self.student_role,
+                scholarship=self.random_scholarship(),
+                password="",
+            )
+
+    def test_create_instructor_without_password(self):
+        """
+        Test create a user without a password.
+        """
+
+        with self.assertRaises(ValueError):
+            UserFactory(
+                username=self.fake.user_name(),
+                first_name=self.fake.first_name(),
+                last_name=self.fake.last_name(),
+                email=self.fake.email(),
+                role=self.instructor_role,
+                degree=self.random_degree(),
+                subject=self.subject,
                 password="",
             )
 
@@ -83,6 +121,7 @@ class UserManagerTests(BaseTestCase):
         self.assertEqual(superuser.gender, gender)
         self.assertEqual(superuser.first_name, first_name)
         self.assertEqual(superuser.last_name, last_name)
+        self.assertEqual(superuser.role, self.admin_role)
 
 
 class UserModelTests(BaseTestCase):
@@ -102,12 +141,7 @@ class UserModelTests(BaseTestCase):
         self.date_of_birth = self.random_date_of_birth(is_student=False)
         self.gender = self.random_gender()
 
-    def test_user_creation(self):
-        """
-        Test create a user with all fields.
-        """
-
-        user = UserFactory(
+        self.new_user = UserFactory(
             username=self.username,
             first_name=self.first_name,
             last_name=self.last_name,
@@ -116,12 +150,26 @@ class UserModelTests(BaseTestCase):
             phone_number=self.phone_number,
             date_of_birth=self.date_of_birth,
             gender=self.gender,
+            role=self.student_role,
         )
-        self.assertEqual(user.username, self.username)
-        self.assertEqual(user.first_name, self.first_name)
-        self.assertEqual(user.last_name, self.last_name)
-        self.assertEqual(user.email, self.email)
-        self.assertEqual(user.phone_number, self.phone_number)
-        self.assertEqual(user.date_of_birth, self.date_of_birth)
-        self.assertEqual(user.gender, self.gender)
-        self.assertEqual(str(user), self.email)
+
+    def test_user_creation(self):
+        """
+        Test create a user with all fields.
+        """
+
+        self.assertEqual(self.new_user.username, self.username)
+        self.assertEqual(self.new_user.first_name, self.first_name)
+        self.assertEqual(self.new_user.last_name, self.last_name)
+        self.assertEqual(self.new_user.email, self.email)
+        self.assertEqual(self.new_user.phone_number, self.phone_number)
+        self.assertEqual(self.new_user.date_of_birth, self.date_of_birth)
+        self.assertEqual(self.new_user.gender, self.gender)
+        self.assertEqual(self.new_user.role, self.student_role)
+
+    def test_user_str(self):
+        """
+        Test the string representation of the user.
+        """
+
+        self.assertEqual(str(self.new_user), self.email)
