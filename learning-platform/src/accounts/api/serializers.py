@@ -184,7 +184,7 @@ class SpecializationSerializer(serializers.ModelSerializer):
 
 class UserBaseSerializer(serializers.ModelSerializer):
     """
-    Base serializer for student data.
+    Base serializer for user data.
     """
 
     class Meta:
