@@ -275,7 +275,7 @@ class CourseViewSet(BaseModelViewSet):
             try:
                 student = User.objects.get(id=request.data["student"])
             except User.DoesNotExist:
-                return self.bad_request({"student": ErrorMessage.INVALID_STUDENT_ID})
+                return self.bad_request({"student": ErrorMessage.INVALID_USER_ID})
         else:
             student = request.user
 
@@ -318,7 +318,7 @@ class CourseViewSet(BaseModelViewSet):
             try:
                 student = User.objects.get(id=request.data["student"])
             except User.DoesNotExist:
-                return self.bad_request({"student": ErrorMessage.INVALID_STUDENT_ID})
+                return self.bad_request({"student": ErrorMessage.INVALID_USER_ID})
         else:
             student = request.user
 
