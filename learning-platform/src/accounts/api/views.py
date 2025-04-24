@@ -148,7 +148,7 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
     resource_name = "users"
 
     def get_queryset(self):
-        return User.objects.select_related("student_profile", "instructor_profile")
+        return User.objects.all()
 
     @extend_schema(
         description="Retrieve a user profile (Instructor or Student, admin) by id. "
@@ -201,7 +201,10 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         if not user.is_superuser and (pk not in ["me", str(user.id)]):
             return self.forbidden()
 
-        user = user if pk == "me" else self.get_queryset().filter(id=pk).first()
+        try:
+            user = user if pk == "me" else User.objects.get(id=pk)
+        except User.DoesNotExist:
+            return self.bad_request({"student": ErrorMessage.INVALID_USER_ID})
 
         serializer = UserProfileUpdateSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)

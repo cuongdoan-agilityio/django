@@ -139,6 +139,9 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         if "specializations" in validated_data and instance.is_instructor:
             instance.specializations.set(validated_data["specializations"])
 
+        if "password" not in validated_data:
+            instance.password = None
+
         instance.phone_number = validated_data.get(
             "phone_number", instance.phone_number
         )

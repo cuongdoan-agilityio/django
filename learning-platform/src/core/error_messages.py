@@ -39,5 +39,5 @@ class ErrorMessage:
     SCHOLARSHIP_REQUIRED = "Scholarship is required for students."
     DEGREE_REQUIRED = "Degree is required for instructors."
     SPECIALIZATION_REQUIRED = "Specializations is required for instructors."
-    INVALID_STUDENT_ID = "Invalid user ID."
+    INVALID_USER_ID = "Invalid user ID."
     INVALID_DEGREE = "Invalid degree value."
