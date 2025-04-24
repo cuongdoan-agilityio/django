@@ -6,7 +6,7 @@ from rest_framework.authtoken.models import Token
 from core.constants import Gender, ScholarshipChoices, Degree, Role
 from accounts.factories import UserFactory
 from core.tests.utils.helpers import random_birthday, random_phone_number
-from accounts.factories import SubjectFactory
+from accounts.factories import SpecializationFactory
 from courses.factories import CategoryFactory
 
 
@@ -44,7 +44,7 @@ class BaseTestCase(APITestCase):
 
         self.instructor_email = fake.email()
         self.instructor_username = fake.user_name()
-        self.subject = SubjectFactory(name=fake.sentence(nb_words=5))
+        self.specialization = SpecializationFactory(name=fake.sentence(nb_words=5))
 
         self.instructor_user = UserFactory(
             password=self.password,

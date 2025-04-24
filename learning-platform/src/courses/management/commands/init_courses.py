@@ -2,7 +2,7 @@ import random
 from faker import Faker
 from django.core.management.base import BaseCommand
 from courses.models import Course, Category
-from accounts.models import Subject
+from accounts.models import Specialization
 from core.constants import Degree, Status, Gender, Role
 from django.contrib.auth import get_user_model
 from core.tests.utils.helpers import random_birthday, random_phone_number
@@ -17,13 +17,13 @@ class Command(BaseCommand):
     Init courses command.
     """
 
-    help = "Init courses, instructors, categories and subjects using Faker."
+    help = "Init courses, instructors, categories and specializations using Faker."
 
     def handle(self, *args, **options):
         for _ in range(50):
             category_name = fake.word()
             category_description = fake.paragraph(nb_sentences=1)
-            subject_description = fake.paragraph(nb_sentences=1)
+            specialization_description = fake.paragraph(nb_sentences=1)
 
             instructor_first_name = fake.first_name()
             instructor_last_name = fake.last_name()
@@ -41,8 +41,8 @@ class Command(BaseCommand):
             category, _ = Category.objects.get_or_create(
                 name=category_name, defaults={"description": category_description}
             )
-            subject, _ = Subject.objects.get_or_create(
-                name=category_name, defaults={"description": subject_description}
+            specialization, _ = Specialization.objects.get_or_create(
+                name=category_name, defaults={"description": specialization_description}
             )
             degree = random.choice([degree.value for degree in Degree])
 
@@ -58,7 +58,7 @@ class Command(BaseCommand):
                 degree=degree,
                 role=Role.INSTRUCTOR.value,
             )
-            user_instance.subjects.set([str(subject.id)])
+            user_instance.specializations.set([str(specialization.id)])
 
             status = random.choice([status.value for status in Status])
             Course.objects.create(

@@ -3,7 +3,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 
 
-from accounts.models import Subject
+from accounts.models import Specialization
 from accounts.forms import UserBaseForm, UserEditForm
 from core.filters import GenderFilter
 from core.constants import Role
@@ -11,14 +11,14 @@ from core.constants import Role
 User = get_user_model()
 
 
-@admin.register(Subject)
-class SubjectAdmin(admin.ModelAdmin):
+@admin.register(Specialization)
+class SpecializationAdmin(admin.ModelAdmin):
     """
-    Admin configuration for the Subject model.
+    Admin configuration for the Specialization model.
 
-    This class defines how the Subject model is displayed and managed
+    This class defines how the Specialization model is displayed and managed
     within the Django admin interface. It provides features for listing
-    and searching Subject instances.
+    and searching Specialization instances.
 
     Attributes:
         list_display (list): A list of model fields to be displayed in the
@@ -170,12 +170,18 @@ class UserAdmin(admin.ModelAdmin):
         "date_of_birth",
         "gender",
         "scholarship",
-        "get_subjects",
+        "get_specializations",
         "degree",
         "modified",
     ]
 
-    list_filter = [GenderFilter, ScholarshipFilter, RoleFilter, "degree", "subjects"]
+    list_filter = [
+        GenderFilter,
+        ScholarshipFilter,
+        RoleFilter,
+        "degree",
+        "specializations",
+    ]
     search_fields = [
         "username",
         "first_name",
@@ -184,7 +190,7 @@ class UserAdmin(admin.ModelAdmin):
         "email",
     ]
     ordering = ["username", "-modified"]
-    autocomplete_fields = ["subjects"]
+    autocomplete_fields = ["specializations"]
     list_per_page = settings.ADMIN_PAGE_SIZE
 
     def get_queryset(self, request):
@@ -193,7 +199,7 @@ class UserAdmin(admin.ModelAdmin):
         """
 
         queryset = super().get_queryset(request)
-        return queryset.prefetch_related("subjects")
+        return queryset.prefetch_related("specializations")
 
     def get_form(self, request, obj=None, **kwargs):
         """

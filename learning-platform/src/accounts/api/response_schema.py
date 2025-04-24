@@ -20,7 +20,7 @@ user_profile_response_schema = OpenApiResponse(
                     "date_of_birth": "1990-01-01",
                     "gender": "female",
                     "degree": "no",
-                    "subjects": [],
+                    "specializations": [],
                 }
             },
             response_only=True,

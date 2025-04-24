@@ -15,7 +15,7 @@ from core.error_messages import ErrorMessage
 from .validators import validate_phone_number, validate_date_of_birth
 
 
-class Subject(AbstractBaseModel):
+class Specialization(AbstractBaseModel):
     """
     Subject model representing a subject that an instructor can specialize in.
 
@@ -191,8 +191,8 @@ class User(AbstractUser, AbstractBaseModel):
         null=True,
         db_index=True,
     )
-    subjects = models.ManyToManyField(
-        Subject,
+    specializations = models.ManyToManyField(
+        Specialization,
         related_name="user",
         help_text="The subjects that the instructor specializes in.",
         blank=True,
@@ -233,7 +233,7 @@ class User(AbstractUser, AbstractBaseModel):
             if self.scholarship not in ScholarshipChoices.values():
                 raise ValidationError(ErrorMessage.REQUIRED_FIELD)
             self.degree = None
-            self.subjects.clear()
+            self.specializations.clear()
 
         if self.role == Role.INSTRUCTOR.value:
             if self.degree not in Degree.values():
@@ -250,8 +250,8 @@ class User(AbstractUser, AbstractBaseModel):
 
         super().save(*args, **kwargs)
 
-    def get_subjects(self):
-        return ", ".join([spec.name for spec in self.subjects.all()])
+    def get_specializations(self):
+        return ", ".join([spec.name for spec in self.specializations.all()])
 
     @property
     def is_instructor(self):

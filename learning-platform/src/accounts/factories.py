@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from factory.django import DjangoModelFactory as ModelFactory
 from factory import Iterator, Faker, Sequence
 
-from accounts.models import Subject
+from accounts.models import Specialization
 from core.constants import ScholarshipChoices
 
 
@@ -42,12 +42,12 @@ class StudentFactory(UserFactory):
     scholarship = Iterator(ScholarshipChoices.values())
 
 
-class SubjectFactory(ModelFactory):
+class SpecializationFactory(ModelFactory):
     """
-    Faker for Subject model.
+    Faker for Specialization model.
     """
 
-    name = Sequence(lambda n: f"Subject_{n}")
+    name = Sequence(lambda n: f"Specialization_{n}")
     description = Faker("paragraph")
 
     class Meta:
@@ -55,4 +55,4 @@ class SubjectFactory(ModelFactory):
         Meta class
         """
 
-        model = Subject
+        model = Specialization

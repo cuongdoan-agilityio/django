@@ -10,7 +10,7 @@ from drf_spectacular.utils import (
     extend_schema_view,
 )
 
-from accounts.models import Subject
+from accounts.models import Specialization
 from core.api_views import BaseViewSet, BaseGenericViewSet
 from core.serializers import (
     BaseUnauthorizedResponseSerializer,
@@ -29,7 +29,7 @@ from .serializers import (
     LoginResponseSerializer,
     RegisterSerializer,
     UserProfileUpdateSerializer,
-    SubjectSerializer,
+    SpecializationSerializer,
     UserProfileDataSerializer,
 )
 
@@ -214,18 +214,18 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         return self.ok(response_serializer.data)
 
 
-class SubjectViewSet(BaseGenericViewSet, ListModelMixin):
+class SpecializationViewSet(BaseGenericViewSet, ListModelMixin):
     """
-    Subject view set.
+    Specialization view set.
     """
 
     permission_classes = [AllowAny]
-    serializer_class = SubjectSerializer
+    serializer_class = SpecializationSerializer
     http_method_names = ["get"]
-    resource_name = "subjects"
+    resource_name = "specializations"
 
     def get_queryset(self):
-        return Subject.objects.all()
+        return Specialization.objects.all()
 
 
-apps = [AuthenticationViewSet, UserViewSet, SubjectViewSet]
+apps = [AuthenticationViewSet, UserViewSet, SpecializationViewSet]

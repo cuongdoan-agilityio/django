@@ -55,7 +55,7 @@ class UserBaseForm(forms.ModelForm):
             "password",
             "role",
             "scholarship",
-            "subjects",
+            "specializations",
             "degree",
         )
 
@@ -117,8 +117,8 @@ class UserBaseForm(forms.ModelForm):
         if self.cleaned_data.get("role") == Role.INSTRUCTOR.value:
             if not self.cleaned_data.get("degree"):
                 raise forms.ValidationError(ErrorMessage.DEGREE_REQUIRED)
-            if not self.cleaned_data.get("subjects"):
-                raise forms.ValidationError(ErrorMessage.SUBJECT_REQUIRED)
+            if not self.cleaned_data.get("specializations"):
+                raise forms.ValidationError(ErrorMessage.SPECIALIZATION_REQUIRED)
         return super().clean()
 
 
@@ -164,6 +164,6 @@ class UserEditForm(UserBaseForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.is_student:
             self.fields["degree"].disabled = True
-            self.fields["subjects"].disabled = True
+            self.fields["specializations"].disabled = True
         if self.instance and self.instance.is_instructor:
             self.fields["scholarship"].disabled = True

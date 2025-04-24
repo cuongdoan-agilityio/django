@@ -4,7 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 
 from core.constants import ScholarshipChoices, Degree
 from core.error_messages import ErrorMessage
-from accounts.models import Subject
+from accounts.models import Specialization
 
 User = get_user_model()
 
@@ -91,7 +91,9 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         choices=ScholarshipChoices.choices(), required=False
     )
     degree = serializers.ChoiceField(choices=Degree.choices(), required=False)
-    subjects = serializers.ListField(child=serializers.CharField(), required=False)
+    specializations = serializers.ListField(
+        child=serializers.CharField(), required=False
+    )
 
     class Meta:
         model = User
@@ -103,17 +105,17 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             "gender",
             "scholarship",
             "degree",
-            "subjects",
+            "specializations",
         ]
 
-    def validate_subjects(self, value):
+    def validate_specializations(self, value):
         """
-        Validates the subjects field.
+        Validates the specializations field.
         """
 
-        for subject in value:
-            if not Subject.objects.filter(id=subject).exists():
-                raise serializers.ValidationError(ErrorMessage.SUBJECT_NOT_EXIST)
+        for specialization in value:
+            if not Specialization.objects.filter(id=specialization).exists():
+                raise serializers.ValidationError(ErrorMessage.SPECIALIZATION_NOT_EXIST)
         return value
 
     def update(self, instance, validated_data):
@@ -134,8 +136,8 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         if "degree" in validated_data and instance.is_instructor:
             instance.degree = validated_data["degree"]
 
-        if "subjects" in validated_data and instance.is_instructor:
-            instance.subjects.set(validated_data["subjects"])
+        if "specializations" in validated_data and instance.is_instructor:
+            instance.specializations.set(validated_data["specializations"])
 
         instance.phone_number = validated_data.get(
             "phone_number", instance.phone_number
@@ -170,13 +172,13 @@ class UserSerializer(serializers.ModelSerializer):
         ]
 
 
-class SubjectSerializer(serializers.ModelSerializer):
+class SpecializationSerializer(serializers.ModelSerializer):
     """
-    Subject serializer
+    Specialization serializer
     """
 
     class Meta:
-        model = Subject
+        model = Specialization
         fields = ["id", "name", "description"]
 
 
@@ -214,5 +216,5 @@ class UserProfileDataSerializer(UserBaseSerializer):
             "scholarship",
             "role",
             "degree",
-            "subjects",
+            "specializations",
         ]

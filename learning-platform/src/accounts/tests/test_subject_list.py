@@ -1,46 +1,46 @@
 from rest_framework import status
-from accounts.models import Subject
-from accounts.factories import SubjectFactory
+from accounts.models import Specialization
+from accounts.factories import SpecializationFactory
 from core.tests.base import BaseTestCase
 
 
-class SubjectViewSetTest(BaseTestCase):
+class SpecializationViewSetTest(BaseTestCase):
     """
-    Test case for the SubjectViewSet.
+    Test case for the SpecializationViewSet.
     """
 
     def setUp(self):
         """
-        Set up the test case with sample subjects.
+        Set up the test case with sample specializations.
         """
         super().setUp()
 
-        Subject.objects.all().delete()
-        self.subject_name = self.fake.sentence(nb_words=5)
-        self.another_subject_name = self.fake.sentence(nb_words=5)
-        SubjectFactory(name=self.subject_name)
-        SubjectFactory(name=self.another_subject_name)
+        Specialization.objects.all().delete()
+        self.specialization_name = self.fake.sentence(nb_words=5)
+        self.another_specialization_name = self.fake.sentence(nb_words=5)
+        SpecializationFactory(name=self.specialization_name)
+        SpecializationFactory(name=self.another_specialization_name)
 
-        self.url = f"{self.root_url}subjects/"
+        self.url = f"{self.root_url}specializations/"
 
-    def test_list_subjects_ok(self):
+    def test_list_specializations_ok(self):
         """
-        Test listing all subjects.
+        Test listing all specializations.
         """
 
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data["data"]
         self.assertEqual(len(data), 2)
-        self.assertEqual(data[0]["name"], self.subject_name)
-        self.assertEqual(data[1]["name"], self.another_subject_name)
+        self.assertEqual(data[0]["name"], self.specialization_name)
+        self.assertEqual(data[1]["name"], self.another_specialization_name)
 
-    def test_list_subjects_empty(self):
+    def test_list_specializations_empty(self):
         """
-        Test listing subjects when there are no subjects.
+        Test listing specializations when there are no specializations.
         """
 
-        Subject.objects.all().delete()
+        Specialization.objects.all().delete()
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -48,9 +48,9 @@ class SubjectViewSetTest(BaseTestCase):
         data = response.data["data"]
         self.assertEqual(data, [])
 
-    def test_subject_viewset_permissions(self):
+    def test_specialization_viewset_permissions(self):
         """
-        Test that the SubjectViewSet allows any user to access the list of subjects.
+        Test that the SpecializationViewSet allows any user to access the list of specializations.
         """
 
         self.client.logout()
@@ -58,9 +58,9 @@ class SubjectViewSetTest(BaseTestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_list_subjects_with_limit_offset(self):
+    def test_list_specializations_with_limit_offset(self):
         """
-        Test that subjects are listed in alphabetical order by default.
+        Test that specializations are listed in alphabetical order by default.
         """
 
         response = self.client.get(f"{self.url}?limit=5&offset=1")
@@ -69,19 +69,19 @@ class SubjectViewSetTest(BaseTestCase):
 
         data = response.data["data"]
         self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]["name"], self.another_subject_name)
+        self.assertEqual(data[0]["name"], self.another_specialization_name)
 
         pagination = response.data["meta"]["pagination"]
         self.assertEqual(pagination["limit"], 5)
         self.assertEqual(pagination["offset"], 1)
         self.assertEqual(pagination["total"], 2)
 
-    def test_list_subjects_failed(self):
+    def test_list_specializations_failed(self):
         """
-        Test that the request to list subjects fails due to an invalid URL.
+        Test that the request to list specializations fails due to an invalid URL.
         """
 
-        invalid_url = f"{self.root_url}invalid_subjects/"
+        invalid_url = f"{self.root_url}invalid_specializations/"
         response = self.client.get(invalid_url)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

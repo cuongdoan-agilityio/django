@@ -53,7 +53,7 @@ class UserManagerTests(BaseTestCase):
                 email="",
                 password=self.password,
                 degree=self.random_degree(),
-                subject=self.subject,
+                specialization=self.specialization,
             )
 
     def test_create_student_without_password(self):
@@ -85,7 +85,7 @@ class UserManagerTests(BaseTestCase):
                 email=self.fake.email(),
                 role=self.instructor_role,
                 degree=self.random_degree(),
-                subject=self.subject,
+                specialization=self.specialization,
                 password="",
             )
 

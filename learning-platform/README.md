@@ -188,10 +188,10 @@ Setup environments: create `.env` follow `.env.example` with your own settings
 
 7. Flow create data with admin page
 - Login to [admin page](http://127.0.0.1:8000/admin-dashboard/) with admin info.
-- Create course subjects.
+- Create course specializations.
 - Create students.
 - Create instructors.
-- Create courses with subject and instructor.
+- Create courses with specialization and instructor.
 - Create Enrollments.
 
 ## Unit Testing
@@ -214,9 +214,9 @@ Setup environments: create `.env` follow `.env.example` with your own settings
 - Category
   - Get category
     - GET: /api/v1/categories/
-- Subject
-  - Get subject
-    - GET: /api/v1/subjects/
+- Specialization
+  - Get specialization
+    - GET: /api/v1/specializations/
 - Courses
   - Get courses
     - GET: /api/v1/courses/

@@ -44,13 +44,9 @@ class UserBaseFormTest(BaseTestCase):
             "username": self.fake.user_name(),
             "email": self.fake.email(),
             "role": Role.INSTRUCTOR.value,
-            "subjects": [str(self.subject.id)],
+            "specializations": [str(self.specialization.id)],
             "degree": self.random_degree(),
         }
-
-    # def tearDown(self):
-    #     # Student.objects.all().delete()
-    #     super().tearDown()
 
     def test_create_student_with_valid_data(self):
         """
@@ -229,7 +225,7 @@ class StudentEditFormTest(BaseTestCase):
         self.instructor_data = {
             **self.update_data,
             "email": self.fake.email(),
-            "subjects": [str(self.subject.id)],
+            "specializations": [str(self.specialization.id)],
             "degree": self.random_degree(),
         }
 
