@@ -3,11 +3,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 
 from core.constants import ScholarshipChoices, Degree
-from accounts.validators import validate_phone_number as check_phone_number
 from core.error_messages import ErrorMessage
-from students.models import Student
-from instructors.models import Subject
-from datetime import date
+from accounts.models import Specialization
 
 User = get_user_model()
 
@@ -74,8 +71,14 @@ class RegisterSerializer(serializers.ModelSerializer):
             User: The created user instance.
         """
 
-        user = User.objects.create_user(**validated_data)
-        Student.objects.create(user=user, scholarship=ScholarshipChoices.ZERO.value)
+        user = User(
+            username=validated_data["username"],
+            email=validated_data["email"],
+            scholarship=ScholarshipChoices.ZERO.value,
+            password=validated_data["password"],
+        )
+        user.full_clean()
+        user.save()
         return user
 
 
@@ -88,7 +91,9 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         choices=ScholarshipChoices.choices(), required=False
     )
     degree = serializers.ChoiceField(choices=Degree.choices(), required=False)
-    subjects = serializers.ListField(child=serializers.CharField(), required=False)
+    specializations = serializers.ListField(
+        child=serializers.CharField(), required=False
+    )
 
     class Meta:
         model = User
@@ -100,44 +105,17 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             "gender",
             "scholarship",
             "degree",
-            "subjects",
+            "specializations",
         ]
 
-    def validate_subjects(self, value):
+    def validate_specializations(self, value):
         """
-        Validates the subjects field.
-        """
-
-        for subject in value:
-            if not Subject.objects.filter(id=subject).exists():
-                raise serializers.ValidationError(ErrorMessage.SUBJECT_NOT_EXIST)
-        return value
-
-    def validate_phone_number(self, value):
-        """
-        Validates the phone_number field.
+        Validates the specializations field.
         """
 
-        return check_phone_number(value)
-
-    def validate_date_of_birth(self, value):
-        """
-        Validates the date_of_birth field based on the user's.
-        """
-
-        today = date.today()
-        age = (
-            today.year
-            - value.year
-            - ((today.month, today.day) < (value.month, value.day))
-        )
-
-        if hasattr(self.instance, "student_profile"):
-            if age < 6 or age > 100:
-                raise serializers.ValidationError(ErrorMessage.INVALID_STUDENT_AGE)
-        elif hasattr(self.instance, "instructor_profile"):
-            if age < 18 or age > 100:
-                raise serializers.ValidationError(ErrorMessage.INVALID_INSTRUCTOR_AGE)
+        for specialization in value:
+            if not Specialization.objects.filter(id=specialization).exists():
+                raise serializers.ValidationError(ErrorMessage.SPECIALIZATION_NOT_EXIST)
         return value
 
     def update(self, instance, validated_data):
@@ -152,17 +130,14 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             User: The updated user instance.
         """
 
-        if "scholarship" in validated_data and hasattr(instance, "student_profile"):
-            instance.student_profile.scholarship = validated_data["scholarship"]
-            instance.student_profile.save()
+        if "scholarship" in validated_data and instance.is_student:
+            instance.scholarship = validated_data["scholarship"]
 
-        if "degree" in validated_data and hasattr(instance, "instructor_profile"):
-            instance.instructor_profile.degree = validated_data["degree"]
-            instance.instructor_profile.save()
+        if "degree" in validated_data and instance.is_instructor:
+            instance.degree = validated_data["degree"]
 
-        if "subjects" in validated_data and hasattr(instance, "instructor_profile"):
-            instance.instructor_profile.subjects.set(validated_data["subjects"])
-            instance.instructor_profile.save()
+        if "specializations" in validated_data and instance.is_instructor:
+            instance.specializations.set(validated_data["specializations"])
 
         instance.phone_number = validated_data.get(
             "phone_number", instance.phone_number
@@ -194,4 +169,52 @@ class UserSerializer(serializers.ModelSerializer):
             "phone_number",
             "date_of_birth",
             "gender",
+        ]
+
+
+class SpecializationSerializer(serializers.ModelSerializer):
+    """
+    Specialization serializer
+    """
+
+    class Meta:
+        model = Specialization
+        fields = ["id", "name", "description"]
+
+
+class UserBaseSerializer(serializers.ModelSerializer):
+    """
+    Base serializer for user data.
+    """
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+        ]
+
+
+class UserProfileDataSerializer(UserBaseSerializer):
+    """
+    Serializer for user profile data.
+    """
+
+    class Meta(UserBaseSerializer.Meta):
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "phone_number",
+            "date_of_birth",
+            "gender",
+            "scholarship",
+            "role",
+            "degree",
+            "specializations",
         ]

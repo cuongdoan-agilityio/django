@@ -79,7 +79,7 @@ class UserViewSetTests(BaseTestCase):
             "phone_number": self.random_user_phone_number(),
             "degree": self.random_degree(),
             "date_of_birth": self.random_date_of_birth(is_student=False),
-            "subjects": [self.subject.id],
+            "specializations": [self.specialization.id],
         }
 
         response = self.patch_json(
@@ -89,16 +89,16 @@ class UserViewSetTests(BaseTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_partial_update_instructor_profile_with_invalid_subjects(self):
+    def test_partial_update_instructor_profile_with_invalid_specializations(self):
         """
-        Test the partial_update action for an instructor with invalid subject.
+        Test the partial_update action for an instructor with invalid specialization.
         """
 
         data = {
             "phone_number": self.random_user_phone_number(),
             "degree": self.random_degree(),
             "date_of_birth": self.random_date_of_birth(is_student=False),
-            "subjects": [str(uuid.uuid4())],
+            "specializations": [str(uuid.uuid4())],
         }
 
         response = self.patch_json(
@@ -114,7 +114,7 @@ class UserViewSetTests(BaseTestCase):
         Test the partial_update action for an instructor with forbidden.
         """
 
-        data = {"subjects": [str(uuid.uuid4())]}
+        data = {"specializations": [str(uuid.uuid4())]}
 
         response = self.patch_json(
             url=f"{self.root_url}users/{str(uuid.uuid4())}/",

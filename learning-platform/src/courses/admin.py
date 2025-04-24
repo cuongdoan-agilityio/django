@@ -64,7 +64,7 @@ class CourseAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         query_set = super().get_queryset(request)
-        return query_set.select_related("category", "instructor", "instructor__user")
+        return query_set.select_related("category", "instructor")
 
     list_display = [
         "id",
@@ -78,7 +78,7 @@ class CourseAdmin(admin.ModelAdmin):
     ]
     list_per_page = settings.ADMIN_PAGE_SIZE
     list_filter = ["category", "status"]
-    search_fields = ["title", "category__name", "instructor__user__username"]
+    search_fields = ["title", "category__name", "instructor__username"]
     ordering = ["title"]
     autocomplete_fields = ["category", "instructor"]
 
@@ -126,13 +126,13 @@ class EnrollmentAdmin(admin.ModelAdmin):
     list_display = [
         "id",
         "course__title",
-        "student__user__username",
+        "student__username",
         "modified",
     ]
     list_filter = ["course"]
     search_fields = [
         "course__title",
-        "student__user__username",
+        "student__username",
     ]
     list_per_page = settings.ADMIN_PAGE_SIZE
     ordering = ["course__title"]
@@ -152,4 +152,4 @@ class EnrollmentAdmin(admin.ModelAdmin):
         """
 
         queryset = super().get_queryset(request)
-        return queryset.select_related("course", "student__user")
+        return queryset.select_related("course", "student")

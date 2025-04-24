@@ -1,7 +1,7 @@
 # Improve
 
 - Use other database management systems instead of `SQLite`.
-- `Subject` and `Category` models should have `many-to-many` relationships with each other.
+- `Specialization` and `Category` models should have `many-to-many` relationships with each other.
 - Need docker integration.
 - Handle exceptions before requests are sent to views, with [Middleware](https://docs.djangoproject.com/en/5.1/topics/http/middleware/)
 - Check again if the two models `Student` and `Instructor` are necessary
