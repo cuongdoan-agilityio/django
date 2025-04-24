@@ -40,3 +40,4 @@ class ErrorMessage:
     DEGREE_REQUIRED = "Degree is required for instructors."
     SPECIALIZATION_REQUIRED = "Specializations is required for instructors."
     INVALID_STUDENT_ID = "Invalid user ID."
+    INVALID_DEGREE = "Invalid degree value."
