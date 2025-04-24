@@ -2,10 +2,9 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth import get_user_model
 
 from factory.django import DjangoModelFactory as ModelFactory
-from factory import Iterator, Faker, Sequence
+from factory import Faker, Sequence
 
 from accounts.models import Specialization
-from core.constants import ScholarshipChoices
 
 
 User = get_user_model()
@@ -32,14 +31,6 @@ class UserFactory(ModelFactory):
     def _create(cls, model_class, **kwargs):
         manager = model_class.objects
         return manager.create_user(**kwargs)
-
-
-class StudentFactory(UserFactory):
-    """
-    Faker for student user.
-    """
-
-    scholarship = Iterator(ScholarshipChoices.values())
 
 
 class SpecializationFactory(ModelFactory):
