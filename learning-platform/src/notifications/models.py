@@ -15,7 +15,7 @@ class Notification(AbstractBaseModel):
         is_read (bool): Indicates whether the notification has been read or not.
     """
 
-    message = models.TextField()
+    message = models.TextField(help_text="Notification message")
     is_read = models.BooleanField(default=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"
