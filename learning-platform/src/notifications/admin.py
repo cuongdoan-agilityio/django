@@ -17,3 +17,10 @@ class NotificationAdmin(admin.ModelAdmin):
     list_filter = ["is_read", "user"]
     search_fields = ["message"]
     ordering = ["-modified"]
+
+    def get_readonly_fields(self, request, obj=None):
+        """
+        Returns a list of fields to be set as read-only in the admin form.
+        """
+
+        return ["user"] if obj else []
