@@ -1,7 +1,9 @@
 from django.core.exceptions import ValidationError
 import datetime
+import re
+from django.utils.translation import gettext as _
 
-from core.constants import SPECIAL_CHARACTER
+from core.constants import SPECIAL_CHARACTER_REGEX
 from core.error_messages import ErrorMessage
 
 
@@ -21,7 +23,7 @@ def validate_password(password):
             has_upper = True
         elif char.isdigit():
             has_digit = True
-        elif char in SPECIAL_CHARACTER:
+        elif char in SPECIAL_CHARACTER_REGEX:
             has_special = True
 
         if has_lower and has_upper and has_digit and has_special:
@@ -40,6 +42,33 @@ def validate_password(password):
         raise ValidationError(ErrorMessage.PASSWORD_SPECIAL_CHAR)
 
     return password
+
+
+class ComplexPasswordValidator:
+    def validate(self, password, user=None):
+        if not re.search(r"[A-Z]", password):
+            raise ValidationError(
+                _(ErrorMessage.PASSWORD_UPPERCASE),
+                code="password_no_upper",
+            )
+        if not re.search(r"[a-z]", password):
+            raise ValidationError(
+                _(ErrorMessage.PASSWORD_LOWERCASE),
+                code="password_no_lower",
+            )
+        if not re.search(r"\d", password):
+            raise ValidationError(
+                _(ErrorMessage.PASSWORD_NUMBER),
+                code="password_no_digit",
+            )
+        if not re.search(SPECIAL_CHARACTER_REGEX, password):
+            raise ValidationError(
+                _(ErrorMessage.PASSWORD_SPECIAL_CHAR),
+                code="password_no_special",
+            )
+
+    def get_help_text(self):
+        return _(ErrorMessage.COMPLEX_PASSWORD)
 
 
 def validate_phone_number(phone_number):

@@ -188,10 +188,10 @@ Setup environments: create `.env` follow `.env.example` with your own settings
 
 7. Flow create data with admin page
 - Login to [admin page](http://127.0.0.1:8000/admin-dashboard/) with admin info.
-- Create course subjects.
+- Create course specializations.
 - Create students.
 - Create instructors.
-- Create courses with subject and instructor.
+- Create courses with specialization and instructor.
 - Create Enrollments.
 
 ## Unit Testing
@@ -207,29 +207,29 @@ Setup environments: create `.env` follow `.env.example` with your own settings
     - POST: /api/v1/auth/signup/
 - User
   - Get profile
-    - GET: /api/v1/users/{uuid}/
+    - GET: /api/v1/users/{id}/
     - GET: /api/v1/users/me/
   - Update profile
-    - PATCH: /api/v1/users/{uuid}/
+    - PATCH: /api/v1/users/{id}/
 - Category
   - Get category
     - GET: /api/v1/categories/
-- Subject
-  - Get subject
-    - GET: /api/v1/subjects/
+- Specialization
+  - Get specialization
+    - GET: /api/v1/specializations/
 - Courses
   - Get courses
     - GET: /api/v1/courses/
   - Get course detail
-    - GET: /api/v1/courses/{uuid}/
+    - GET: /api/v1/courses/{id}/
   - Update course
-    - PATCH: /api/v1/courses/{uuid}/
+    - PATCH: /api/v1/courses/{id}/
   - Enroll course
-    - POST: /api/v1/courses/{uuid}/enroll/
+    - POST: /api/v1/courses/{id}/enroll/
   - Leave course
-    - POST: /api/v1/courses/{uuid}/leave/
+    - POST: /api/v1/courses/{id}/leave/
   - Get course student
-    - GET: /api/v1/courses/{uuid}/students/
+    - GET: /api/v1/courses/{id}/students/
 
 ## Issues
 - [Issues document](./documents/issues.md)

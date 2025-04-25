@@ -1,16 +1,36 @@
 from django.db import models
 from django.contrib.auth.models import (
-    AbstractBaseUser,
+    AbstractUser,
     BaseUserManager,
-    PermissionsMixin,
 )
-from django.contrib.auth.validators import UnicodeUsernameValidator
-from django.core.validators import MinLengthValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
+from django.contrib.auth.hashers import make_password
 
-from core.constants import Gender
+from core.constants import Gender, Role
 from core.models import AbstractBaseModel
+from core.constants import ScholarshipChoices
+from core.constants import Degree
 from core.error_messages import ErrorMessage
-from .validators import validate_phone_number, validate_password
+from .validators import validate_phone_number, validate_date_of_birth
+
+
+class Specialization(AbstractBaseModel):
+    """
+    Model representing a user specialization.
+
+    Attributes:
+        name (CharField): The name of the specialization.
+        description (TextField): A description of the specialization.
+    """
+
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(
+        help_text="Specialization description", blank=True, null=True
+    )
+
+    def __str__(self):
+        return self.name
 
 
 class UserManager(BaseUserManager):
@@ -66,9 +86,9 @@ class UserManager(BaseUserManager):
             phone_number=phone_number,
             date_of_birth=date_of_birth,
             gender=gender,
+            password=password,
             **extra_fields,
         )
-        user.set_password(password)
         user.save(using=self._db)
         return user
 
@@ -110,20 +130,20 @@ class UserManager(BaseUserManager):
             phone_number=phone_number,
             date_of_birth=date_of_birth,
             gender=gender,
+            role=Role.ADMIN.value,
+            is_staff=True,
+            is_superuser=True,
             **extra_fields,
         )
-        user.is_staff = True
-        user.is_superuser = True
-        user.save(using=self._db)
         return user
 
 
-class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
+class User(AbstractUser, AbstractBaseModel):
     """
     Custom user model.
 
     Attributes:
-        uuid (UUIDField): The UUID of the user.
+        id (UUIDField): The UUID of the user.
         username (CharField): The username of the user.
         first_name (CharField): The first name of the user.
         last_name (CharField): The last name of the user.
@@ -135,24 +155,27 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
         is_staff (BooleanField): Whether the user is staff.
     """
 
-    username_validator = UnicodeUsernameValidator()
-
-    username = models.CharField(
-        max_length=150,
-        unique=True,
-        validators=[username_validator],
+    first_name = models.CharField(
+        help_text="First name", max_length=150, blank=True, null=True, db_index=True
     )
-    first_name = models.CharField(max_length=30, blank=True, null=True, db_index=True)
-    last_name = models.CharField(max_length=30, blank=True, null=True, db_index=True)
-    email = models.EmailField(unique=True)
+    last_name = models.CharField(
+        help_text="Last name", max_length=150, blank=True, null=True, db_index=True
+    )
+    email = models.EmailField(help_text="email address", unique=True)
     phone_number = models.CharField(
+        help_text="Phone number",
         max_length=11,
         blank=True,
         null=True,
-        validators=[MinLengthValidator(10)],
+        validators=[validate_phone_number],
         db_index=True,
     )
-    date_of_birth = models.DateField(blank=True, null=True)
+    date_of_birth = models.DateField(
+        help_text="Date of birth",
+        blank=True,
+        null=True,
+        validators=[validate_date_of_birth],
+    )
     gender = models.CharField(
         choices=Gender.choices(),
         help_text="Male or Female",
@@ -160,9 +183,37 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
         blank=True,
         null=True,
     )
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-    is_superuser = models.BooleanField(default=False)
+    scholarship = models.IntegerField(
+        choices=ScholarshipChoices.choices(),
+        default=None,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="The scholarship amount for the student.",
+        blank=True,
+        null=True,
+        db_index=True,
+    )
+    specializations = models.ManyToManyField(
+        Specialization,
+        related_name="user",
+        help_text="The specializations that the instructor specializes in.",
+        blank=True,
+    )
+    degree = models.CharField(
+        choices=Degree.choices(),
+        default=Degree.NO.value,
+        help_text="The degree of the instructor.",
+        max_length=9,
+        db_index=True,
+        null=True,
+        blank=True,
+    )
+
+    role = models.CharField(
+        choices=Role.choices(),
+        default=Role.STUDENT.value,
+        max_length=10,
+        help_text="The role of the user.",
+    )
 
     objects = UserManager()
 
@@ -177,20 +228,31 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
 
     def clean(self):
         """
-        Verify for phone_number and password fields.
+        Clean the user data before saving.
         """
+        if self.role == Role.STUDENT.value:
+            if self.scholarship not in ScholarshipChoices.values():
+                raise ValidationError(ErrorMessage.REQUIRED_FIELD)
+            self.degree = None
+            self.specializations.clear()
 
-        super().clean()
-
-        if self.phone_number:
-            validate_phone_number(self.phone_number)
-
-        if self.password:
-            validate_password(self.password)
+        if self.role == Role.INSTRUCTOR.value:
+            if self.degree not in Degree.values():
+                raise ValidationError(ErrorMessage.INVALID_DEGREE)
+            self.scholarship = None
 
     def save(self, *args, **kwargs):
-        self.clean()
+        if self.password:
+            self.password = make_password(self.password)
+
+        if not self._state.adding and not self.password:
+            user = User.objects.get(pk=self.pk)
+            self.password = user.password
+
         super().save(*args, **kwargs)
+
+    def get_specializations(self):
+        return ", ".join([spec.name for spec in self.specializations.all()])
 
     @property
     def is_instructor(self):
@@ -200,7 +262,7 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
         Returns:
             bool: True if the user is an instructor, False otherwise.
         """
-        return hasattr(self, "instructor_profile")
+        return self.role == Role.INSTRUCTOR.value
 
     @property
     def is_student(self):
@@ -210,4 +272,4 @@ class User(AbstractBaseUser, PermissionsMixin, AbstractBaseModel):
         Returns:
             bool: True if the user is an student, False otherwise.
         """
-        return hasattr(self, "student_profile")
+        return self.role == Role.STUDENT.value
