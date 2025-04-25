@@ -44,3 +44,6 @@ class NotificationViewSet(
         """
 
         return super().partial_update(request, *args, **kwargs)
+
+
+apps = [NotificationViewSet]
