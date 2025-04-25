@@ -1,7 +1,8 @@
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 
 from core.api_views import BaseGenericViewSet
+from core.permissions import IsOwner
 from .serializers import NotificationSerializer
 
 
@@ -13,7 +14,7 @@ class NotificationViewSet(
     This viewset allows users to list, retrieve, and update their notifications.
     """
 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated, IsOwner]
     serializer_class = NotificationSerializer
     http_method_names = ["get", "patch"]
     resource_name = "notifications"
