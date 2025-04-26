@@ -7,7 +7,9 @@ from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiPara
 
 from core.api_views import BaseGenericViewSet
 from core.permissions import IsOwner
+from core.serializers import BaseDetailSerializer
 from notifications.models import Notification
+from notifications.api.response_schema import notification_detail_response_schema
 from .serializers import NotificationSerializer
 
 
@@ -57,6 +59,19 @@ class NotificationViewSet(
         Returns the queryset for the Notification model.
         """
         return self.request.user.notifications.all()
+
+    @extend_schema(
+        description="Retrieve a user notification detail.",
+        responses={
+            200: notification_detail_response_schema,
+        },
+    )
+    def retrieve(self, request, *args, **kwargs):
+        notification = self.get_object()
+        serializer = BaseDetailSerializer(
+            notification, context={"serializer_class": self.get_serializer_class()}
+        )
+        return self.ok(serializer.data)
 
 
 apps = [NotificationViewSet]
