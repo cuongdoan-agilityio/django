@@ -153,34 +153,82 @@ class NotificationViewSetTestCase(BaseTestCase):
         """
         Test that a notification is partially updated correctly.
         """
-        pass
+
+        payload = {
+            "is_read": False,
+            "message": self.fake.paragraph(),
+        }
+        response = self.patch_json(
+            url=f"{self.url_list}{str(self.first_notification.id)}/",
+            data=payload,
+            email=self.user,
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.first_notification.refresh_from_db()
+        self.assertFalse(self.first_notification.is_read)
+        self.assertEqual(self.first_notification.message, payload["message"])
 
     def test_partial_update_notification_without_authentication(self):
         """
         Test that an authentication error is returned when trying to partially update a notification without authentication.
         """
-        pass
+
+        payload = {"is_read": True}
+        response = self.client.patch(
+            f"{self.url_list}{str(self.first_notification.id)}/", payload, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_partial_update_notification_of_another_user(self):
         """
         Test that an error is returned when trying to partially update a notification of another user.
         """
-        pass
+
+        payload = {"is_read": True}
+        response = self.patch_json(
+            url=f"{self.url_list}{str(self.instructor_user_notification.id)}/",
+            data=payload,
+            email=self.user,
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_partial_update_notification_with_invalid_notification_id(self):
         """
         Test that an error is returned when trying to partially update a notification with an invalid ID.
         """
-        pass
+
+        payload = {"is_read": True}
+        response = self.patch_json(
+            url=f"{self.url_list}{str(uuid4())}/",
+            data=payload,
+            email=self.user,
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_partial_update_notification_with_invalid_http_method(self):
         """
         Test that an error is returned when using an invalid HTTP method.
         """
-        pass
+
+        payload = {"is_read": True}
+        response = self.put_json(
+            url=f"{self.url_list}{str(self.first_notification.id)}/",
+            data=payload,
+            email=self.user,
+        )
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_partial_update_notification_with_invalid_data(self):
         """
         Test that an error is returned when trying to partially update a notification with invalid data.
         """
-        pass
+
+        payload = {"is_read": "invalid_value"}
+        response = self.patch_json(
+            url=f"{self.url_list}{str(self.first_notification.id)}/",
+            data=payload,
+            email=self.user,
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        response_data = response.json()
+        self.assertEqual(response_data["is_read"][0], "Must be a valid boolean.")
