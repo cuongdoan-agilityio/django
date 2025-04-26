@@ -1,4 +1,8 @@
 from core.tests.base import BaseTestCase
+from rest_framework import status
+
+from notifications.factories import NotificationFactory
+from notifications.models import Notification
 
 
 class NotificationViewSetTestCase(BaseTestCase):
@@ -10,31 +14,80 @@ class NotificationViewSetTestCase(BaseTestCase):
     """
 
     def setUp(self):
-        return super().setUp()
+        super().setUp()
+        self.url_list = f"{self.root_url}notifications/"
+
+        self.first_notification = NotificationFactory(user=self.user, is_read=False)
+        self.more_notification = NotificationFactory(user=self.user, is_read=True)
+        self.instructor_user_notification = NotificationFactory(
+            user=self.instructor_user, is_read=False
+        )
 
     def test_list_notifications(self):
         """
         Test that the list of notifications is returned correctly.
         """
-        pass
+        response = self.get_json(
+            url=self.url_list,
+            email=self.user,
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.data.get("data")
+        response_pagination = response.data.get("meta").get("pagination")
+        self.assertEqual(len(response_data), 2)
+        self.assertEqual(response_pagination["total"], 2)
+        self.assertEqual(response_pagination["limit"], 20)
+        self.assertEqual(response_pagination["offset"], 0)
+        self.assertIn(str(self.first_notification.id), [n["id"] for n in response_data])
+        self.assertIn(str(self.more_notification.id), [n["id"] for n in response_data])
 
     def test_get_empty_notifications(self):
         """
         Test that an empty list is returned when there are no notifications.
         """
-        pass
+
+        Notification.objects.all().delete()
+
+        response = self.get_json(
+            url=self.url_list,
+            email=self.user,
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.data.get("data")
+        response_pagination = response.data.get("meta").get("pagination")
+        self.assertEqual(len(response_data), 0)
+        self.assertEqual(response_pagination["total"], 0)
+        self.assertEqual(response_pagination["limit"], 20)
+        self.assertEqual(response_pagination["offset"], 0)
 
     def test_get_notification_without_authentication(self):
         """
         Test that an authentication error is returned when trying to get notifications without authentication.
         """
-        pass
+
+        response = self.client.get(self.url_list)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_get_notification_with_invalid_http_method(self):
         """
         Test that an error is returned when using an invalid HTTP method.
         """
-        pass
+
+        response = self.post_json(url=self.url_list, data=None, email=self.user)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_get_other_user_notifications(self):
+        """
+        Test that a user cannot access notifications belonging to another user.
+        """
+        response = self.get_json(
+            url=self.url_list,
+            email=self.user,
+        )
+        self.assertNotIn(
+            str(self.instructor_user_notification.id),
+            [n["id"] for n in response.data.get("data")],
+        )
 
     def test_retrieve_notification(self):
         """
