@@ -10,7 +10,7 @@ from core.permissions import IsOwner
 from core.serializers import BaseDetailSerializer
 from notifications.models import Notification
 from notifications.api.response_schema import notification_detail_response_schema
-from .serializers import NotificationDetailSerializer
+from .serializers import NotificationSerializer
 
 
 from rest_framework.response import Response
@@ -74,7 +74,7 @@ class NotificationViewSet(
     """
 
     permission_classes = [IsAuthenticated, IsOwner]
-    serializer_class = NotificationDetailSerializer
+    serializer_class = NotificationSerializer
     http_method_names = ["get", "patch"]
     resource_name = "notifications"
     filter_backends = [DjangoFilterBackend]
@@ -93,6 +93,7 @@ class NotificationViewSet(
     #     },
     # )
     # def retrieve(self, request, *args, **kwargs):
+    #     self.serializer_class = NotificationSerializer
     #     notification = super().retrieve(request, *args, **kwargs)
     #     serializer = BaseDetailSerializer(
     #         notification.data, context={"serializer_class": self.get_serializer_class()}
