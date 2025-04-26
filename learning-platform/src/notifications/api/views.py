@@ -61,15 +61,28 @@ class NotificationViewSet(
         return self.request.user.notifications.all()
 
     @extend_schema(
-        description="Retrieve a user notification detail.",
+        description="Retrieve a user notification.",
         responses={
             200: notification_detail_response_schema,
         },
     )
     def retrieve(self, request, *args, **kwargs):
-        notification = self.get_object()
+        notification = super().retrieve(request, *args, **kwargs)
         serializer = BaseDetailSerializer(
-            notification, context={"serializer_class": self.get_serializer_class()}
+            notification.data, context={"serializer_class": self.get_serializer_class()}
+        )
+        return self.ok(serializer.data)
+
+    @extend_schema(
+        description="Retrieve a user notification.",
+        responses={
+            200: notification_detail_response_schema,
+        },
+    )
+    def partial_update(self, request, *args, **kwargs):
+        notification = super().partial_update(request, *args, **kwargs)
+        serializer = BaseDetailSerializer(
+            notification.data, context={"serializer_class": self.get_serializer_class()}
         )
         return self.ok(serializer.data)
 

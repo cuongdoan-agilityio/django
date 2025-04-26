@@ -5,7 +5,7 @@ from core.serializers import BaseDetailSerializer
 
 notification_detail_response_schema = OpenApiResponse(
     response=BaseDetailSerializer,
-    description="Returns either user notification detail.",
+    description="Returns either user notification.",
     examples=[
         OpenApiExample(
             "User notification detail",
