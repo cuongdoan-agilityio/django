@@ -179,6 +179,9 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "This API provides documentation for the learning platform.",
     "VERSION": "0.0.1",
     "SCHEMA_PATH_PREFIX": r"/api/v[0-9]",
+    "EXTENSIONS": [
+        "core.custom_schema.CustomDataWrapper",
+    ],
 }
 
 

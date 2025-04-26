@@ -10,7 +10,29 @@ from core.permissions import IsOwner
 from core.serializers import BaseDetailSerializer
 from notifications.models import Notification
 from notifications.api.response_schema import notification_detail_response_schema
-from .serializers import NotificationSerializer
+from .serializers import NotificationDetailSerializer
+
+
+from rest_framework.response import Response
+
+
+class RetrieveResponseMixin:
+    """
+    A mixin to provide a consistent response structure for retrieve methods.
+    """
+
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Retrieve an object and wrap the response in a consistent structure.
+        """
+
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(
+            {
+                "data": serializer.data,
+            }
+        )
 
 
 class NotificationFilter(filters.FilterSet):
@@ -40,7 +62,11 @@ class NotificationFilter(filters.FilterSet):
     )
 )
 class NotificationViewSet(
-    BaseGenericViewSet, ListModelMixin, RetrieveModelMixin, UpdateModelMixin
+    BaseGenericViewSet,
+    ListModelMixin,
+    RetrieveResponseMixin,
+    RetrieveModelMixin,
+    UpdateModelMixin,
 ):
     """
     A viewset for handling notifications.
@@ -48,7 +74,7 @@ class NotificationViewSet(
     """
 
     permission_classes = [IsAuthenticated, IsOwner]
-    serializer_class = NotificationSerializer
+    serializer_class = NotificationDetailSerializer
     http_method_names = ["get", "patch"]
     resource_name = "notifications"
     filter_backends = [DjangoFilterBackend]
@@ -60,18 +86,18 @@ class NotificationViewSet(
         """
         return self.request.user.notifications.all()
 
-    @extend_schema(
-        description="Retrieve a user notification.",
-        responses={
-            200: notification_detail_response_schema,
-        },
-    )
-    def retrieve(self, request, *args, **kwargs):
-        notification = super().retrieve(request, *args, **kwargs)
-        serializer = BaseDetailSerializer(
-            notification.data, context={"serializer_class": self.get_serializer_class()}
-        )
-        return self.ok(serializer.data)
+    # @extend_schema(
+    #     description="Retrieve a user notification.",
+    #     responses={
+    #         200: notification_detail_response_schema,
+    #     },
+    # )
+    # def retrieve(self, request, *args, **kwargs):
+    #     notification = super().retrieve(request, *args, **kwargs)
+    #     serializer = BaseDetailSerializer(
+    #         notification.data, context={"serializer_class": self.get_serializer_class()}
+    #     )
+    #     return self.ok(serializer.data)
 
     @extend_schema(
         description="Retrieve a user notification.",

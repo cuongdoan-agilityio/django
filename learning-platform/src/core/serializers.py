@@ -1,6 +1,10 @@
 from rest_framework import serializers
 
 
+class BaseDetailResponseSerializer(serializers.Serializer):
+    data = serializers.DictField()
+
+
 class DataSuccessSerializer(serializers.Serializer):
     """
     Serializer for indicating a successful response.
