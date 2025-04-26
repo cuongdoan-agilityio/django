@@ -1,3 +1,4 @@
+from uuid import uuid4
 from core.tests.base import BaseTestCase
 from rest_framework import status
 
@@ -93,31 +94,60 @@ class NotificationViewSetTestCase(BaseTestCase):
         """
         Test that a single notification is retrieved correctly.
         """
-        pass
+
+        response = self.get_json(
+            url=f"{self.url_list}{str(self.first_notification.id)}/",
+            email=self.user,
+        )
+
+        response_data = response.data.get("data")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response_data["id"], str(self.first_notification.id))
+        self.assertEqual(response_data["is_read"], self.first_notification.is_read)
+        self.assertEqual(response_data["message"], self.first_notification.message)
 
     def test_retrieve_notification_without_authentication(self):
         """
         Test that an authentication error is returned when trying to retrieve a notification without authentication.
         """
-        pass
+
+        response = self.client.get(f"{self.url_list}{str(self.first_notification.id)}/")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_retrieve_notification_of_another_user(self):
         """
         Test that an error is returned when trying to retrieve a notification of another user.
         """
-        pass
+
+        response = self.get_json(
+            url=f"{self.url_list}{str(self.instructor_user_notification.id)}/",
+            email=self.user,
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_retrieve_notification_with_invalid_notification_id(self):
         """
         Test that an error is returned when trying to retrieve a notification with an invalid ID.
         """
-        pass
+
+        response = self.get_json(
+            url=f"{self.url_list}{str(uuid4())}/",
+            email=self.user,
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_retrieve_notification_with_invalid_http_method(self):
         """
         Test that an error is returned when using an invalid HTTP method.
         """
-        pass
+
+        response = self.post_json(
+            url=f"{self.url_list}{str(self.first_notification.id)}/",
+            data=None,
+            email=self.user,
+        )
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_partial_update_notification(self):
         """
