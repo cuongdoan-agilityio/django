@@ -127,11 +127,23 @@ class AuthenticationViewSet(BaseViewSet):
         serializer.is_valid(raise_exception=True)
         user_instance = serializer.save()
 
+        # TODO: create new User with is_active = False, and send email to user with activation link.
+        # Update the response data.
+
         response_serializer = BaseDetailSerializer(
             user_instance, context={"serializer_class": UserProfileDataSerializer}
         )
 
         return self.created(response_serializer.data)
+
+    @action(detail=False, methods=["get"], url_path="verify-email")
+    def verify_email(self, request):
+        """
+        Verify the email of a user using a token.
+        """
+        # Activate the user account using the token.
+        # Enroll introduction courses for new users.
+        return self.ok()
 
 
 class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
@@ -215,6 +227,22 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
             updated_user, context={"serializer_class": self.get_serializer_class()}
         )
         return self.ok(response_serializer.data)
+
+    @action(detail=False, methods=["post"], url_path="change-password")
+    def change_password(self, request):
+        """
+        Change the password of a user using a token.
+        """
+        # Send confirm email to user with token to change password.
+        return self.ok()
+
+    @action(detail=False, methods=["post"], url_path="verify-change-password")
+    def verify_change_password(self, request):
+        """
+        Verify change the password of a user using a token.
+        """
+        # Change the password of the user using the token.
+        return self.ok()
 
 
 class SpecializationViewSet(BaseGenericViewSet, ListModelMixin):
