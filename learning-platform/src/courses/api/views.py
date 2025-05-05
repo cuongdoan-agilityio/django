@@ -335,6 +335,14 @@ class CourseViewSet(BaseModelViewSet):
 
         if enrollment := student.enrollments.filter(course=course).first():
             enrollment.delete()
+
+            # Send notification.
+            Notification.objects.create(
+                user=student,
+                message=NotificationMessage.STUDENT_UNENROLLED.format(
+                    course_name=course.title
+                ),
+            )
             response_serializer = BaseSuccessResponseSerializer(
                 {"data": {"success": True}}
             )
