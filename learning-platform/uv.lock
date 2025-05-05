@@ -201,7 +201,7 @@ requires-dist = [
     { name = "factory-boy", specifier = ">=3.3.3" },
     { name = "faker", specifier = ">=36.1.1" },
     { name = "pytest-django", specifier = "==4.5.2" },
-    { name = "sentry-sdk", specifier = ">=2.25.1" },
+    { name = "sentry-sdk", specifier = ">=2.26.1" },
 ]
 
 [package.metadata.requires-dev]
@@ -542,7 +542,7 @@ wheels = [
 
 [[package]]
 name = "sentry-sdk"
-version = "2.25.1"
+version = "2.26.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },

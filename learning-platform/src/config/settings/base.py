@@ -5,6 +5,10 @@ from pathlib import Path
 
 import environ
 
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -190,3 +194,14 @@ API_ROOT_ENDPOINT = env("API_ROOT_ENDPOINT", default="api/v1/")
 
 # Admin pagination settings
 ADMIN_PAGE_SIZE = 20
+
+# Sentry settings
+sentry_sdk.init(
+    dsn=env("SENTRY_DSN"),
+    integrations=[
+        DjangoIntegration(),
+    ],
+    traces_sample_rate=env("SENTRY_TRACES_SAMPLE_RATE", default=0.1),
+    send_default_pii=env("SENTRY_SEND_DEFAULT_PII", default=False),
+    debug=env("SENTRY_DEBUG", default=False),
+)
