@@ -195,7 +195,10 @@ API_ROOT_ENDPOINT = env("API_ROOT_ENDPOINT", default="api/v1/")
 # Admin pagination settings
 ADMIN_PAGE_SIZE = 20
 
+
 # Sentry settings
+# ------------------------------------------------------------------------------
+# https://docs.sentry.io/platforms/python/
 sentry_sdk.init(
     dsn=env("SENTRY_DSN"),
     integrations=[

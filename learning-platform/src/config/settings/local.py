@@ -1,6 +1,4 @@
 # ruff: noqa: E501
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
 from .base import *  # noqa: F403
 from .base import INSTALLED_APPS
 from .base import MIDDLEWARE
@@ -52,16 +50,3 @@ INTERNAL_IPS = ["127.0.0.1"]
 # ------------------------------------------------------------------------------
 # https://django-extensions.readthedocs.io/en/latest/installation_instructions.html#configuration
 INSTALLED_APPS += ["django_extensions"]
-
-# Sentry settings
-# ------------------------------------------------------------------------------
-# https://docs.sentry.io/platforms/python/
-sentry_sdk.init(
-    dsn="",
-    integrations=[
-        DjangoIntegration(),
-    ],
-    traces_sample_rate=1.0,
-    send_default_pii=True,
-    debug=True,
-)
