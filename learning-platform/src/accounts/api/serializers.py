@@ -76,10 +76,47 @@ class RegisterSerializer(serializers.ModelSerializer):
             email=validated_data["email"],
             scholarship=ScholarshipChoices.ZERO.value,
             password=validated_data["password"],
+            is_active=False,
         )
         user.full_clean()
         user.save()
         return user
+
+
+class VerifySignupEmailSerializer(serializers.Serializer):
+    """
+    Serializer for verifying signup email addresses
+    """
+
+    token = serializers.CharField(help_text="Token for email verification")
+
+
+class UserActivateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for activating a user account.
+    """
+
+    class Meta:
+        model = User
+        fields = ["is_active"]
+
+    def update(self, instance, validated_data):
+        """
+        Updates the user profile with the provided validated data.
+
+        Args:
+            instance (User): The user instance to update.
+            validated_data (dict): The validated data for updating the user profile.
+
+        Returns:
+            User: The updated user instance.
+        """
+
+        instance.is_active = validated_data.get("is_active", True)
+        instance.password = None
+        instance.save()
+
+        return instance
 
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):

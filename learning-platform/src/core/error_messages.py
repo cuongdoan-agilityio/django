@@ -41,3 +41,4 @@ class ErrorMessage:
     SPECIALIZATION_REQUIRED = "Specializations is required for instructors."
     INVALID_USER_ID = "Invalid user ID."
     INVALID_DEGREE = "Invalid degree value."
+    TOKEN_INVALID = "Token is invalid or expired!"
