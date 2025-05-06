@@ -125,7 +125,7 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         Validates the course field.
         """
 
-        if instance.status != "activate" or not instance.instructor:
+        if instance.status != "activate":
             raise serializers.ValidationError(ErrorMessage.INACTIVE_COURSE)
 
         return instance
