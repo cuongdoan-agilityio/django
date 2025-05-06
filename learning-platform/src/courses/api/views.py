@@ -2,6 +2,7 @@ from rest_framework import filters
 import django_filters
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
+from django.db.models import Count
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter
@@ -28,8 +29,9 @@ from .serializers import (
     CategorySerializer,
     EnrollmentCreateOrEditSerializer,
     EnrollmentSerializer,
+    TopCoursesSerializer,
 )
-
+from django.conf import settings
 
 User = get_user_model()
 
@@ -359,6 +361,25 @@ class CourseViewSet(BaseModelViewSet):
             context={"serializer_class": UserBaseSerializer},
         )
         return self.ok(serializer.data)
+
+    @extend_schema(
+        description="Get top courses based on the number of students enrolled.",
+        responses={
+            200: TopCoursesSerializer,
+        },
+    )
+    @action(detail=False, methods=["get"], url_path="top")
+    def get_top_courses(self, request):
+        """
+        Get top courses based on the number of students enrolled.
+        """
+        queryset = self.get_queryset()
+        queryset = queryset.annotate(num_students=Count("enrollments"))
+        queryset = queryset.order_by("-num_students")[: settings.TOP_COURSES_LIMIT]
+
+        serialized_data = CourseDataSerializer(queryset, many=True).data
+
+        return self.ok({"data": serialized_data})
 
 
 class CategoryViewSet(BaseGenericViewSet, ListModelMixin):

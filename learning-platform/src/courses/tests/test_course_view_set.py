@@ -1,8 +1,10 @@
 from rest_framework import status
-from core.constants import Status
-from courses.factories import CourseFactory, CategoryFactory
-from courses.models import Enrollment
+
+from accounts.factories import UserFactory
+from core.constants import Status, Role
 from core.tests.base import BaseTestCase
+from courses.factories import CourseFactory, CategoryFactory, EnrollmentFactory
+from courses.models import Enrollment, Course
 
 
 class CourseViewSetTest(BaseTestCase):
@@ -31,6 +33,14 @@ class CourseViewSetTest(BaseTestCase):
         self.url_enroll = f"{self.root_url}courses/{self.course.id}/enroll/"
         self.url_leave = f"{self.root_url}courses/{self.course.id}/leave/"
         self.url_students = f"{self.root_url}courses/{self.course.id}/students/"
+        self.url_top_courses = f"{self.root_url}courses/top/"
+
+    def tearDown(self):
+        """
+        Clean up the test case by deleting the created course and enrollments.
+        """
+        super().tearDown()
+        Enrollment.objects.all().delete()
 
     def test_list_courses_ok(self):
         """
@@ -256,3 +266,71 @@ class CourseViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["data"]), 1)
         self.assertEqual(response.data["data"][0]["title"], self.course_title)
+
+    def create_courses(self):
+        """
+        Create multiple courses for testing top-courses API.
+        """
+
+        new_instructor = UserFactory(
+            username=self.fake.user_name(), role=Role.INSTRUCTOR.value
+        )
+        self.another_course_description = self.fake.paragraph(nb_sentences=2)
+        self.another_course_title = self.fake.sentence(nb_words=6)
+        self.another_course = CourseFactory(
+            title=self.another_course_title,
+            description=self.another_course_description,
+            status=Status.ACTIVATE.value,
+            instructor=new_instructor,
+        )
+
+        EnrollmentFactory.create_batch(30, course=self.course)
+        EnrollmentFactory.create_batch(20, course=self.another_course)
+
+    def test_get_top_courses_success(self):
+        """
+        Test retrieving the top courses successfully.
+        """
+        self.create_courses()
+
+        response = self.client.get(self.url_top_courses)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("data", response.data)
+        self.assertEqual(len(response.data["data"]), 2)
+        self.assertEqual(response.data["data"][0]["title"], self.course_title)
+        self.assertEqual(
+            response.data["data"][0]["description"], self.course_description
+        )
+        self.assertEqual(response.data["data"][1]["title"], self.another_course_title)
+        self.assertEqual(
+            response.data["data"][1]["description"], self.another_course_description
+        )
+
+    def test_get_top_courses_empty(self):
+        """
+        Test retrieving top courses when no courses exist.
+        """
+        Course.objects.all().delete()
+        response = self.client.get(self.url_top_courses)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("data", response.data)
+        self.assertEqual(len(response.data["data"]), 0)
+
+    def test_get_top_courses_unauthenticated(self):
+        """
+        Test retrieving top courses without authentication.
+        """
+        response = self.client.get(self.url_top_courses)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_top_courses_invalid_http_method(self):
+        """
+        Test using an invalid HTTP method for the top_courses API.
+        """
+        response = self.post_json(
+            url=self.url_top_courses,
+            data=None,
+            email=self.instructor_email,
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
