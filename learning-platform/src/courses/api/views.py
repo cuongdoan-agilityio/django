@@ -368,8 +368,8 @@ class CourseViewSet(BaseModelViewSet):
             200: TopCoursesSerializer,
         },
     )
-    @action(detail=False, methods=["get"], url_path="top-courses")
-    def top_courses(self, request):
+    @action(detail=False, methods=["get"], url_path="top")
+    def get_top_courses(self, request):
         """
         Get top courses based on the number of students enrolled.
         """

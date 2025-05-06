@@ -14,7 +14,7 @@ class CoursePermission(BasePermission):
         if request.user.is_superuser or view.action in [
             "list",
             "retrieve",
-            "top_courses",
+            "get_top_courses",
         ]:
             return True
 

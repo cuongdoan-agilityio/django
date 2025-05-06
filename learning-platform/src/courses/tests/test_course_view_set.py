@@ -33,7 +33,7 @@ class CourseViewSetTest(BaseTestCase):
         self.url_enroll = f"{self.root_url}courses/{self.course.id}/enroll/"
         self.url_leave = f"{self.root_url}courses/{self.course.id}/leave/"
         self.url_students = f"{self.root_url}courses/{self.course.id}/students/"
-        self.url_top_courses = f"{self.root_url}courses/top-courses/"
+        self.url_top_courses = f"{self.root_url}courses/top/"
 
     def tearDown(self):
         """
