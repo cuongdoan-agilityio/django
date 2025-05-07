@@ -176,8 +176,8 @@ class AuthenticationViewSet(BaseViewSet):
                 send_welcome_email.delay(user_data)
             return self.ok()
 
-        except (BadSignature, SignatureExpired, User.DoesNotExist):
-            return self.bad_request(ErrorMessage.INVALID_TOKEN)
+        except (BadSignature, SignatureExpired, User.DoesNotExist, ValueError):
+            return self.bad_request(ErrorMessage.TOKEN_INVALID)
 
 
 class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
