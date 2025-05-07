@@ -8,11 +8,13 @@ from django.contrib.auth import authenticate, get_user_model
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
+from django.forms.models import model_to_dict
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
 )
 
+from accounts.tasks import send_welcome_email
 from accounts.models import Specialization
 from core.api_views import BaseViewSet, BaseGenericViewSet
 from core.serializers import (
@@ -38,7 +40,6 @@ from .serializers import (
     VerifySignupEmailSerializer,
     UserActivateSerializer,
 )
-
 
 User = get_user_model()
 
@@ -165,11 +166,14 @@ class AuthenticationViewSet(BaseViewSet):
             signed_value = force_str(urlsafe_base64_decode(token))
             user_id = signer.unsign(signed_value, max_age=24 * 3600)
             user = User.objects.get(id=user_id)
-            serializer = UserActivateSerializer(
-                user, data={"is_active": True}, partial=True
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
+            if not user.is_active:
+                serializer = UserActivateSerializer(
+                    user, data={"is_active": True}, partial=True
+                )
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                user_data = model_to_dict(user, fields=["username", "email"])
+                send_welcome_email.delay(user_data)
             return self.ok()
 
         except (BadSignature, SignatureExpired, User.DoesNotExist):
