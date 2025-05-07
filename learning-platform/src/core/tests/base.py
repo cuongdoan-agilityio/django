@@ -2,19 +2,26 @@ import random
 from faker import Faker
 from rest_framework.test import APITestCase, APIClient
 from rest_framework.authtoken.models import Token
+from django.db.models.signals import post_save
+from django.contrib.auth import get_user_model
 
 from core.constants import Gender, ScholarshipChoices, Degree, Role
 from accounts.factories import UserFactory
 from core.tests.utils.helpers import random_birthday, random_phone_number
 from accounts.factories import SpecializationFactory
 from courses.factories import CategoryFactory
+from accounts.signals import send_verify_email, enroll_intro_course
 
 
 fake = Faker()
+User = get_user_model()
 
 
 class BaseTestCase(APITestCase):
     def setUp(self):
+        post_save.disconnect(receiver=send_verify_email, sender=User)
+        post_save.disconnect(receiver=enroll_intro_course, sender=User)
+
         self.client = APIClient()
         self.fake = fake
         self.genders = [gender.value for gender in Gender]
@@ -62,6 +69,10 @@ class BaseTestCase(APITestCase):
 
         self.student_token = Token.objects.create(user=self.student_user)
         self.instructor_token = Token.objects.create(user=self.instructor_user)
+
+    def tearDown(self):
+        post_save.connect(receiver=send_verify_email, sender=User)
+        post_save.connect(receiver=enroll_intro_course, sender=User)
 
     def random_gender(self):
         """
