@@ -5,11 +5,16 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin, ListModelMixin
 from django.contrib.auth import authenticate, get_user_model
+from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
+from django.forms.models import model_to_dict
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
 )
 
+from accounts.tasks import send_welcome_email
 from accounts.models import Specialization
 from core.api_views import BaseViewSet, BaseGenericViewSet
 from core.serializers import (
@@ -22,7 +27,8 @@ from core.error_messages import ErrorMessage
 
 from .response_schema import (
     user_profile_response_schema,
-    student_profile_response_schema,
+    signup_success_response_schema,
+    verify_success_response_schema,
 )
 from .serializers import (
     LoginRequestSerializer,
@@ -31,8 +37,9 @@ from .serializers import (
     UserProfileUpdateSerializer,
     SpecializationSerializer,
     UserProfileDataSerializer,
+    VerifySignupEmailSerializer,
+    UserActivateSerializer,
 )
-
 
 User = get_user_model()
 
@@ -50,7 +57,15 @@ User = get_user_model()
         description="API to sign up a new user.",
         request=RegisterSerializer,
         responses={
-            201: student_profile_response_schema,
+            201: signup_success_response_schema,
+            400: BaseBadRequestResponseSerializer,
+        },
+    ),
+    verify_email=extend_schema(
+        description="API to verify signup email.",
+        request=VerifySignupEmailSerializer,
+        responses={
+            201: verify_success_response_schema,
             400: BaseBadRequestResponseSerializer,
         },
     ),
@@ -125,25 +140,44 @@ class AuthenticationViewSet(BaseViewSet):
             return self.bad_request(error_details)
 
         serializer.is_valid(raise_exception=True)
-        user_instance = serializer.save()
+        serializer.save()
+        return self.ok()
 
-        # TODO: create new User with is_active = False, and send email to user with activation link.
-        # Update the response data.
-
-        response_serializer = BaseDetailSerializer(
-            user_instance, context={"serializer_class": UserProfileDataSerializer}
-        )
-
-        return self.created(response_serializer.data)
-
-    @action(detail=False, methods=["get"], url_path="verify-email")
+    @action(detail=False, methods=["post"], url_path="verify-email")
     def verify_email(self, request):
         """
         Verify the email of a user using a token.
         """
-        # Activate the user account using the token.
-        # Enroll introduction courses for new users.
-        return self.ok()
+
+        serializer = VerifySignupEmailSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        token = serializer.validated_data["token"]
+
+        if not serializer.is_valid():
+            error_details = {}
+            for field, errors in serializer.errors.items():
+                error_details[field] = errors[0] if isinstance(errors, list) else errors
+
+            return self.bad_request(error_details)
+
+        signer = TimestampSigner()
+
+        try:
+            signed_value = force_str(urlsafe_base64_decode(token))
+            user_id = signer.unsign(signed_value, max_age=24 * 3600)
+            user = User.objects.get(id=user_id)
+            if not user.is_active:
+                serializer = UserActivateSerializer(
+                    user, data={"is_active": True}, partial=True
+                )
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                user_data = model_to_dict(user, fields=["username", "email"])
+                send_welcome_email.delay(user_data)
+            return self.ok()
+
+        except (BadSignature, SignatureExpired, User.DoesNotExist, ValueError):
+            return self.bad_request(ErrorMessage.TOKEN_INVALID)
 
 
 class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
