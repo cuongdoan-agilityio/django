@@ -1,4 +1,5 @@
 import random
+from copy import deepcopy
 from accounts.forms import UserBaseForm, UserEditForm
 from accounts.factories import UserFactory
 from core.error_messages import ErrorMessage
@@ -242,7 +243,9 @@ class StudentEditFormTest(BaseTestCase):
         Test editing an instructor with valid data.
         """
 
-        form = UserEditForm(instance=self.instructor, data=self.instructor_data)
+        instructor_data = deepcopy(self.instructor_data)
+        instructor_data.pop("email")
+        form = UserEditForm(instance=self.instructor, data=instructor_data)
         self.assertTrue(form.is_valid())
 
     def test_edit_student_with_invalid_phone_number(self):
