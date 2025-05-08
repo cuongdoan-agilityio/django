@@ -255,3 +255,27 @@ class UserProfileDataSerializer(UserBaseSerializer):
             "degree",
             "specializations",
         ]
+
+
+class VerifyResetUserPasswordSerializer(serializers.Serializer):
+    """
+    Serializer for verify reset user passwords.
+    """
+
+    email = serializers.EmailField(help_text="Email for reset user password")
+
+
+class ResetUserPasswordSerializer(serializers.Serializer):
+    """
+    Serializer for reset user password.
+    """
+
+    token = serializers.CharField(help_text="Token for reset user password")
+
+
+class ResetUserPasswordResponseSerializer(serializers.Serializer):
+    """
+    Serializer for reset user password response.
+    """
+
+    password = serializers.CharField(help_text="New password")

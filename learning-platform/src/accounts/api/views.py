@@ -14,21 +14,24 @@ from drf_spectacular.utils import (
     extend_schema_view,
 )
 
-from accounts.tasks import send_welcome_email
+from accounts.tasks import send_welcome_email, send_password_reset_email
 from accounts.models import Specialization
 from core.api_views import BaseViewSet, BaseGenericViewSet
 from core.serializers import (
     BaseUnauthorizedResponseSerializer,
     BaseBadRequestResponseSerializer,
     BaseForbiddenResponseSerializer,
+    BaseSuccessResponseSerializer,
     BaseDetailSerializer,
 )
 from core.error_messages import ErrorMessage
+from core.helpers import create_token
 
 from .response_schema import (
     user_profile_response_schema,
     signup_success_response_schema,
     verify_success_response_schema,
+    reset_password_response_schema,
 )
 from .serializers import (
     LoginRequestSerializer,
@@ -39,6 +42,9 @@ from .serializers import (
     UserProfileDataSerializer,
     VerifySignupEmailSerializer,
     UserActivateSerializer,
+    ResetUserPasswordSerializer,
+    VerifyResetUserPasswordSerializer,
+    ResetUserPasswordResponseSerializer,
 )
 
 User = get_user_model()
@@ -66,6 +72,22 @@ User = get_user_model()
         request=VerifySignupEmailSerializer,
         responses={
             201: verify_success_response_schema,
+            400: BaseBadRequestResponseSerializer,
+        },
+    ),
+    verify_reset_password=extend_schema(
+        description="Verify reset password of a user using a token.",
+        request=VerifyResetUserPasswordSerializer,
+        responses={
+            200: BaseSuccessResponseSerializer,
+            400: BaseBadRequestResponseSerializer,
+        },
+    ),
+    reset_password=extend_schema(
+        description="Reset the password of a user using a token.",
+        request=ResetUserPasswordSerializer,
+        responses={
+            200: reset_password_response_schema,
             400: BaseBadRequestResponseSerializer,
         },
     ),
@@ -100,6 +122,8 @@ class AuthenticationViewSet(BaseViewSet):
         user = authenticate(request, email=email, password=password)
 
         if user is not None:
+            if not user.is_active:
+                return self.bad_request(ErrorMessage.USER_NOT_ACTIVE)
             token, created = Token.objects.get_or_create(user=user)
             response_data = LoginResponseSerializer({"data": {"token": token.key}}).data
             return self.ok(response_data)
@@ -151,15 +175,8 @@ class AuthenticationViewSet(BaseViewSet):
 
         serializer = VerifySignupEmailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         token = serializer.validated_data["token"]
-
-        if not serializer.is_valid():
-            error_details = {}
-            for field, errors in serializer.errors.items():
-                error_details[field] = errors[0] if isinstance(errors, list) else errors
-
-            return self.bad_request(error_details)
-
         signer = TimestampSigner()
 
         try:
@@ -175,6 +192,63 @@ class AuthenticationViewSet(BaseViewSet):
                 user_data = model_to_dict(user, fields=["username", "email"])
                 send_welcome_email.delay(user_data)
             return self.ok()
+
+        except (BadSignature, SignatureExpired, User.DoesNotExist, ValueError):
+            return self.bad_request(ErrorMessage.TOKEN_INVALID)
+
+    @action(detail=False, methods=["post"], url_path="verify-reset-password")
+    def verify_reset_password(self, request):
+        """
+        Verify reset the password of a user using a token.
+        """
+
+        serializer = VerifyResetUserPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"]
+
+        user = User.objects.filter(email=email).first()
+
+        if not user:
+            return self.bad_request(ErrorMessage.USER_NOT_FOUND)
+
+        token = create_token(user.email)
+
+        try:
+            send_password_reset_email.delay(
+                {"username": user.username, "email": user.email},
+                token,
+            )
+            return self.ok()
+        except Exception as e:
+            return self.bad_request(str(e))
+
+    @action(detail=False, methods=["post"], url_path="reset-password")
+    def reset_password(self, request):
+        """
+        Reset the password of a user using a token.
+        """
+
+        serializer = ResetUserPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        token = serializer.validated_data["token"]
+
+        signer = TimestampSigner()
+
+        try:
+            signed_value = force_str(urlsafe_base64_decode(token))
+            email = signer.unsign(signed_value, max_age=24 * 3600)
+            user = User.objects.filter(email=email).first()
+            # TODO: need replace with other password
+            new_password = "Password@123"
+            user.password = new_password
+            user.save()
+
+            response_serializer = BaseDetailSerializer(
+                {"password": new_password},
+                context={"serializer_class": ResetUserPasswordResponseSerializer},
+            )
+            return self.ok(response_serializer.data)
 
         except (BadSignature, SignatureExpired, User.DoesNotExist, ValueError):
             return self.bad_request(ErrorMessage.TOKEN_INVALID)
@@ -261,22 +335,6 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
             updated_user, context={"serializer_class": self.get_serializer_class()}
         )
         return self.ok(response_serializer.data)
-
-    @action(detail=False, methods=["post"], url_path="change-password")
-    def change_password(self, request):
-        """
-        Change the password of a user using a token.
-        """
-        # Send confirm email to user with token to change password.
-        return self.ok()
-
-    @action(detail=False, methods=["post"], url_path="verify-change-password")
-    def verify_change_password(self, request):
-        """
-        Verify change the password of a user using a token.
-        """
-        # Change the password of the user using the token.
-        return self.ok()
 
 
 class SpecializationViewSet(BaseGenericViewSet, ListModelMixin):
