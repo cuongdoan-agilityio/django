@@ -104,6 +104,8 @@ class AuthenticationViewSet(BaseViewSet):
         user = authenticate(request, email=email, password=password)
 
         if user is not None:
+            if not user.is_active:
+                return self.bad_request(ErrorMessage.USER_NOT_ACTIVE)
             token, created = Token.objects.get_or_create(user=user)
             response_data = LoginResponseSerializer({"data": {"token": token.key}}).data
             return self.ok(response_data)
