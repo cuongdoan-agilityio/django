@@ -22,7 +22,7 @@ class AuthorViewSetTests(BaseTestCase):
             is_active=False,
         )
         self.signer = TimestampSigner()
-        self.token = create_token(self.new_user)
+        self.token = create_token(self.new_user.id)
 
     def test_login_success(self):
         """

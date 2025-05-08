@@ -50,7 +50,7 @@ class UserSignalsTest(BaseTestCase):
             password=self.password,
         )
 
-        mock_create_token.assert_called_once_with(user)
+        mock_create_token.assert_called_once_with(user.id)
 
         mock_send_email.assert_called_once_with(
             user.email,

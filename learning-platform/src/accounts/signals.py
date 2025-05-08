@@ -15,7 +15,7 @@ def send_verify_email(sender, instance, created, **kwargs):
     if created:
         dynamic_template_data = {
             "user_name": instance.username,
-            "token": create_token(instance),
+            "token": create_token(instance.id),
             "sender_name": settings.SENDER_NAME,
             "subject": "Verification Email",
         }

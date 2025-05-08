@@ -8,13 +8,13 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
 
-def create_token(user: object) -> str:
+def create_token(value: str) -> str:
     """
     Create a signing token for the user.
     """
 
     signer = TimestampSigner()
-    value = str(user.id)
+    value = str(value)
     signed_value = signer.sign(value)
     token = urlsafe_base64_encode(force_bytes(signed_value))
     return token
