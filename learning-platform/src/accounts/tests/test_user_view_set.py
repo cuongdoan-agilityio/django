@@ -1,6 +1,8 @@
 import uuid
 from rest_framework import status
+from unittest.mock import patch
 from core.tests.base import BaseTestCase
+from core.error_messages import ErrorMessage
 
 
 class UserViewSetTests(BaseTestCase):
@@ -16,6 +18,10 @@ class UserViewSetTests(BaseTestCase):
         super().setUp()
 
         self.retrieve_url = f"{self.root_url}users/me/"
+        self.verify_change_password_url = (
+            f"{self.root_url}users/verify-change-password/"
+        )
+        self.new_password = "NewPassword@123"
 
     def test_retrieve_student_profile(self):
         """
@@ -122,3 +128,58 @@ class UserViewSetTests(BaseTestCase):
             data=data,
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @patch("accounts.tasks.send_password_reset_email.delay")
+    def test_verify_change_password_success(self, mock_send_password_reset_email):
+        """
+        Test verifying change password with a valid token.
+        """
+
+        data = {"password": self.new_password}
+
+        response = self.post_json(
+            self.verify_change_password_url, data, email=self.user.email
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_send_password_reset_email.assert_called_once()
+
+    def test_verify_change_password_missing_token(self):
+        """
+        Test verifying change password with a missing token.
+        """
+        data = {}
+        response = self.post_json(
+            self.verify_change_password_url, data, email=self.user.email
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {"password": ["This field is required."]})
+
+    def test_verify_change_password_invalid_data(self):
+        """
+        Test verifying change password with an invalid data.
+        """
+        data = {"password": "InvalidPassword"}
+        response = self.post_json(
+            self.verify_change_password_url, data, email=self.user.email
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {"password": [ErrorMessage.PASSWORD_NUMBER]})
+
+    @patch("accounts.tasks.send_password_reset_email.delay")
+    def test_verify_change_password_email_sending_failure(
+        self, mock_send_password_reset_email
+    ):
+        """
+        Test verifying change password when email sending fails.
+        """
+        mock_send_password_reset_email.side_effect = Exception("Email sending failed")
+        data = {"password": self.new_password}
+
+        response = self.post_json(
+            self.verify_change_password_url, data, email=self.user.email
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
