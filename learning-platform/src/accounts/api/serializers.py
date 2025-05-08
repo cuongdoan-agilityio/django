@@ -255,3 +255,15 @@ class UserProfileDataSerializer(UserBaseSerializer):
             "degree",
             "specializations",
         ]
+
+
+class VerifyUpdateUserPasswordSerializer(serializers.ModelSerializer):
+    """
+    Serializer for updating user passwords.
+    """
+
+    password = serializers.CharField(required=True, validators=[validate_password])
+
+    class Meta:
+        model = User
+        fields = ["password"]

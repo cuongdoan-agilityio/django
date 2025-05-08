@@ -14,16 +14,18 @@ from drf_spectacular.utils import (
     extend_schema_view,
 )
 
-from accounts.tasks import send_welcome_email
+from accounts.tasks import send_welcome_email, send_password_reset_email
 from accounts.models import Specialization
 from core.api_views import BaseViewSet, BaseGenericViewSet
 from core.serializers import (
     BaseUnauthorizedResponseSerializer,
     BaseBadRequestResponseSerializer,
     BaseForbiddenResponseSerializer,
+    BaseSuccessResponseSerializer,
     BaseDetailSerializer,
 )
 from core.error_messages import ErrorMessage
+from core.helpers import create_token
 
 from .response_schema import (
     user_profile_response_schema,
@@ -39,6 +41,7 @@ from .serializers import (
     UserProfileDataSerializer,
     VerifySignupEmailSerializer,
     UserActivateSerializer,
+    VerifyUpdateUserPasswordSerializer,
 )
 
 User = get_user_model()
@@ -190,7 +193,7 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
 
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileDataSerializer
-    http_method_names = ["get", "patch"]
+    http_method_names = ["get", "patch", "post"]
     resource_name = "users"
 
     def get_queryset(self):
@@ -270,13 +273,35 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         # Send confirm email to user with token to change password.
         return self.ok()
 
+    @extend_schema(
+        description="Verify change the password of a user using a token.",
+        request=VerifyUpdateUserPasswordSerializer,
+        responses={
+            200: BaseSuccessResponseSerializer,
+        },
+    )
     @action(detail=False, methods=["post"], url_path="verify-change-password")
     def verify_change_password(self, request):
         """
         Verify change the password of a user using a token.
         """
-        # Change the password of the user using the token.
-        return self.ok()
+
+        serializer = VerifyUpdateUserPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        new_password = serializer.validated_data["password"]
+
+        user = request.user
+
+        token = create_token(new_password)
+
+        try:
+            send_password_reset_email.delay(
+                {"username": user.username, "email": user.email},
+                token,
+            )
+            return self.ok()
+        except Exception as e:
+            return self.bad_request(str(e))
 
 
 class SpecializationViewSet(BaseGenericViewSet, ListModelMixin):
