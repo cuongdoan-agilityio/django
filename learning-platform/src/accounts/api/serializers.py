@@ -257,21 +257,25 @@ class UserProfileDataSerializer(UserBaseSerializer):
         ]
 
 
-class VerifyChangeUserPasswordSerializer(serializers.ModelSerializer):
+class VerifyResetUserPasswordSerializer(serializers.Serializer):
     """
-    Serializer for updating user passwords.
-    """
-
-    password = serializers.CharField(required=True, validators=[validate_password])
-
-    class Meta:
-        model = User
-        fields = ["password"]
-
-
-class ChangeUserPasswordSerializer(serializers.Serializer):
-    """
-    Serializer for change user password.
+    Serializer for verify reset user passwords.
     """
 
-    token = serializers.CharField(help_text="Token for update user password")
+    email = serializers.EmailField(required=True)
+
+
+class ResetUserPasswordSerializer(serializers.Serializer):
+    """
+    Serializer for reset user password.
+    """
+
+    token = serializers.CharField(help_text="Token for reset user password")
+
+
+class ResetUserPasswordResponseSerializer(serializers.Serializer):
+    """
+    Serializer for reset user password response.
+    """
+
+    password = serializers.CharField(help_text="New password")

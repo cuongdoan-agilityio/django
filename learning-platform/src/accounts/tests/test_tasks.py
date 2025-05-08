@@ -98,7 +98,7 @@ class SendPasswordResetEmailTest(BaseTestCase):
                 "sender_name": settings.SENDER_NAME,
                 "subject": "Verify Password Change",
             },
-            settings.VERIFY_CHANGE_PASSWORD_TEMPLATE_ID,
+            settings.VERIFY_RESET_PASSWORD_TEMPLATE_ID,
         )
 
     @patch("core.helpers.send_capture_message")

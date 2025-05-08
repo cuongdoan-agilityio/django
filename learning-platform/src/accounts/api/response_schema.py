@@ -78,8 +78,20 @@ verify_success_response_schema = OpenApiResponse(
     description="Verify success",
     examples=[
         OpenApiExample(
-            "Verify Success",
+            "Verify success",
             value={"data": {"success": True}},
+            response_only=True,
+        ),
+    ],
+)
+
+reset_password_response_schema = OpenApiResponse(
+    response=BaseDetailSerializer,
+    description="Reset password success",
+    examples=[
+        OpenApiExample(
+            "Reset password success",
+            value={"data": {"password": "Password"}},
             response_only=True,
         ),
     ],
