@@ -1,8 +1,11 @@
 import uuid
+from django.core.signing import SignatureExpired
 from rest_framework import status
 from unittest.mock import patch
+
 from core.tests.base import BaseTestCase
 from core.error_messages import ErrorMessage
+from core.helpers import create_token
 
 
 class UserViewSetTests(BaseTestCase):
@@ -21,7 +24,9 @@ class UserViewSetTests(BaseTestCase):
         self.verify_change_password_url = (
             f"{self.root_url}users/verify-change-password/"
         )
+        self.change_password_url = f"{self.root_url}users/change-password/"
         self.new_password = "NewPassword@123"
+        self.password_token = create_token(self.user.email)
 
     def test_retrieve_student_profile(self):
         """
@@ -194,3 +199,74 @@ class UserViewSetTests(BaseTestCase):
             self.verify_change_password_url, data, email=self.user.email
         )
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_change_password_success(self):
+        """
+        Test changing password with a valid token.
+        """
+
+        data = {"token": self.password_token}
+        response = self.post_json(self.change_password_url, data, email=self.user.email)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_change_password_missing_token(self):
+        """
+        Test changing password with a missing token.
+        """
+
+        response = self.post_json(
+            self.change_password_url, data={}, email=self.user.email
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {"token": [ErrorMessage.REQUIRED_FIELD]})
+
+    def test_change_password_invalid_token(self):
+        """
+        Test changing password with an invalid token.
+        """
+        data = {"token": "InvalidToken"}
+        response = self.post_json(
+            self.change_password_url, data=data, email=self.user.email
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_change_password_expired_token(self):
+        """
+        Test changing password with an expired token.
+        """
+
+        with patch("django.core.signing.TimestampSigner.unsign") as mock_unsign:
+            mock_unsign.side_effect = SignatureExpired("Token has expired")
+            data = {"token": self.password_token}
+            response = self.post_json(
+                self.change_password_url, data, email=self.user.email
+            )
+
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_change_password_invalid_http_method(self):
+        """
+        Test changing password with invalid HTTP methods.
+        """
+
+        response = self.get_json(self.change_password_url, email=self.user.email)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        data = {"token": self.password_token}
+        response = self.patch_json(
+            self.change_password_url, data=data, email=self.user.email
+        )
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_change_password_unauthenticated(self):
+        """
+        Test changing password without authentication.
+        """
+        data = {"token": self.password_token}
+
+        response = self.client.post(self.change_password_url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
