@@ -32,5 +32,5 @@ def send_password_reset_email(user: dict, token: str) -> None:
     }
 
     send_email(
-        user.get("email"), template_data, settings.VERIFY_CHANGE_PASSWORD_TEMPLATE_ID
+        user.get("email"), template_data, settings.VERIFY_RESET_PASSWORD_TEMPLATE_ID
     )
