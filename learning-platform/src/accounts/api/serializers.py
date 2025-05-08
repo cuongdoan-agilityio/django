@@ -257,7 +257,7 @@ class UserProfileDataSerializer(UserBaseSerializer):
         ]
 
 
-class VerifyUpdateUserPasswordSerializer(serializers.ModelSerializer):
+class VerifyChangeUserPasswordSerializer(serializers.ModelSerializer):
     """
     Serializer for updating user passwords.
     """
@@ -267,3 +267,11 @@ class VerifyUpdateUserPasswordSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["password"]
+
+
+class ChangeUserPasswordSerializer(serializers.Serializer):
+    """
+    Serializer for change user password.
+    """
+
+    token = serializers.CharField(help_text="Token for update user password")

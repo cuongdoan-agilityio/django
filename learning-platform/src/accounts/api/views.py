@@ -41,7 +41,8 @@ from .serializers import (
     UserProfileDataSerializer,
     VerifySignupEmailSerializer,
     UserActivateSerializer,
-    VerifyUpdateUserPasswordSerializer,
+    VerifyChangeUserPasswordSerializer,
+    ChangeUserPasswordSerializer,
 )
 
 User = get_user_model()
@@ -154,7 +155,6 @@ class AuthenticationViewSet(BaseViewSet):
 
         serializer = VerifySignupEmailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        token = serializer.validated_data["token"]
 
         if not serializer.is_valid():
             error_details = {}
@@ -163,6 +163,7 @@ class AuthenticationViewSet(BaseViewSet):
 
             return self.bad_request(error_details)
 
+        token = serializer.validated_data["token"]
         signer = TimestampSigner()
 
         try:
@@ -265,17 +266,47 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         )
         return self.ok(response_serializer.data)
 
+    @extend_schema(
+        description="Change the password of a user using a token.",
+        request=ChangeUserPasswordSerializer,
+        responses={
+            200: BaseSuccessResponseSerializer,
+            400: BaseBadRequestResponseSerializer,
+        },
+    )
     @action(detail=False, methods=["post"], url_path="change-password")
     def change_password(self, request):
         """
         Change the password of a user using a token.
         """
-        # Send confirm email to user with token to change password.
-        return self.ok()
+        serializer = ChangeUserPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        if not serializer.is_valid():
+            error_details = {}
+            for field, errors in serializer.errors.items():
+                error_details[field] = errors[0] if isinstance(errors, list) else errors
+
+            return self.bad_request(error_details)
+
+        token = serializer.validated_data["token"]
+
+        signer = TimestampSigner()
+
+        try:
+            signed_value = force_str(urlsafe_base64_decode(token))
+            new_password = signer.unsign(signed_value, max_age=24 * 3600)
+            user = request.user
+            user.password = new_password
+            user.save()
+            return self.ok()
+
+        except (BadSignature, SignatureExpired, User.DoesNotExist, ValueError):
+            return self.bad_request(ErrorMessage.TOKEN_INVALID)
 
     @extend_schema(
         description="Verify change the password of a user using a token.",
-        request=VerifyUpdateUserPasswordSerializer,
+        request=VerifyChangeUserPasswordSerializer,
         responses={
             200: BaseSuccessResponseSerializer,
         },
@@ -286,7 +317,7 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         Verify change the password of a user using a token.
         """
 
-        serializer = VerifyUpdateUserPasswordSerializer(data=request.data)
+        serializer = VerifyChangeUserPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         new_password = serializer.validated_data["password"]
 
