@@ -183,3 +183,14 @@ class UserViewSetTests(BaseTestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_verify_change_password_invalid_http_method(self):
+        """
+        Test verifying change password with invalid HTTP methods.
+        """
+
+        data = {"password": self.new_password}
+        response = self.patch_json(
+            self.verify_change_password_url, data, email=self.user.email
+        )
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
