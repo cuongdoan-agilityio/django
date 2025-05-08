@@ -262,7 +262,7 @@ class VerifyResetUserPasswordSerializer(serializers.Serializer):
     Serializer for verify reset user passwords.
     """
 
-    email = serializers.EmailField(required=True)
+    email = serializers.EmailField(help_text="Email for reset user password")
 
 
 class ResetUserPasswordSerializer(serializers.Serializer):

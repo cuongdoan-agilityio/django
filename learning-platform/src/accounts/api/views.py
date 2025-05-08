@@ -176,13 +176,6 @@ class AuthenticationViewSet(BaseViewSet):
         serializer = VerifySignupEmailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        if not serializer.is_valid():
-            error_details = {}
-            for field, errors in serializer.errors.items():
-                error_details[field] = errors[0] if isinstance(errors, list) else errors
-
-            return self.bad_request(error_details)
-
         token = serializer.validated_data["token"]
         signer = TimestampSigner()
 
@@ -203,13 +196,6 @@ class AuthenticationViewSet(BaseViewSet):
         except (BadSignature, SignatureExpired, User.DoesNotExist, ValueError):
             return self.bad_request(ErrorMessage.TOKEN_INVALID)
 
-    @extend_schema(
-        description="Verify reset password of a user using a token.",
-        request=VerifyResetUserPasswordSerializer,
-        responses={
-            200: BaseSuccessResponseSerializer,
-        },
-    )
     @action(detail=False, methods=["post"], url_path="verify-reset-password")
     def verify_reset_password(self, request):
         """
@@ -245,13 +231,6 @@ class AuthenticationViewSet(BaseViewSet):
         serializer = ResetUserPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        if not serializer.is_valid():
-            error_details = {}
-            for field, errors in serializer.errors.items():
-                error_details[field] = errors[0] if isinstance(errors, list) else errors
-
-            return self.bad_request(error_details)
-
         token = serializer.validated_data["token"]
 
         signer = TimestampSigner()
@@ -285,7 +264,7 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
 
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileDataSerializer
-    http_method_names = ["get", "patch", "post"]
+    http_method_names = ["get", "patch"]
     resource_name = "users"
 
     def get_queryset(self):
