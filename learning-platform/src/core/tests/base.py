@@ -147,6 +147,14 @@ class BaseTestCase(APITestCase):
         self.authenticate(email)
         return self.client.post(url, data)
 
+    def put_json(self, url, data, email):
+        """
+        Perform a PUT request with a token.
+        """
+
+        self.authenticate(email)
+        return self.client.put(url, data, format="json")
+
     def authenticate(self, email):
         """
         Authenticate the test client

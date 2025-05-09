@@ -5,6 +5,10 @@ from pathlib import Path
 
 import environ
 
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -68,6 +72,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "accounts",
     "courses",
+    "notifications",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -208,3 +213,17 @@ SENDER_NAME = env("SENDER_NAME")
 
 # Course enrollment limit
 DEFAULT_COURSE_ENROLLMENT_LIMIT = env("DEFAULT_COURSE_ENROLLMENT_LIMIT", default=10)
+
+
+# Sentry settings
+# ------------------------------------------------------------------------------
+# https://docs.sentry.io/platforms/python/
+sentry_sdk.init(
+    dsn=env("SENTRY_DSN"),
+    integrations=[
+        DjangoIntegration(),
+    ],
+    traces_sample_rate=env("SENTRY_TRACES_SAMPLE_RATE", default=0.1),
+    send_default_pii=env("SENTRY_SEND_DEFAULT_PII", default=False),
+    debug=env("SENTRY_DEBUG", default=False),
+)

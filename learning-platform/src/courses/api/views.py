@@ -8,6 +8,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework.permissions import AllowAny
 
+from accounts.api.serializers import UserBaseSerializer
 from core.api_views import BaseModelViewSet, BaseGenericViewSet
 from core.serializers import (
     BaseSuccessResponseSerializer,
@@ -17,7 +18,8 @@ from core.serializers import (
 )
 from core.error_messages import ErrorMessage
 from courses.permissions import CoursePermission
-from accounts.api.serializers import UserBaseSerializer
+from notifications.models import Notification
+from notifications.constants import NotificationMessage
 
 from .response_schema import course_response_schema, student_list_response_schema
 
@@ -289,6 +291,15 @@ class CourseViewSet(BaseModelViewSet):
         )
         enrollment_serializer.is_valid(raise_exception=True)
         enrollment_serializer.save()
+
+        # Send notification.
+        Notification.objects.create(
+            user=course.instructor,
+            message=NotificationMessage.STUDENT_ENROLLED.format(
+                user_name=student.username, course_name=course.title
+            ),
+        )
+
         enrollment_serializer = BaseSuccessResponseSerializer(
             {"data": {"success": True}}
         )
@@ -326,6 +337,14 @@ class CourseViewSet(BaseModelViewSet):
 
         if enrollment := student.enrollments.filter(course=course).first():
             enrollment.delete()
+
+            # Send notification.
+            Notification.objects.create(
+                user=student,
+                message=NotificationMessage.STUDENT_UNENROLLED.format(
+                    course_name=course.title
+                ),
+            )
             response_serializer = BaseSuccessResponseSerializer(
                 {"data": {"success": True}}
             )
