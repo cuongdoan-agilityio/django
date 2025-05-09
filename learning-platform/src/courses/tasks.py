@@ -1,10 +1,14 @@
-from celery import shared_task
 import csv
-from io import StringIO
 import base64
-from core.constants import Role
+from io import StringIO
+from datetime import datetime
+
 from django.contrib.auth import get_user_model
+from dateutil.relativedelta import relativedelta
+from celery import shared_task
+from core.constants import Role, Status
 from core.helpers import send_report_email
+from courses.models import Course
 
 
 User = get_user_model()
@@ -16,7 +20,11 @@ def clean_up_inactive_courses():
     Deletes courses that have been inactive for more than 3 months.
     """
 
-    return
+    delta_time = datetime.now() - relativedelta(months=3)
+    # Don't delete system courses
+    Course.objects.filter(
+        instructor__isnull=False, status=Status.INACTIVE.value, modified__lt=delta_time
+    ).delete()
 
 
 @shared_task
