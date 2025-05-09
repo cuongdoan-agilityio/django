@@ -61,10 +61,6 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Asia/Ho_Chi_Minh"
 
 CELERY_BEAT_SCHEDULE = {
-    "run-hourly-task": {
-        "task": "courses.tasks.clean_up_inactive_courses",
-        "schedule": crontab(minute=35),
-    },
     "run-weekly-task": {
         "task": "courses.tasks.clean_up_inactive_courses",
         "schedule": crontab(hour=1, minute=0, day_of_week="mon"),
