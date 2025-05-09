@@ -38,6 +38,9 @@ def send_monthly_report():
 
     for instructor in instructors:
         courses = instructor.courses.all()
+        if not courses:
+            continue
+
         csv_file = StringIO()
         csv_writer = csv.writer(csv_file)
         csv_writer.writerow(["Course Title", "Number of Enrolled"])
