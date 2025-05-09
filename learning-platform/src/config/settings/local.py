@@ -3,6 +3,7 @@ from .base import *  # noqa: F403
 from .base import INSTALLED_APPS
 from .base import MIDDLEWARE
 from .base import env
+from celery.schedules import crontab
 
 # GENERAL
 # ------------------------------------------------------------------------------
@@ -57,3 +58,15 @@ CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "Asia/Ho_Chi_Minh"
+
+CELERY_BEAT_SCHEDULE = {
+    "run-weekly-task": {
+        "task": "courses.tasks.clean_up_inactive_courses",
+        "schedule": crontab(hour=1, minute=0, day_of_week="mon"),
+    },
+    "run-monthly-task": {
+        "task": "courses.tasks.send_monthly_report",
+        "schedule": crontab(hour=1, minute=0, day_of_month=1),
+    },
+}
