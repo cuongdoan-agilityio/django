@@ -42,6 +42,7 @@ class UserBaseFormTest(BaseTestCase):
 
         self.instructor_data = {
             **self.create_data,
+            "date_of_birth": self.random_date_of_birth(),
             "username": self.fake.user_name(),
             "email": self.fake.email(),
             "role": Role.INSTRUCTOR.value,

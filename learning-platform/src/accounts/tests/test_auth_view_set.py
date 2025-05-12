@@ -281,7 +281,10 @@ class AuthorViewSetTests(BaseTestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data, {"token": [ErrorMessage.REQUIRED_FIELD]})
+        self.assertEqual(response.data.get("errors")[0]["field"], "token")
+        self.assertEqual(
+            response.data.get("errors")[0]["message"][0], ErrorMessage.REQUIRED_FIELD
+        )
 
     def test_reset_password_invalid_token(self):
         """

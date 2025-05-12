@@ -107,6 +107,8 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         if action := self.action:
             if action == "login":
                 return LoginResponseDataSerializer
+            if action == "reset_password":
+                return ResetUserPasswordResponseSerializer
         return LoginRequestSerializer
 
     @action(detail=False, methods=["post"])
@@ -240,15 +242,11 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
             new_password = "Password@123"
             user.password = new_password
             user.save()
-
-            response_serializer = BaseDetailSerializer(
-                {"password": new_password},
-                context={"serializer_class": ResetUserPasswordResponseSerializer},
-            )
-            return self.ok(response_serializer.data)
+            response_data = self.format_data({"password": new_password})
+            return self.ok(response_data)
 
         except (BadSignature, SignatureExpired, User.DoesNotExist, ValueError):
-            return self.bad_request(ErrorMessage.TOKEN_INVALID)
+            return self.bad_request(field="token", message=ErrorMessage.TOKEN_INVALID)
 
 
 class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
