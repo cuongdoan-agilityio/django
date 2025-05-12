@@ -51,7 +51,7 @@ class CustomFilter(django_filters.FilterSet):
         fields = ["category"]
 
 
-class CourseViewSet(BaseModelViewSet):
+class CourseViewSet(BaseModelViewSet, ListModelMixin):
     """
     Course view set
 
@@ -147,15 +147,7 @@ class CourseViewSet(BaseModelViewSet):
         Returns:
             Response: A paginated list of courses with metadata.
         """
-
-        queryset = self.filter_queryset(self.get_queryset())
-
-        page = self.paginate_queryset(queryset)
-        data = self.get_paginated_response(page).data
-        serializer = BaseListSerializer(
-            data, context={"serializer_class": CourseDataSerializer}
-        )
-        return self.ok(serializer.data)
+        return super().list(request, *args, **kwargs)
 
     @extend_schema(
         description="Create a course.",
