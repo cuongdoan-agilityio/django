@@ -12,9 +12,9 @@ from accounts.api.serializers import UserBaseSerializer
 from core.api_views import BaseModelViewSet, BaseGenericViewSet
 from core.serializers import (
     BaseSuccessResponseSerializer,
-    BaseListSerializer,
     BaseBadRequestResponseSerializer,
     BaseForbiddenResponseSerializer,
+    BaseNotFoundResponseSerializer,
 )
 from core.error_messages import ErrorMessage
 from core.mixins import FormatDataMixin, CustomRetrieveModelMixin
@@ -137,6 +137,14 @@ class CustomFilter(django_filters.FilterSet):
             403: BaseForbiddenResponseSerializer,
         },
     ),
+    get_students=extend_schema(
+        description="View all students enrolled in a course.",
+        responses={
+            200: student_list_response_schema,
+            403: BaseForbiddenResponseSerializer,
+            404: BaseNotFoundResponseSerializer,
+        },
+    ),
 )
 class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin):
     """
@@ -163,6 +171,11 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = CustomFilter
     search_fields = ["title", "description"]
+
+    def get_serializer_class(self):
+        if self.action == "get_students":
+            return UserBaseSerializer
+        return CourseDataSerializer
 
     def get_queryset(self):
         """
@@ -338,10 +351,6 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
                 field="detail", message=ErrorMessage.STUDENT_NOT_ENROLLED
             )
 
-    @extend_schema(
-        description="View all students enrolled in a course.",
-        responses={200: student_list_response_schema},
-    )
     @action(detail=True, methods=["get"], url_path="students")
     def get_students(self, request, **kwargs):
         """
@@ -361,11 +370,9 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
 
         paginator = self.paginator
         page = paginator.paginate_queryset(users, request)
-        serializer = BaseListSerializer(
-            paginator.get_paginated_response(page).data,
-            context={"serializer_class": UserBaseSerializer},
-        )
-        return self.ok(serializer.data)
+        serializer = self.get_serializer(page, many=True)
+        response_data = paginator.get_paginated_response(serializer.data).data
+        return self.ok(response_data)
 
     @extend_schema(
         description="Get top courses based on the number of students enrolled.",
