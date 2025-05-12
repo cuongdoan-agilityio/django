@@ -61,25 +61,37 @@ user_profile_response_schema = OpenApiResponse(
     ],
 )
 
-student_profile_response_schema = OpenApiResponse(
+signup_success_response_schema = OpenApiResponse(
     response=BaseDetailSerializer,
-    description="Returns either student profile",
+    description="Signup success",
     examples=[
         OpenApiExample(
-            "Student Profile Example",
-            value={
-                "data": {
-                    "id": "1e80d4c5-f612-4ead-a165-811b1466f03d",
-                    "username": "String",
-                    "first_name": "String",
-                    "last_name": "String",
-                    "email": "student@example.com",
-                    "phone_number": "0652485157",
-                    "date_of_birth": "1990-01-01",
-                    "gender": "female",
-                    "scholarship": 0,
-                }
-            },
+            "Signup Success",
+            value={"data": {"success": True}},
+            response_only=True,
+        ),
+    ],
+)
+
+verify_success_response_schema = OpenApiResponse(
+    response=BaseDetailSerializer,
+    description="Verify success",
+    examples=[
+        OpenApiExample(
+            "Verify success",
+            value={"data": {"success": True}},
+            response_only=True,
+        ),
+    ],
+)
+
+reset_password_response_schema = OpenApiResponse(
+    response=BaseDetailSerializer,
+    description="Reset password success",
+    examples=[
+        OpenApiExample(
+            "Reset password success",
+            value={"data": {"password": "Password"}},
             response_only=True,
         ),
     ],

@@ -41,3 +41,6 @@ class ErrorMessage:
     SPECIALIZATION_REQUIRED = "Specializations is required for instructors."
     INVALID_USER_ID = "Invalid user ID."
     INVALID_DEGREE = "Invalid degree value."
+    TOKEN_INVALID = "Token is invalid or expired!"
+    USER_NOT_ACTIVE = "User is not active, please activate your account."
+    USER_NOT_FOUND = "User not found."
