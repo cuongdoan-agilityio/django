@@ -33,9 +33,8 @@ class BadRequestSerializer(serializers.Serializer):
         message (CharField): A user-friendly error message.
     """
 
-    developerMessage = serializers.CharField(help_text="User friendly message")
+    field = serializers.CharField(help_text="The error field")
     message = serializers.ListField(help_text="User friendly message")
-    code = serializers.CharField(help_text="Code")
 
 
 class BaseSuccessResponseSerializer(serializers.Serializer):
@@ -57,7 +56,7 @@ class BaseBadRequestResponseSerializer(serializers.Serializer):
         errors (BadRequestSerializer): The errors indicating the bad request.
     """
 
-    errors = BadRequestSerializer()
+    errors = BadRequestSerializer(many=True)
 
 
 class BaseUnauthorizedResponseSerializer(serializers.Serializer):

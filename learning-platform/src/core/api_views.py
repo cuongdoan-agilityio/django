@@ -39,16 +39,15 @@ class CommonViewSet:
 
         return Response(data=data, status=status.HTTP_403_FORBIDDEN)
 
-    def bad_request(self, message=None, code=None):
+    def bad_request(self, message=None, field=None):
         """
         Return bad request with message content & code
         """
         # Build up the error content.
         response_data = {
             "errors": {
-                "developerMessage": "API is not working properly.",
+                "field": field,
                 "message": [message],
-                "code": code,
             },
         }
 

@@ -1,8 +1,6 @@
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
-from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin, ListModelMixin
 from django.contrib.auth import authenticate, get_user_model
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
@@ -17,6 +15,7 @@ from drf_spectacular.utils import (
 from accounts.tasks import send_welcome_email, send_password_reset_email
 from accounts.models import Specialization
 from core.api_views import BaseViewSet, BaseGenericViewSet
+from core.mixins import FormatDataMixin
 from core.serializers import (
     BaseUnauthorizedResponseSerializer,
     BaseBadRequestResponseSerializer,
@@ -45,6 +44,7 @@ from .serializers import (
     ResetUserPasswordSerializer,
     VerifyResetUserPasswordSerializer,
     ResetUserPasswordResponseSerializer,
+    LoginResponseDataSerializer,
 )
 
 User = get_user_model()
@@ -56,6 +56,7 @@ User = get_user_model()
         request=LoginRequestSerializer,
         responses={
             200: LoginResponseSerializer,
+            400: BaseBadRequestResponseSerializer,
             401: BaseUnauthorizedResponseSerializer,
         },
     ),
@@ -92,7 +93,7 @@ User = get_user_model()
         },
     ),
 )
-class AuthenticationViewSet(BaseViewSet):
+class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
     """
     A viewset for handling user authentication.
 
@@ -101,6 +102,12 @@ class AuthenticationViewSet(BaseViewSet):
 
     permission_classes = [AllowAny]
     resource_name = "auth"
+
+    def get_serializer_class(self):
+        if action := self.action:
+            if action == "login":
+                return LoginResponseDataSerializer
+        return LoginRequestSerializer
 
     @action(detail=False, methods=["post"])
     def login(self, request):
@@ -122,24 +129,21 @@ class AuthenticationViewSet(BaseViewSet):
         user = authenticate(request, email=email, password=password)
 
         if user is not None:
-            if not user.is_active:
-                return self.bad_request(ErrorMessage.USER_NOT_ACTIVE)
-            token, created = Token.objects.get_or_create(user=user)
-            response_data = LoginResponseSerializer({"data": {"token": token.key}}).data
+            token, _ = Token.objects.get_or_create(user=user)
+            response_data = self.format_data({"token": token.key})
+
             return self.ok(response_data)
         else:
-            return Response(
-                BaseUnauthorizedResponseSerializer(
-                    {
-                        "errors": [
-                            {
-                                "field": "email or password",
-                                "message": ErrorMessage.INVALID_CREDENTIALS,
-                            }
-                        ]
-                    }
-                ).data,
-                status=status.HTTP_401_UNAUTHORIZED,
+            inactive_user = User.objects.filter(email=email).first()
+
+            if not inactive_user.is_active:
+                return self.bad_request(
+                    field="Email", message=ErrorMessage.USER_NOT_ACTIVE
+                )
+
+            return self.unauthorized_request(
+                field="Email or Password",
+                message=ErrorMessage.INVALID_CREDENTIALS,
             )
 
     @action(detail=False, methods=["post"])
