@@ -128,6 +128,15 @@ class CustomFilter(django_filters.FilterSet):
             403: BaseForbiddenResponseSerializer,
         },
     ),
+    leave=extend_schema(
+        description="Leave a course.",
+        request=EnrollmentCreateOrEditSerializer,
+        responses={
+            200: BaseSuccessResponseSerializer,
+            400: BaseBadRequestResponseSerializer,
+            403: BaseForbiddenResponseSerializer,
+        },
+    ),
 )
 class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin):
     """
@@ -283,14 +292,6 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         )
         return self.ok(enrollment_serializer.data)
 
-    @extend_schema(
-        description="Leave a course.",
-        request=EnrollmentCreateOrEditSerializer,
-        responses={
-            200: BaseSuccessResponseSerializer,
-            400: BaseBadRequestResponseSerializer,
-        },
-    )
     @action(detail=True, methods=["post"])
     def leave(self, request, **kwargs):
         """
@@ -305,11 +306,16 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         course = self.get_object()
         if request.user.is_superuser:
             if "student" not in request.data:
-                return self.bad_request({"student": ErrorMessage.STUDENT_DATA_REQUIRED})
+                return self.bad_request(
+                    field="student", message=ErrorMessage.STUDENT_DATA_REQUIRED
+                )
             try:
                 student = User.objects.get(id=request.data["student"])
             except User.DoesNotExist:
-                return self.bad_request({"student": ErrorMessage.INVALID_USER_ID})
+                return self.bad_request(
+                    field="student",
+                    message=ErrorMessage.INVALID_USER_ID,
+                )
         else:
             student = request.user
 
@@ -328,7 +334,9 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
             )
             return self.ok(response_serializer.data)
         else:
-            return self.bad_request(ErrorMessage.STUDENT_NOT_ENROLLED)
+            return self.bad_request(
+                field="detail", message=ErrorMessage.STUDENT_NOT_ENROLLED
+            )
 
     @extend_schema(
         description="View all students enrolled in a course.",
