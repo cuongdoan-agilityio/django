@@ -13,8 +13,8 @@ from core.api_views import BaseModelViewSet, BaseGenericViewSet
 from core.serializers import (
     BaseSuccessResponseSerializer,
     BaseListSerializer,
-    BaseDetailSerializer,
     BaseBadRequestResponseSerializer,
+    BaseForbiddenResponseSerializer,
 )
 from core.error_messages import ErrorMessage
 from core.mixins import FormatDataMixin, CustomRetrieveModelMixin
@@ -110,6 +110,15 @@ class CustomFilter(django_filters.FilterSet):
             404: BaseBadRequestResponseSerializer,
         },
     ),
+    partial_update=extend_schema(
+        description="Update course.",
+        request=CourseUpdateSerializer,
+        responses={
+            200: course_response_schema,
+            400: BaseBadRequestResponseSerializer,
+            403: BaseForbiddenResponseSerializer,
+        },
+    ),
 )
 class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin):
     """
@@ -184,11 +193,6 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         response_data = self.format_data(course)
         return self.created(response_data)
 
-    @extend_schema(
-        description="Enroll a student in a course.",
-        request=CourseUpdateSerializer,
-        responses={200: course_response_schema, 400: BaseBadRequestResponseSerializer},
-    )
     def partial_update(self, request, *args, **kwargs):
         """
         Partially update a course by an instructor.
@@ -211,15 +215,15 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         # Check if the course is in progress and has students enrolled
         if "status" in serializer_data and serializer_data["status"] == "inactive":
             if instance.enrollments.exists():
-                return self.bad_request(ErrorMessage.COURSE_HAS_STUDENTS)
+                return self.bad_request(
+                    field="status", message=ErrorMessage.COURSE_HAS_STUDENTS
+                )
 
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         course = serializer.save()
-        data = BaseDetailSerializer(
-            course, context={"serializer_class": CourseDataSerializer}
-        )
-        return self.ok(data.data)
+        response_data = self.format_data(course)
+        return self.ok(response_data)
 
     @extend_schema(
         description="Enroll a student in a course.",
