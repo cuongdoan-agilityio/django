@@ -14,11 +14,11 @@ class LoginRequestSerializer(serializers.Serializer):
     Serializer for handling login requests.
 
     Fields:
-        email (CharField): The email of the user.
+        email (EmailField): The email of the user.
         password (CharField): The password of the user (write-only).
     """
 
-    email = serializers.CharField()
+    email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True)
 
 
