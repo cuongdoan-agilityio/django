@@ -145,6 +145,12 @@ class CustomFilter(django_filters.FilterSet):
             404: BaseNotFoundResponseSerializer,
         },
     ),
+    get_top_courses=extend_schema(
+        description="Get top courses based on the number of students enrolled.",
+        responses={
+            200: TopCoursesSerializer,
+        },
+    ),
 )
 class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin):
     """
@@ -374,12 +380,6 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         response_data = paginator.get_paginated_response(serializer.data).data
         return self.ok(response_data)
 
-    @extend_schema(
-        description="Get top courses based on the number of students enrolled.",
-        responses={
-            200: TopCoursesSerializer,
-        },
-    )
     @action(detail=False, methods=["get"], url_path="top")
     def get_top_courses(self, request):
         """
@@ -389,9 +389,8 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         queryset = queryset.annotate(num_students=Count("enrollments"))
         queryset = queryset.order_by("-num_students")[: settings.TOP_COURSES_LIMIT]
 
-        serialized_data = CourseDataSerializer(queryset, many=True).data
-
-        return self.ok({"data": serialized_data})
+        response_data = self.format_list_data(queryset)
+        return self.ok(response_data)
 
 
 class CategoryViewSet(BaseGenericViewSet, ListModelMixin):
