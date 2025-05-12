@@ -17,6 +17,7 @@ from core.serializers import (
     BaseBadRequestResponseSerializer,
 )
 from core.error_messages import ErrorMessage
+from core.mixins import FormatDataMixin
 from courses.permissions import CoursePermission
 from notifications.models import Notification
 from notifications.constants import NotificationMessage
@@ -93,9 +94,17 @@ class CustomFilter(django_filters.FilterSet):
                 type=bool,
             ),
         ],
-    )
+    ),
+    create=extend_schema(
+        description="Create a course.",
+        request=CourseCreateSerializer,
+        responses={
+            201: course_response_schema,
+            400: BaseBadRequestResponseSerializer,
+        },
+    ),
 )
-class CourseViewSet(BaseModelViewSet, ListModelMixin):
+class CourseViewSet(BaseModelViewSet, FormatDataMixin):
     """
     Course view set
 
@@ -139,13 +148,6 @@ class CourseViewSet(BaseModelViewSet, ListModelMixin):
 
         return queryset
 
-    @extend_schema(
-        description="Create a course.",
-        request=CourseCreateSerializer,
-        responses={
-            201: course_response_schema,
-        },
-    )
     def create(self, request, *args, **kwargs):
         """
         Create a new course by an instructor.
@@ -163,7 +165,7 @@ class CourseViewSet(BaseModelViewSet, ListModelMixin):
         if request.user.is_superuser:
             if "instructor" not in serializer.validated_data:
                 return self.bad_request(
-                    {"instructor": ErrorMessage.INSTRUCTOR_DATA_REQUIRED}
+                    field="instructor", message=ErrorMessage.INSTRUCTOR_DATA_REQUIRED
                 )
 
             course = serializer.save()
@@ -172,10 +174,8 @@ class CourseViewSet(BaseModelViewSet, ListModelMixin):
                 instructor=request.user,
             )
 
-        course_serializer = BaseDetailSerializer(
-            course, context={"serializer_class": CourseDataSerializer}
-        )
-        return self.created(course_serializer.data)
+        response_data = self.format_data(course)
+        return self.created(response_data)
 
     @extend_schema(
         description="Retrieve a single course",
