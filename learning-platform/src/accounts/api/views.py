@@ -21,6 +21,7 @@ from core.serializers import (
     BaseBadRequestResponseSerializer,
     BaseForbiddenResponseSerializer,
     BaseSuccessResponseSerializer,
+    BaseNotFoundResponseSerializer,
     BaseDetailSerializer,
 )
 from core.error_messages import ErrorMessage
@@ -249,7 +250,9 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
             return self.bad_request(field="token", message=ErrorMessage.TOKEN_INVALID)
 
 
-class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
+class UserViewSet(
+    BaseGenericViewSet, FormatDataMixin, RetrieveModelMixin, UpdateModelMixin
+):
     """
     A viewset for handling user profiles.
 
@@ -270,7 +273,9 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         "Call `/api/v1/users/me` to get the authenticated user's profile.",
         responses={
             200: user_profile_response_schema,
+            401: BaseUnauthorizedResponseSerializer,
             403: BaseForbiddenResponseSerializer,
+            404: BaseNotFoundResponseSerializer,
         },
     )
     def retrieve(self, request, *args, **kwargs):
@@ -285,11 +290,11 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
             return self.forbidden()
 
         user = user if pk == "me" else self.get_queryset().filter(id=pk).first()
+        if not user:
+            return self.not_found(message=ErrorMessage.USER_NOT_FOUND)
 
-        serializer = BaseDetailSerializer(
-            user, context={"serializer_class": self.get_serializer_class()}
-        )
-        return self.ok(serializer.data)
+        response_data = self.format_data(user)
+        return self.ok(response_data)
 
     @extend_schema(
         description="Update the student or instructor profile",

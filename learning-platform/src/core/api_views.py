@@ -34,7 +34,10 @@ class CommonViewSet:
         """
         if not data:
             data = {
-                "detail": "You do not have permission to perform this action.",
+                "errors": {
+                    "field": "detail",
+                    "message": ["You do not have permission to perform this action."],
+                },
             }
 
         return Response(data=data, status=status.HTTP_403_FORBIDDEN)
