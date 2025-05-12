@@ -1,6 +1,8 @@
 import uuid
 from rest_framework import status
+
 from core.tests.base import BaseTestCase
+from core.helpers import create_token
 
 
 class UserViewSetTests(BaseTestCase):
@@ -16,6 +18,12 @@ class UserViewSetTests(BaseTestCase):
         super().setUp()
 
         self.retrieve_url = f"{self.root_url}users/me/"
+        self.verify_change_password_url = (
+            f"{self.root_url}users/verify-change-password/"
+        )
+        self.change_password_url = f"{self.root_url}users/change-password/"
+        self.new_password = "NewPassword@123"
+        self.password_token = create_token(self.user.email)
 
     def test_retrieve_student_profile(self):
         """
@@ -42,7 +50,7 @@ class UserViewSetTests(BaseTestCase):
         data = {
             "phone_number": self.random_user_phone_number(),
             "scholarship": self.random_scholarship(),
-            "date_of_birth": self.random_date_of_birth(is_student=True),
+            "date_of_birth": "2000-01-01",
         }
 
         response = self.patch_json(

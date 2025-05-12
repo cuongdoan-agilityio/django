@@ -197,6 +197,25 @@ API_ROOT_ENDPOINT = env("API_ROOT_ENDPOINT", default="api/v1/")
 ADMIN_PAGE_SIZE = 20
 
 
+# Top corses
+TOP_COURSES_LIMIT = env("TOP_COURSES_LIMIT", default=5)
+
+
+# SendGrid settings
+SENDGRID_API_KEY = env("SENDGRID_API_KEY")
+EMAIL_BACKEND = env("EMAIL_BACKEND")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
+VERIFY_SIGNUP_TEMPLATE_ID = env("VERIFY_SIGNUP_TEMPLATE_ID")
+WELCOME_TEMPLATE_ID = env("WELCOME_TEMPLATE_ID")
+VERIFY_RESET_PASSWORD_TEMPLATE_ID = env("VERIFY_RESET_PASSWORD_TEMPLATE_ID")
+INSTRUCTOR_EMAIL_TEMPLATE_ID = env("INSTRUCTOR_EMAIL_TEMPLATE_ID")
+SENDER_NAME = env("SENDER_NAME")
+
+
+# Course enrollment limit
+DEFAULT_COURSE_ENROLLMENT_LIMIT = env("DEFAULT_COURSE_ENROLLMENT_LIMIT", default=10)
+
+
 # Sentry settings
 # ------------------------------------------------------------------------------
 # https://docs.sentry.io/platforms/python/

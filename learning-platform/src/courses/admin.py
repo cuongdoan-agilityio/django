@@ -74,6 +74,7 @@ class CourseAdmin(admin.ModelAdmin):
         "instructor",
         "status",
         "modified",
+        "enrollment_limit",
         "image_url",
     ]
     list_per_page = settings.ADMIN_PAGE_SIZE
