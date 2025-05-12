@@ -153,7 +153,7 @@ Setup environments: create `.env` follow `.env.example` with your own settings
 - Run Celery:
   - cd to `src` folder.
   - celery -A config worker --pool=solo --loglevel=info
-  - celery -A config worker --pool=threads --loglevel=info
+  - celery -A config beat --loglevel=info
 - Swagger documents: `http://127.0.0.1:8000/docs/swagger/`
 - Admin page: `http://127.0.0.1:8000/admin-dashboard/`
 7. Init data
