@@ -119,6 +119,15 @@ class CustomFilter(django_filters.FilterSet):
             403: BaseForbiddenResponseSerializer,
         },
     ),
+    enroll=extend_schema(
+        description="Enroll a student in a course.",
+        request=EnrollmentCreateOrEditSerializer,
+        responses={
+            200: BaseSuccessResponseSerializer,
+            400: BaseBadRequestResponseSerializer,
+            403: BaseForbiddenResponseSerializer,
+        },
+    ),
 )
 class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin):
     """
@@ -225,14 +234,6 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         response_data = self.format_data(course)
         return self.ok(response_data)
 
-    @extend_schema(
-        description="Enroll a student in a course.",
-        request=EnrollmentCreateOrEditSerializer,
-        responses={
-            200: BaseSuccessResponseSerializer,
-            400: BaseBadRequestResponseSerializer,
-        },
-    )
     @action(detail=True, methods=["post"])
     def enroll(self, request, **kwargs):
         """
@@ -248,11 +249,15 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
 
         if request.user.is_superuser:
             if "student" not in request.data:
-                return self.bad_request({"student": ErrorMessage.STUDENT_DATA_REQUIRED})
+                return self.bad_request(
+                    field="student", message=ErrorMessage.STUDENT_DATA_REQUIRED
+                )
             try:
                 student = User.objects.get(id=request.data["student"])
             except User.DoesNotExist:
-                return self.bad_request({"student": ErrorMessage.INVALID_USER_ID})
+                return self.bad_request(
+                    field="student", message=ErrorMessage.INVALID_USER_ID
+                )
         else:
             student = request.user
 
