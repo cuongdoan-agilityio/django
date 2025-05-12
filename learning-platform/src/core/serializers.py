@@ -33,9 +33,8 @@ class BadRequestSerializer(serializers.Serializer):
         message (CharField): A user-friendly error message.
     """
 
-    developerMessage = serializers.CharField(help_text="User friendly message")
+    field = serializers.CharField(help_text="The error field")
     message = serializers.ListField(help_text="User friendly message")
-    code = serializers.CharField(help_text="Code")
 
 
 class BaseSuccessResponseSerializer(serializers.Serializer):
@@ -57,7 +56,7 @@ class BaseBadRequestResponseSerializer(serializers.Serializer):
         errors (BadRequestSerializer): The errors indicating the bad request.
     """
 
-    errors = BadRequestSerializer()
+    errors = BadRequestSerializer(many=True)
 
 
 class BaseUnauthorizedResponseSerializer(serializers.Serializer):
@@ -71,17 +70,6 @@ class BaseUnauthorizedResponseSerializer(serializers.Serializer):
     errors = ErrorSerializer(many=True)
 
 
-class BaseForbiddenErrorResponseSerializer(serializers.Serializer):
-    """
-    Serializer for representing a forbidden error.
-
-    Fields:
-        message (CharField): A user-friendly error message.
-    """
-
-    message = serializers.CharField(help_text="User friendly message")
-
-
 class BaseForbiddenResponseSerializer(serializers.Serializer):
     """
     Base serializer for a forbidden response.
@@ -90,7 +78,18 @@ class BaseForbiddenResponseSerializer(serializers.Serializer):
         detail (CharField): The errors indicating the forbidden request.
     """
 
-    errors = BaseForbiddenErrorResponseSerializer()
+    errors = ErrorSerializer()
+
+
+class BaseNotFoundResponseSerializer(serializers.Serializer):
+    """
+    Base serializer for a not found response.
+
+    Fields:
+        detail (CharField): The errors indicating the forbidden request.
+    """
+
+    errors = ErrorSerializer()
 
 
 class PaginationSerializer(serializers.Serializer):

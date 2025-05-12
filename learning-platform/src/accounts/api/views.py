@@ -1,8 +1,6 @@
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
-from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin, ListModelMixin
 from django.contrib.auth import authenticate, get_user_model
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
@@ -17,12 +15,13 @@ from drf_spectacular.utils import (
 from accounts.tasks import send_welcome_email, send_password_reset_email
 from accounts.models import Specialization
 from core.api_views import BaseViewSet, BaseGenericViewSet
+from core.mixins import FormatDataMixin
 from core.serializers import (
     BaseUnauthorizedResponseSerializer,
     BaseBadRequestResponseSerializer,
     BaseForbiddenResponseSerializer,
     BaseSuccessResponseSerializer,
-    BaseDetailSerializer,
+    BaseNotFoundResponseSerializer,
 )
 from core.error_messages import ErrorMessage
 from core.helpers import create_token
@@ -45,6 +44,7 @@ from .serializers import (
     ResetUserPasswordSerializer,
     VerifyResetUserPasswordSerializer,
     ResetUserPasswordResponseSerializer,
+    LoginResponseDataSerializer,
 )
 
 User = get_user_model()
@@ -56,6 +56,7 @@ User = get_user_model()
         request=LoginRequestSerializer,
         responses={
             200: LoginResponseSerializer,
+            400: BaseBadRequestResponseSerializer,
             401: BaseUnauthorizedResponseSerializer,
         },
     ),
@@ -67,7 +68,7 @@ User = get_user_model()
             400: BaseBadRequestResponseSerializer,
         },
     ),
-    verify_email=extend_schema(
+    verify_signup_email=extend_schema(
         description="API to verify signup email.",
         request=VerifySignupEmailSerializer,
         responses={
@@ -92,7 +93,7 @@ User = get_user_model()
         },
     ),
 )
-class AuthenticationViewSet(BaseViewSet):
+class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
     """
     A viewset for handling user authentication.
 
@@ -101,6 +102,14 @@ class AuthenticationViewSet(BaseViewSet):
 
     permission_classes = [AllowAny]
     resource_name = "auth"
+
+    def get_serializer_class(self):
+        if action := self.action:
+            if action == "login":
+                return LoginResponseDataSerializer
+            if action == "reset_password":
+                return ResetUserPasswordResponseSerializer
+        return LoginRequestSerializer
 
     @action(detail=False, methods=["post"])
     def login(self, request):
@@ -122,24 +131,21 @@ class AuthenticationViewSet(BaseViewSet):
         user = authenticate(request, email=email, password=password)
 
         if user is not None:
-            if not user.is_active:
-                return self.bad_request(ErrorMessage.USER_NOT_ACTIVE)
-            token, created = Token.objects.get_or_create(user=user)
-            response_data = LoginResponseSerializer({"data": {"token": token.key}}).data
+            token, _ = Token.objects.get_or_create(user=user)
+            response_data = self.format_data({"token": token.key})
+
             return self.ok(response_data)
         else:
-            return Response(
-                BaseUnauthorizedResponseSerializer(
-                    {
-                        "errors": [
-                            {
-                                "field": "email or password",
-                                "message": ErrorMessage.INVALID_CREDENTIALS,
-                            }
-                        ]
-                    }
-                ).data,
-                status=status.HTTP_401_UNAUTHORIZED,
+            inactive_user = User.objects.filter(email=email).first()
+
+            if not inactive_user.is_active:
+                return self.bad_request(
+                    field="Email", message=ErrorMessage.USER_NOT_ACTIVE
+                )
+
+            return self.unauthorized_request(
+                field="Email or Password",
+                message=ErrorMessage.INVALID_CREDENTIALS,
             )
 
     @action(detail=False, methods=["post"])
@@ -156,19 +162,12 @@ class AuthenticationViewSet(BaseViewSet):
 
         serializer = RegisterSerializer(data=request.data)
 
-        if not serializer.is_valid():
-            error_details = {}
-            for field, errors in serializer.errors.items():
-                error_details[field] = errors[0] if isinstance(errors, list) else errors
-
-            return self.bad_request(error_details)
-
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return self.ok()
 
-    @action(detail=False, methods=["post"], url_path="verify-email")
-    def verify_email(self, request):
+    @action(detail=False, methods=["post"], url_path="verify-signup-email")
+    def verify_signup_email(self, request):
         """
         Verify the email of a user using a token.
         """
@@ -194,7 +193,7 @@ class AuthenticationViewSet(BaseViewSet):
             return self.ok()
 
         except (BadSignature, SignatureExpired, User.DoesNotExist, ValueError):
-            return self.bad_request(ErrorMessage.TOKEN_INVALID)
+            return self.bad_request(field="token", message=ErrorMessage.TOKEN_INVALID)
 
     @action(detail=False, methods=["post"], url_path="verify-reset-password")
     def verify_reset_password(self, request):
@@ -209,7 +208,7 @@ class AuthenticationViewSet(BaseViewSet):
         user = User.objects.filter(email=email).first()
 
         if not user:
-            return self.bad_request(ErrorMessage.USER_NOT_FOUND)
+            return self.bad_request(field="email", message=ErrorMessage.USER_NOT_FOUND)
 
         token = create_token(user.email)
 
@@ -220,7 +219,7 @@ class AuthenticationViewSet(BaseViewSet):
             )
             return self.ok()
         except Exception as e:
-            return self.bad_request(str(e))
+            return self.bad_request(message=str(e))
 
     @action(detail=False, methods=["post"], url_path="reset-password")
     def reset_password(self, request):
@@ -243,18 +242,16 @@ class AuthenticationViewSet(BaseViewSet):
             new_password = "Password@123"
             user.password = new_password
             user.save()
-
-            response_serializer = BaseDetailSerializer(
-                {"password": new_password},
-                context={"serializer_class": ResetUserPasswordResponseSerializer},
-            )
-            return self.ok(response_serializer.data)
+            response_data = self.format_data({"password": new_password})
+            return self.ok(response_data)
 
         except (BadSignature, SignatureExpired, User.DoesNotExist, ValueError):
-            return self.bad_request(ErrorMessage.TOKEN_INVALID)
+            return self.bad_request(field="token", message=ErrorMessage.TOKEN_INVALID)
 
 
-class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
+class UserViewSet(
+    BaseGenericViewSet, FormatDataMixin, RetrieveModelMixin, UpdateModelMixin
+):
     """
     A viewset for handling user profiles.
 
@@ -275,7 +272,9 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         "Call `/api/v1/users/me` to get the authenticated user's profile.",
         responses={
             200: user_profile_response_schema,
+            401: BaseUnauthorizedResponseSerializer,
             403: BaseForbiddenResponseSerializer,
+            404: BaseNotFoundResponseSerializer,
         },
     )
     def retrieve(self, request, *args, **kwargs):
@@ -290,11 +289,11 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
             return self.forbidden()
 
         user = user if pk == "me" else self.get_queryset().filter(id=pk).first()
+        if not user:
+            return self.not_found(message=ErrorMessage.USER_NOT_FOUND)
 
-        serializer = BaseDetailSerializer(
-            user, context={"serializer_class": self.get_serializer_class()}
-        )
-        return self.ok(serializer.data)
+        response_data = self.format_data(user)
+        return self.ok(response_data)
 
     @extend_schema(
         description="Update the student or instructor profile",
@@ -302,6 +301,7 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         responses={
             200: user_profile_response_schema,
             403: BaseForbiddenResponseSerializer,
+            404: BaseNotFoundResponseSerializer,
         },
     )
     def partial_update(self, request, *args, **kwargs):
@@ -324,17 +324,13 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
         try:
             user = user if pk == "me" else User.objects.get(id=pk)
         except User.DoesNotExist:
-            return self.bad_request({"student": ErrorMessage.INVALID_USER_ID})
+            return self.not_found(message=ErrorMessage.USER_NOT_FOUND)
 
         serializer = UserProfileUpdateSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        updated_user = self.get_queryset().get(id=user.id)
-        response_serializer = BaseDetailSerializer(
-            updated_user, context={"serializer_class": self.get_serializer_class()}
-        )
-        return self.ok(response_serializer.data)
+        updated_user = serializer.save()
+        response_data = self.format_data(updated_user)
+        return self.ok(response_data)
 
 
 class SpecializationViewSet(BaseGenericViewSet, ListModelMixin):
