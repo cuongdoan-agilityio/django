@@ -22,7 +22,6 @@ from core.serializers import (
     BaseForbiddenResponseSerializer,
     BaseSuccessResponseSerializer,
     BaseNotFoundResponseSerializer,
-    BaseDetailSerializer,
 )
 from core.error_messages import ErrorMessage
 from core.helpers import create_token
@@ -302,6 +301,7 @@ class UserViewSet(
         responses={
             200: user_profile_response_schema,
             403: BaseForbiddenResponseSerializer,
+            404: BaseNotFoundResponseSerializer,
         },
     )
     def partial_update(self, request, *args, **kwargs):
@@ -324,17 +324,13 @@ class UserViewSet(
         try:
             user = user if pk == "me" else User.objects.get(id=pk)
         except User.DoesNotExist:
-            return self.bad_request({"student": ErrorMessage.INVALID_USER_ID})
+            return self.not_found(message=ErrorMessage.USER_NOT_FOUND)
 
         serializer = UserProfileUpdateSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        updated_user = self.get_queryset().get(id=user.id)
-        response_serializer = BaseDetailSerializer(
-            updated_user, context={"serializer_class": self.get_serializer_class()}
-        )
-        return self.ok(response_serializer.data)
+        updated_user = serializer.save()
+        response_data = self.format_data(updated_user)
+        return self.ok(response_data)
 
 
 class SpecializationViewSet(BaseGenericViewSet, ListModelMixin):

@@ -36,7 +36,7 @@ class CommonViewSet:
             data = {
                 "errors": {
                     "field": "detail",
-                    "message": ["You do not have permission to perform this action."],
+                    "message": "You do not have permission to perform this action.",
                 },
             }
 
