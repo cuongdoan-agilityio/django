@@ -54,6 +54,20 @@ class CommonViewSet:
 
         return Response(data=response_data, status=status.HTTP_400_BAD_REQUEST)
 
+    def unauthorized_request(self, field=None, message=None):
+        """
+        Return unauthorized request with message content
+        """
+        # Build up the error content.
+        response_data = {
+            "errors": {
+                "field": field,
+                "message": message,
+            },
+        }
+
+        return Response(data=response_data, status=status.HTTP_401_UNAUTHORIZED)
+
 
 class BaseViewSet(ViewSet, CommonViewSet):
     """
