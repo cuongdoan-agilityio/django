@@ -67,6 +67,20 @@ class CommonViewSet:
 
         return Response(data=response_data, status=status.HTTP_401_UNAUTHORIZED)
 
+    def not_found(self, field="detail", message="Not found"):
+        """
+        Return not found request with message content
+        """
+        # Build up the error content.
+        response_data = {
+            "errors": {
+                "field": field,
+                "message": message,
+            }
+        }
+
+        return Response(data=response_data, status=status.HTTP_404_NOT_FOUND)
+
 
 class BaseViewSet(ViewSet, CommonViewSet):
     """
