@@ -6,11 +6,12 @@ from django.db.models.signals import post_save
 from django.contrib.auth import get_user_model
 
 from core.constants import Gender, ScholarshipChoices, Degree, Role
-from accounts.factories import UserFactory
-from core.tests.utils.helpers import random_birthday, random_phone_number
-from accounts.factories import SpecializationFactory
-from courses.factories import CategoryFactory
+from accounts.factories import UserFactory, SpecializationFactory
 from accounts.signals import send_verify_email, enroll_intro_course
+from core.tests.utils.helpers import random_birthday, random_phone_number
+from courses.factories import CategoryFactory
+from courses.signals import send_email_to_instructor
+from courses.models import Enrollment
 
 
 fake = Faker()
@@ -21,6 +22,7 @@ class BaseTestCase(APITestCase):
     def setUp(self):
         post_save.disconnect(receiver=send_verify_email, sender=User)
         post_save.disconnect(receiver=enroll_intro_course, sender=User)
+        post_save.disconnect(receiver=send_email_to_instructor, sender=Enrollment)
 
         self.client = APIClient()
         self.fake = fake
