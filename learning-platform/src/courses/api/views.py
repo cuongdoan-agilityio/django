@@ -17,7 +17,7 @@ from core.serializers import (
     BaseBadRequestResponseSerializer,
 )
 from core.error_messages import ErrorMessage
-from core.mixins import FormatDataMixin
+from core.mixins import FormatDataMixin, CustomRetrieveModelMixin
 from courses.permissions import CoursePermission
 from notifications.models import Notification
 from notifications.constants import NotificationMessage
@@ -103,8 +103,15 @@ class CustomFilter(django_filters.FilterSet):
             400: BaseBadRequestResponseSerializer,
         },
     ),
+    retrieve=extend_schema(
+        description="Retrieve a single course",
+        responses={
+            200: course_response_schema,
+            404: BaseBadRequestResponseSerializer,
+        },
+    ),
 )
-class CourseViewSet(BaseModelViewSet, FormatDataMixin):
+class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin):
     """
     Course view set
 
@@ -176,26 +183,6 @@ class CourseViewSet(BaseModelViewSet, FormatDataMixin):
 
         response_data = self.format_data(course)
         return self.created(response_data)
-
-    @extend_schema(
-        description="Retrieve a single course",
-        responses={
-            200: course_response_schema,
-        },
-    )
-    def retrieve(self, request, *args, **kwargs):
-        """
-        Retrieve a single course with custom response format.
-
-        Returns:
-            Response: The course data.
-        """
-
-        course = self.get_object()
-        serializer = BaseDetailSerializer(
-            course, context={"serializer_class": CourseDataSerializer}
-        )
-        return self.ok(serializer.data)
 
     @extend_schema(
         description="Enroll a student in a course.",
