@@ -164,8 +164,8 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         serializer.save()
         return self.ok()
 
-    @action(detail=False, methods=["post"], url_path="verify-email")
-    def verify_email(self, request):
+    @action(detail=False, methods=["post"], url_path="verify-signup-email")
+    def verify_signup_email(self, request):
         """
         Verify the email of a user using a token.
         """
@@ -191,7 +191,7 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
             return self.ok()
 
         except (BadSignature, SignatureExpired, User.DoesNotExist, ValueError):
-            return self.bad_request(ErrorMessage.TOKEN_INVALID)
+            return self.bad_request(field="token", message=ErrorMessage.TOKEN_INVALID)
 
     @action(detail=False, methods=["post"], url_path="verify-reset-password")
     def verify_reset_password(self, request):
