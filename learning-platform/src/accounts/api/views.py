@@ -68,7 +68,7 @@ User = get_user_model()
             400: BaseBadRequestResponseSerializer,
         },
     ),
-    verify_email=extend_schema(
+    verify_signup_email=extend_schema(
         description="API to verify signup email.",
         request=VerifySignupEmailSerializer,
         responses={
@@ -206,7 +206,7 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         user = User.objects.filter(email=email).first()
 
         if not user:
-            return self.bad_request(ErrorMessage.USER_NOT_FOUND)
+            return self.bad_request(field="email", message=ErrorMessage.USER_NOT_FOUND)
 
         token = create_token(user.email)
 
@@ -217,7 +217,7 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
             )
             return self.ok()
         except Exception as e:
-            return self.bad_request(str(e))
+            return self.bad_request(message=str(e))
 
     @action(detail=False, methods=["post"], url_path="reset-password")
     def reset_password(self, request):
