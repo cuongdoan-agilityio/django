@@ -160,13 +160,6 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
 
         serializer = RegisterSerializer(data=request.data)
 
-        if not serializer.is_valid():
-            error_details = {}
-            for field, errors in serializer.errors.items():
-                error_details[field] = errors[0] if isinstance(errors, list) else errors
-
-            return self.bad_request(error_details)
-
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return self.ok()
