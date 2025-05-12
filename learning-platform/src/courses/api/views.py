@@ -5,7 +5,7 @@ from rest_framework.mixins import ListModelMixin
 from django.db.models import Count
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
 from rest_framework.permissions import AllowAny
 
 from accounts.api.serializers import UserBaseSerializer
@@ -51,6 +51,50 @@ class CustomFilter(django_filters.FilterSet):
         fields = ["category"]
 
 
+@extend_schema_view(
+    list=extend_schema(
+        description="List all courses with pagination and custom response format.",
+        parameters=[
+            OpenApiParameter(
+                name="search",
+                description="Course title or description.",
+                location=OpenApiParameter.QUERY,
+                type=str,
+                required=False,
+            ),
+            OpenApiParameter(
+                name="limit",
+                description="Maximum number of resources that will be returned.",
+                required=False,
+                type=int,
+            ),
+            OpenApiParameter(
+                name="offset",
+                description="Number of resources to skip.",
+                required=False,
+                type=int,
+            ),
+            OpenApiParameter(
+                name="status",
+                description="Filter courses by status.",
+                required=False,
+                type=str,
+            ),
+            OpenApiParameter(
+                name="category",
+                description="Filter courses by category UUID.",
+                required=False,
+                type=str,
+            ),
+            OpenApiParameter(
+                name="enrolled",
+                description="Filter enrolled courses (students only).",
+                required=False,
+                type=bool,
+            ),
+        ],
+    )
+)
 class CourseViewSet(BaseModelViewSet, ListModelMixin):
     """
     Course view set
@@ -94,60 +138,6 @@ class CourseViewSet(BaseModelViewSet, ListModelMixin):
             queryset = queryset.filter(enrollments__student=self.request.user)
 
         return queryset
-
-    @extend_schema(
-        description="List all courses with pagination and custom response format.",
-        parameters=[
-            OpenApiParameter(
-                name="search",
-                description="Course title or description.",
-                location=OpenApiParameter.QUERY,
-                type=str,
-                required=False,
-            ),
-            OpenApiParameter(
-                name="limit",
-                description="Maximum number of resources that will be returned.",
-                required=False,
-                type=int,
-            ),
-            OpenApiParameter(
-                name="offset",
-                description="Number of resources to skip.",
-                required=False,
-                type=int,
-            ),
-            OpenApiParameter(
-                name="status",
-                description="Filter courses by status.",
-                required=False,
-                type=str,
-            ),
-            OpenApiParameter(
-                name="category",
-                description="Filter courses by category UUID.",
-                required=False,
-                type=str,
-            ),
-            OpenApiParameter(
-                name="enrolled",
-                description="Filter enrolled courses (students only).",
-                required=False,
-                type=bool,
-            ),
-        ],
-    )
-    def list(self, request, *args, **kwargs):
-        """
-        List all courses with pagination and custom response format.
-
-        Args:
-            request (HttpRequest): The current request object.
-
-        Returns:
-            Response: A paginated list of courses with metadata.
-        """
-        return super().list(request, *args, **kwargs)
 
     @extend_schema(
         description="Create a course.",
