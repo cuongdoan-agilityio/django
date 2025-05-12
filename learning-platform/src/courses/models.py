@@ -53,6 +53,17 @@ class Course(AbstractBaseModel):
         default=Status.ACTIVATE.value,
     )
     image_url = models.URLField(help_text="Course image URL", blank=True, null=True)
+    enrollment_limit = models.PositiveIntegerField(
+        default=settings.DEFAULT_COURSE_ENROLLMENT_LIMIT
+    )
+
+    @property
+    def count_enrollments(self):
+        return self.enrollments.count()
+
+    @property
+    def is_full(self):
+        return self.count_enrollments == self.enrollment_limit
 
     def __str__(self):
         return self.title
@@ -83,9 +94,6 @@ class Enrollment(AbstractBaseModel):
         if self._state.adding:
             if self.course.status != Status.ACTIVATE.value:
                 raise ValidationError(ErrorMessage.INACTIVE_COURSE)
-
-            if not self.course.instructor:
-                raise ValidationError(ErrorMessage.COURSE_HAS_NO_INSTRUCTOR)
 
             if (
                 self.student

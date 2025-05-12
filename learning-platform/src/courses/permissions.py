@@ -11,7 +11,11 @@ class CoursePermission(BasePermission):
         Check if the user has permission to perform the action.
         """
 
-        if request.user.is_superuser or view.action in ["list", "retrieve"]:
+        if request.user.is_superuser or view.action in [
+            "list",
+            "retrieve",
+            "get_top_courses",
+        ]:
             return True
 
         if view.action in ["create", "partial_update", "get_students"]:

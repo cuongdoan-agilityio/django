@@ -5,24 +5,33 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin, ListModelMixin
 from django.contrib.auth import authenticate, get_user_model
+from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
+from django.forms.models import model_to_dict
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
 )
 
+from accounts.tasks import send_welcome_email, send_password_reset_email
 from accounts.models import Specialization
 from core.api_views import BaseViewSet, BaseGenericViewSet
 from core.serializers import (
     BaseUnauthorizedResponseSerializer,
     BaseBadRequestResponseSerializer,
     BaseForbiddenResponseSerializer,
+    BaseSuccessResponseSerializer,
     BaseDetailSerializer,
 )
 from core.error_messages import ErrorMessage
+from core.helpers import create_token
 
 from .response_schema import (
     user_profile_response_schema,
-    student_profile_response_schema,
+    signup_success_response_schema,
+    verify_success_response_schema,
+    reset_password_response_schema,
 )
 from .serializers import (
     LoginRequestSerializer,
@@ -31,8 +40,12 @@ from .serializers import (
     UserProfileUpdateSerializer,
     SpecializationSerializer,
     UserProfileDataSerializer,
+    VerifySignupEmailSerializer,
+    UserActivateSerializer,
+    ResetUserPasswordSerializer,
+    VerifyResetUserPasswordSerializer,
+    ResetUserPasswordResponseSerializer,
 )
-
 
 User = get_user_model()
 
@@ -50,7 +63,31 @@ User = get_user_model()
         description="API to sign up a new user.",
         request=RegisterSerializer,
         responses={
-            201: student_profile_response_schema,
+            201: signup_success_response_schema,
+            400: BaseBadRequestResponseSerializer,
+        },
+    ),
+    verify_email=extend_schema(
+        description="API to verify signup email.",
+        request=VerifySignupEmailSerializer,
+        responses={
+            201: verify_success_response_schema,
+            400: BaseBadRequestResponseSerializer,
+        },
+    ),
+    verify_reset_password=extend_schema(
+        description="Verify reset password of a user using a token.",
+        request=VerifyResetUserPasswordSerializer,
+        responses={
+            200: BaseSuccessResponseSerializer,
+            400: BaseBadRequestResponseSerializer,
+        },
+    ),
+    reset_password=extend_schema(
+        description="Reset the password of a user using a token.",
+        request=ResetUserPasswordSerializer,
+        responses={
+            200: reset_password_response_schema,
             400: BaseBadRequestResponseSerializer,
         },
     ),
@@ -85,6 +122,8 @@ class AuthenticationViewSet(BaseViewSet):
         user = authenticate(request, email=email, password=password)
 
         if user is not None:
+            if not user.is_active:
+                return self.bad_request(ErrorMessage.USER_NOT_ACTIVE)
             token, created = Token.objects.get_or_create(user=user)
             response_data = LoginResponseSerializer({"data": {"token": token.key}}).data
             return self.ok(response_data)
@@ -125,13 +164,94 @@ class AuthenticationViewSet(BaseViewSet):
             return self.bad_request(error_details)
 
         serializer.is_valid(raise_exception=True)
-        user_instance = serializer.save()
+        serializer.save()
+        return self.ok()
 
-        response_serializer = BaseDetailSerializer(
-            user_instance, context={"serializer_class": UserProfileDataSerializer}
-        )
+    @action(detail=False, methods=["post"], url_path="verify-email")
+    def verify_email(self, request):
+        """
+        Verify the email of a user using a token.
+        """
 
-        return self.created(response_serializer.data)
+        serializer = VerifySignupEmailSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        token = serializer.validated_data["token"]
+        signer = TimestampSigner()
+
+        try:
+            signed_value = force_str(urlsafe_base64_decode(token))
+            user_id = signer.unsign(signed_value, max_age=24 * 3600)
+            user = User.objects.get(id=user_id)
+            if not user.is_active:
+                serializer = UserActivateSerializer(
+                    user, data={"is_active": True}, partial=True
+                )
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                user_data = model_to_dict(user, fields=["username", "email"])
+                send_welcome_email.delay(user_data)
+            return self.ok()
+
+        except (BadSignature, SignatureExpired, User.DoesNotExist, ValueError):
+            return self.bad_request(ErrorMessage.TOKEN_INVALID)
+
+    @action(detail=False, methods=["post"], url_path="verify-reset-password")
+    def verify_reset_password(self, request):
+        """
+        Verify reset the password of a user using a token.
+        """
+
+        serializer = VerifyResetUserPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"]
+
+        user = User.objects.filter(email=email).first()
+
+        if not user:
+            return self.bad_request(ErrorMessage.USER_NOT_FOUND)
+
+        token = create_token(user.email)
+
+        try:
+            send_password_reset_email.delay(
+                {"username": user.username, "email": user.email},
+                token,
+            )
+            return self.ok()
+        except Exception as e:
+            return self.bad_request(str(e))
+
+    @action(detail=False, methods=["post"], url_path="reset-password")
+    def reset_password(self, request):
+        """
+        Reset the password of a user using a token.
+        """
+
+        serializer = ResetUserPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        token = serializer.validated_data["token"]
+
+        signer = TimestampSigner()
+
+        try:
+            signed_value = force_str(urlsafe_base64_decode(token))
+            email = signer.unsign(signed_value, max_age=24 * 3600)
+            user = User.objects.filter(email=email).first()
+            # TODO: need replace with other password
+            new_password = "Password@123"
+            user.password = new_password
+            user.save()
+
+            response_serializer = BaseDetailSerializer(
+                {"password": new_password},
+                context={"serializer_class": ResetUserPasswordResponseSerializer},
+            )
+            return self.ok(response_serializer.data)
+
+        except (BadSignature, SignatureExpired, User.DoesNotExist, ValueError):
+            return self.bad_request(ErrorMessage.TOKEN_INVALID)
 
 
 class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):

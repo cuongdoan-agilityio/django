@@ -126,37 +126,6 @@ Develop a functional “Student Course Management System” by building, testing
     |   +---migrations
     |   |
     |   +---tests
-    |
-    +---instructors
-    |   |   admin.py
-    |   |   apps.py
-    |   |   factories.py
-    |   |   forms.py
-    |   |   models.py
-    |   |   views.py
-    |   |
-    |   +---api
-    |   |   |   serializers.py
-    |   |   |   views.py
-    |   |
-    |   +---migrations
-    |   |
-    |   +---tests
-    |
-    +---students
-    |   |   admin.py
-    |   |   apps.py
-    |   |   factories.py
-    |   |   forms.py
-    |   |   models.py
-    |   |   views.py
-    |   |
-    |   +---api
-    |   |   |   serializers.py
-    |   |   |   views.py
-    |
-    |   +---migrations
-    |   +---tests
 ```
 
 ## How to run
@@ -171,22 +140,27 @@ cd learning-platform/
 Setup environments: create `.env` follow `.env.example` with your own settings
 
 3. Create env: `uv sync` and activate it: `source .venv/bin/activate`
+4. Check Redis server:
+`redis-cli ping`: if result is not `PONG` we need run redis server
 
-4. Install hook scripts: `pre-commit install`
+5. Install hook scripts: `pre-commit install`
 
-5. Run project
+6. Run project
 - Make migrations: `uv run ./src/manage.py makemigrations`
 - Migrate: `uv run ./src/manage.py migrate`
 - Create superuser: `uv run ./src/manage.py createsuperuser --username admin --email admin@example.com`
 - Run server: `uv run ./src/manage.py runserver`
+- Run Celery:
+  - cd to `src` folder.
+  - celery -A config worker --pool=solo --loglevel=info
+  - celery -A config beat --loglevel=info
 - Swagger documents: `http://127.0.0.1:8000/docs/swagger/`
 - Admin page: `http://127.0.0.1:8000/admin-dashboard/`
-
-6. Init data
+7. Init data
 - Init students data: `uv run ./src/manage.py init_courses`
 - Init instructors and courses data: `uv run ./src/manage.py init_students`
 
-7. Flow create data with admin page
+8. Flow create data with admin page
 - Login to [admin page](http://127.0.0.1:8000/admin-dashboard/) with admin info.
 - Create course specializations.
 - Create students.

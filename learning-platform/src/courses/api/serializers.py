@@ -39,6 +39,14 @@ class CourseDataSerializer(serializers.ModelSerializer):
         read_only_fields = ["instructor"]
 
 
+class TopCoursesSerializer(serializers.Serializer):
+    """
+    Serializer for the top courses.
+    """
+
+    data = CourseDataSerializer(many=True)
+
+
 class CourseCreateSerializer(serializers.ModelSerializer):
     """
     Serializer for handling create course requests.
@@ -117,7 +125,7 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         Validates the course field.
         """
 
-        if instance.status != "activate" or not instance.instructor:
+        if instance.status != "activate":
             raise serializers.ValidationError(ErrorMessage.INACTIVE_COURSE)
 
         return instance

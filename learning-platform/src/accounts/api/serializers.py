@@ -76,10 +76,47 @@ class RegisterSerializer(serializers.ModelSerializer):
             email=validated_data["email"],
             scholarship=ScholarshipChoices.ZERO.value,
             password=validated_data["password"],
+            is_active=False,
         )
         user.full_clean()
         user.save()
         return user
+
+
+class VerifySignupEmailSerializer(serializers.Serializer):
+    """
+    Serializer for verifying signup email addresses
+    """
+
+    token = serializers.CharField(help_text="Token for email verification")
+
+
+class UserActivateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for activating a user account.
+    """
+
+    class Meta:
+        model = User
+        fields = ["is_active"]
+
+    def update(self, instance, validated_data):
+        """
+        Updates the user profile with the provided validated data.
+
+        Args:
+            instance (User): The user instance to update.
+            validated_data (dict): The validated data for updating the user profile.
+
+        Returns:
+            User: The updated user instance.
+        """
+
+        instance.is_active = validated_data.get("is_active", True)
+        instance.password = None
+        instance.save()
+
+        return instance
 
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
@@ -138,9 +175,6 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
 
         if "specializations" in validated_data and instance.is_instructor:
             instance.specializations.set(validated_data["specializations"])
-
-        if "password" not in validated_data:
-            instance.password = None
 
         instance.phone_number = validated_data.get(
             "phone_number", instance.phone_number
@@ -221,3 +255,27 @@ class UserProfileDataSerializer(UserBaseSerializer):
             "degree",
             "specializations",
         ]
+
+
+class VerifyResetUserPasswordSerializer(serializers.Serializer):
+    """
+    Serializer for verify reset user passwords.
+    """
+
+    email = serializers.EmailField(help_text="Email for reset user password")
+
+
+class ResetUserPasswordSerializer(serializers.Serializer):
+    """
+    Serializer for reset user password.
+    """
+
+    token = serializers.CharField(help_text="Token for reset user password")
+
+
+class ResetUserPasswordResponseSerializer(serializers.Serializer):
+    """
+    Serializer for reset user password response.
+    """
+
+    password = serializers.CharField(help_text="New password")
