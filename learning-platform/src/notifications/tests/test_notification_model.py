@@ -1,45 +1,31 @@
-from core.tests.base import BaseTestCase
+import pytest
 from django.core.exceptions import ValidationError
 
 from notifications.factories import NotificationFactory
 from notifications.models import Notification
 
 
-class NotificationModelTestCase(BaseTestCase):
+@pytest.mark.django_db
+class NotificationModelTestCase:
     """
     Test case for the Notification model.
     """
 
-    def setUp(self):
-        """
-        Set up the test case.
-        """
-
-        super().setUp()
-
-        self.message = self.fake.sentence()
-        self.is_read = self.fake.boolean()
-        self.notification = NotificationFactory(
-            user=self.user,
-            message=self.message,
-            is_read=self.is_read,
-        )
-
-    def test_create_notification_success(self):
+    def test_create_notification_success(self, fake_notification):
         """
         Test that a notification can be created successfully.
         """
 
-        self.assertEqual(self.notification.user, self.user)
-        self.assertEqual(self.notification.message, self.message)
-        self.assertEqual(self.notification.is_read, self.is_read)
+        self.assertEqual(fake_notification.user, self.user)
+        self.assertEqual(fake_notification.message, self.message)
+        self.assertEqual(fake_notification.is_read, self.is_read)
 
     def test_create_notification_without_user(self):
         """
         Test that a notification cannot be created without a user.
         """
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             notification = Notification(
                 message="This is a test notification.",
                 is_read=False,
@@ -52,7 +38,7 @@ class NotificationModelTestCase(BaseTestCase):
         Test that a notification cannot be created without a message.
         """
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             notification = Notification(
                 user=self.user,
                 is_read=False,
@@ -65,7 +51,7 @@ class NotificationModelTestCase(BaseTestCase):
         Test that a notification cannot be created with an empty message.
         """
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             notification = Notification(
                 user=self.user,
                 message="",
@@ -73,46 +59,42 @@ class NotificationModelTestCase(BaseTestCase):
             )
             notification.full_clean()
 
-    def test_mark_notification_as_read(self):
+    def test_mark_notification_as_read(self, fake_user):
         """
         Test that a notification can be marked as read.
         """
 
         notification = NotificationFactory(
-            user=self.user,
-            message=self.message,
+            user=fake_user,
             is_read=False,
         )
         notification.is_read = True
         notification.save()
-        self.assertTrue(notification.is_read)
+        assert notification.is_read is True
 
-    def test_mark_notification_as_unread(self):
+    def test_mark_notification_as_unread(self, fake_user):
         """
         Test that a notification can be marked as unread.
         """
 
         notification = NotificationFactory(
-            user=self.user,
-            message=self.message,
+            user=fake_user,
         )
         notification.is_read = False
         notification.save()
-        self.assertFalse(notification.is_read)
+        assert notification.is_read is False
 
-    def test_notification_str(self):
+    def test_notification_str(self, fake_notification, fake_user):
         """
         Test the string representation of the notification.
         """
 
-        self.assertEqual(
-            str(self.notification), f"Notification for {self.user.username}"
-        )
+        assert str(fake_notification) == f"Notification for {fake_user.username}"
 
-    def test_notification_message_help_text(self):
+    def test_notification_message_help_text(self, fake_notification):
         """
         Test the help text for the notification message field.
         """
 
-        field_help_text = self.notification._meta.get_field("message").help_text
-        self.assertEqual(field_help_text, "Notification message")
+        field_help_text = fake_notification._meta.get_field("message").help_text
+        assert field_help_text == "Notification message"
