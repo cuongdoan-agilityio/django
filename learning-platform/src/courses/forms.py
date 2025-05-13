@@ -30,11 +30,14 @@ class EnrollmentForm(forms.ModelForm):
         course = cleaned_data.get("course")
         student = cleaned_data.get("student")
 
-        if not course:
+        if not course or not student:
             return
 
         if course.status != Status.ACTIVATE.value:
             self.add_error("course", ErrorMessage.INACTIVE_COURSE)
+
+        if not student.is_student:
+            self.add_error("student", ErrorMessage.USER_NOT_STUDENT)
 
         if student and student.enrollments.filter(course=course).exists():
             self.add_error("student", ErrorMessage.STUDENT_ALREADY_ENROLLED)

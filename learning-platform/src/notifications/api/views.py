@@ -1,13 +1,17 @@
-from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
 
 from django_filters.rest_framework import DjangoFilterBackend
 from django_filters import rest_framework as filters
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 
-from core.api_views import BaseGenericViewSet
+from core.api_views import BaseModelViewSet
 from core.permissions import IsOwner
-from core.serializers import BaseDetailSerializer
+from core.serializers import (
+    BaseBadRequestResponseSerializer,
+    BaseForbiddenResponseSerializer,
+    BaseNotFoundResponseSerializer,
+)
+from core.mixins import CustomRetrieveModelMixin, CustomUpdateModelMixin
 from notifications.models import Notification
 from notifications.api.response_schema import notification_detail_response_schema
 from .serializers import NotificationSerializer
@@ -37,10 +41,27 @@ class NotificationFilter(filters.FilterSet):
                 location=OpenApiParameter.QUERY,
             ),
         ],
-    )
+    ),
+    retrieve=extend_schema(
+        description="Retrieve a user notification.",
+        responses={
+            200: notification_detail_response_schema,
+            401: BaseForbiddenResponseSerializer,
+            404: BaseNotFoundResponseSerializer,
+        },
+    ),
+    partial_update=extend_schema(
+        description="Update a user notification.",
+        responses={
+            200: notification_detail_response_schema,
+            400: BaseBadRequestResponseSerializer,
+            401: BaseForbiddenResponseSerializer,
+            404: BaseNotFoundResponseSerializer,
+        },
+    ),
 )
 class NotificationViewSet(
-    BaseGenericViewSet, ListModelMixin, RetrieveModelMixin, UpdateModelMixin
+    CustomRetrieveModelMixin, CustomUpdateModelMixin, BaseModelViewSet
 ):
     """
     A viewset for handling notifications.
@@ -59,32 +80,6 @@ class NotificationViewSet(
         Returns the queryset for the Notification model.
         """
         return self.request.user.notifications.all()
-
-    @extend_schema(
-        description="Retrieve a user notification.",
-        responses={
-            200: notification_detail_response_schema,
-        },
-    )
-    def retrieve(self, request, *args, **kwargs):
-        notification = super().retrieve(request, *args, **kwargs)
-        serializer = BaseDetailSerializer(
-            notification.data, context={"serializer_class": self.get_serializer_class()}
-        )
-        return self.ok(serializer.data)
-
-    @extend_schema(
-        description="Retrieve a user notification.",
-        responses={
-            200: notification_detail_response_schema,
-        },
-    )
-    def partial_update(self, request, *args, **kwargs):
-        notification = super().partial_update(request, *args, **kwargs)
-        serializer = BaseDetailSerializer(
-            notification.data, context={"serializer_class": self.get_serializer_class()}
-        )
-        return self.ok(serializer.data)
 
 
 apps = [NotificationViewSet]
