@@ -5,18 +5,19 @@ from rest_framework.mixins import ListModelMixin
 from django.db.models import Count
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
 from rest_framework.permissions import AllowAny
 
 from accounts.api.serializers import UserBaseSerializer
 from core.api_views import BaseModelViewSet, BaseGenericViewSet
 from core.serializers import (
     BaseSuccessResponseSerializer,
-    BaseListSerializer,
-    BaseDetailSerializer,
     BaseBadRequestResponseSerializer,
+    BaseForbiddenResponseSerializer,
+    BaseNotFoundResponseSerializer,
 )
 from core.error_messages import ErrorMessage
+from core.mixins import FormatDataMixin, CustomRetrieveModelMixin
 from courses.permissions import CoursePermission
 from notifications.models import Notification
 from notifications.constants import NotificationMessage
@@ -51,51 +52,8 @@ class CustomFilter(django_filters.FilterSet):
         fields = ["category"]
 
 
-class CourseViewSet(BaseModelViewSet):
-    """
-    Course view set
-
-    - People who do not need to log in can still see.
-    - Students can see the courses they are enrolled in.
-    - Can filter courses with category, status, and instructor.
-
-    Filters:
-        - category: Filter courses by category.
-        - status: Filter courses by status.
-        - instructor: Filter courses by enrollment status (students only).
-
-    Returns:
-        Response: A paginated list of courses with metadata.
-    """
-
-    resource_name = "courses"
-    serializer_class = CourseDataSerializer
-    queryset = Course.objects.all()
-    permission_classes = [CoursePermission]
-    http_method_names = ["get", "post", "patch"]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_class = CustomFilter
-    search_fields = ["title", "description"]
-
-    def get_queryset(self):
-        """
-        Optionally restricts the returned courses to those enrolled by the student,
-        by filtering against a `enrolled` query parameter in the URL.
-        """
-
-        queryset = super().get_queryset()
-        enrolled = self.request.query_params.get("enrolled", None)
-
-        if (
-            enrolled
-            and self.request.user.is_authenticated
-            and self.request.user.is_student
-        ):
-            queryset = queryset.filter(enrollments__student=self.request.user)
-
-        return queryset
-
-    @extend_schema(
+@extend_schema_view(
+    list=extend_schema(
         description="List all courses with pagination and custom response format.",
         parameters=[
             OpenApiParameter(
@@ -136,34 +94,113 @@ class CourseViewSet(BaseModelViewSet):
                 type=bool,
             ),
         ],
-    )
-    def list(self, request, *args, **kwargs):
-        """
-        List all courses with pagination and custom response format.
-
-        Args:
-            request (HttpRequest): The current request object.
-
-        Returns:
-            Response: A paginated list of courses with metadata.
-        """
-
-        queryset = self.filter_queryset(self.get_queryset())
-
-        page = self.paginate_queryset(queryset)
-        data = self.get_paginated_response(page).data
-        serializer = BaseListSerializer(
-            data, context={"serializer_class": CourseDataSerializer}
-        )
-        return self.ok(serializer.data)
-
-    @extend_schema(
+    ),
+    create=extend_schema(
         description="Create a course.",
         request=CourseCreateSerializer,
         responses={
             201: course_response_schema,
+            400: BaseBadRequestResponseSerializer,
         },
-    )
+    ),
+    retrieve=extend_schema(
+        description="Retrieve a single course",
+        responses={
+            200: course_response_schema,
+            404: BaseBadRequestResponseSerializer,
+        },
+    ),
+    partial_update=extend_schema(
+        description="Update course.",
+        request=CourseUpdateSerializer,
+        responses={
+            200: course_response_schema,
+            400: BaseBadRequestResponseSerializer,
+            403: BaseForbiddenResponseSerializer,
+        },
+    ),
+    enroll=extend_schema(
+        description="Enroll a student in a course.",
+        request=EnrollmentCreateOrEditSerializer,
+        responses={
+            200: BaseSuccessResponseSerializer,
+            400: BaseBadRequestResponseSerializer,
+            403: BaseForbiddenResponseSerializer,
+        },
+    ),
+    leave=extend_schema(
+        description="Leave a course.",
+        request=EnrollmentCreateOrEditSerializer,
+        responses={
+            200: BaseSuccessResponseSerializer,
+            400: BaseBadRequestResponseSerializer,
+            403: BaseForbiddenResponseSerializer,
+        },
+    ),
+    get_students=extend_schema(
+        description="View all students enrolled in a course.",
+        responses={
+            200: student_list_response_schema,
+            403: BaseForbiddenResponseSerializer,
+            404: BaseNotFoundResponseSerializer,
+        },
+    ),
+    get_top_courses=extend_schema(
+        description="Get top courses based on the number of students enrolled.",
+        responses={
+            200: TopCoursesSerializer,
+        },
+    ),
+)
+class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin):
+    """
+    Course view set
+
+    - People who do not need to log in can still see.
+    - Students can see the courses they are enrolled in.
+    - Can filter courses with category, status, and instructor.
+
+    Filters:
+        - category: Filter courses by category.
+        - status: Filter courses by status.
+        - instructor: Filter courses by enrollment status (students only).
+
+    Returns:
+        Response: A paginated list of courses with metadata.
+    """
+
+    resource_name = "courses"
+    serializer_class = CourseDataSerializer
+    queryset = Course.objects.all()
+    permission_classes = [CoursePermission]
+    http_method_names = ["get", "post", "patch"]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = CustomFilter
+    search_fields = ["title", "description"]
+
+    def get_serializer_class(self):
+        if self.action == "get_students":
+            return UserBaseSerializer
+        return CourseDataSerializer
+
+    def get_queryset(self):
+        """
+        Optionally restricts the returned courses to those enrolled by the student,
+        by filtering against a `enrolled` query parameter in the URL.
+        """
+
+        queryset = super().get_queryset()
+        enrolled = self.request.query_params.get("enrolled", None)
+
+        if (
+            enrolled
+            and self.request.user.is_authenticated
+            and self.request.user.is_student
+        ):
+            queryset = queryset.filter(enrollments__student=self.request.user)
+
+        return queryset
+
     def create(self, request, *args, **kwargs):
         """
         Create a new course by an instructor.
@@ -181,7 +218,7 @@ class CourseViewSet(BaseModelViewSet):
         if request.user.is_superuser:
             if "instructor" not in serializer.validated_data:
                 return self.bad_request(
-                    {"instructor": ErrorMessage.INSTRUCTOR_DATA_REQUIRED}
+                    field="instructor", message=ErrorMessage.INSTRUCTOR_DATA_REQUIRED
                 )
 
             course = serializer.save()
@@ -190,36 +227,9 @@ class CourseViewSet(BaseModelViewSet):
                 instructor=request.user,
             )
 
-        course_serializer = BaseDetailSerializer(
-            course, context={"serializer_class": CourseDataSerializer}
-        )
-        return self.created(course_serializer.data)
+        response_data = self.format_data(course)
+        return self.created(response_data)
 
-    @extend_schema(
-        description="Retrieve a single course",
-        responses={
-            200: course_response_schema,
-        },
-    )
-    def retrieve(self, request, *args, **kwargs):
-        """
-        Retrieve a single course with custom response format.
-
-        Returns:
-            Response: The course data.
-        """
-
-        course = self.get_object()
-        serializer = BaseDetailSerializer(
-            course, context={"serializer_class": CourseDataSerializer}
-        )
-        return self.ok(serializer.data)
-
-    @extend_schema(
-        description="Enroll a student in a course.",
-        request=CourseUpdateSerializer,
-        responses={200: course_response_schema, 400: BaseBadRequestResponseSerializer},
-    )
     def partial_update(self, request, *args, **kwargs):
         """
         Partially update a course by an instructor.
@@ -242,24 +252,16 @@ class CourseViewSet(BaseModelViewSet):
         # Check if the course is in progress and has students enrolled
         if "status" in serializer_data and serializer_data["status"] == "inactive":
             if instance.enrollments.exists():
-                return self.bad_request(ErrorMessage.COURSE_HAS_STUDENTS)
+                return self.bad_request(
+                    field="status", message=ErrorMessage.COURSE_HAS_STUDENTS
+                )
 
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         course = serializer.save()
-        data = BaseDetailSerializer(
-            course, context={"serializer_class": CourseDataSerializer}
-        )
-        return self.ok(data.data)
+        response_data = self.format_data(course)
+        return self.ok(response_data)
 
-    @extend_schema(
-        description="Enroll a student in a course.",
-        request=EnrollmentCreateOrEditSerializer,
-        responses={
-            200: BaseSuccessResponseSerializer,
-            400: BaseBadRequestResponseSerializer,
-        },
-    )
     @action(detail=True, methods=["post"])
     def enroll(self, request, **kwargs):
         """
@@ -275,11 +277,15 @@ class CourseViewSet(BaseModelViewSet):
 
         if request.user.is_superuser:
             if "student" not in request.data:
-                return self.bad_request({"student": ErrorMessage.STUDENT_DATA_REQUIRED})
+                return self.bad_request(
+                    field="student", message=ErrorMessage.STUDENT_DATA_REQUIRED
+                )
             try:
                 student = User.objects.get(id=request.data["student"])
             except User.DoesNotExist:
-                return self.bad_request({"student": ErrorMessage.INVALID_USER_ID})
+                return self.bad_request(
+                    field="student", message=ErrorMessage.INVALID_USER_ID
+                )
         else:
             student = request.user
 
@@ -305,14 +311,6 @@ class CourseViewSet(BaseModelViewSet):
         )
         return self.ok(enrollment_serializer.data)
 
-    @extend_schema(
-        description="Leave a course.",
-        request=EnrollmentCreateOrEditSerializer,
-        responses={
-            200: BaseSuccessResponseSerializer,
-            400: BaseBadRequestResponseSerializer,
-        },
-    )
     @action(detail=True, methods=["post"])
     def leave(self, request, **kwargs):
         """
@@ -327,11 +325,16 @@ class CourseViewSet(BaseModelViewSet):
         course = self.get_object()
         if request.user.is_superuser:
             if "student" not in request.data:
-                return self.bad_request({"student": ErrorMessage.STUDENT_DATA_REQUIRED})
+                return self.bad_request(
+                    field="student", message=ErrorMessage.STUDENT_DATA_REQUIRED
+                )
             try:
                 student = User.objects.get(id=request.data["student"])
             except User.DoesNotExist:
-                return self.bad_request({"student": ErrorMessage.INVALID_USER_ID})
+                return self.bad_request(
+                    field="student",
+                    message=ErrorMessage.INVALID_USER_ID,
+                )
         else:
             student = request.user
 
@@ -350,12 +353,10 @@ class CourseViewSet(BaseModelViewSet):
             )
             return self.ok(response_serializer.data)
         else:
-            return self.bad_request(ErrorMessage.STUDENT_NOT_ENROLLED)
+            return self.bad_request(
+                field="detail", message=ErrorMessage.STUDENT_NOT_ENROLLED
+            )
 
-    @extend_schema(
-        description="View all students enrolled in a course.",
-        responses={200: student_list_response_schema},
-    )
     @action(detail=True, methods=["get"], url_path="students")
     def get_students(self, request, **kwargs):
         """
@@ -375,18 +376,10 @@ class CourseViewSet(BaseModelViewSet):
 
         paginator = self.paginator
         page = paginator.paginate_queryset(users, request)
-        serializer = BaseListSerializer(
-            paginator.get_paginated_response(page).data,
-            context={"serializer_class": UserBaseSerializer},
-        )
-        return self.ok(serializer.data)
+        serializer = self.get_serializer(page, many=True)
+        response_data = paginator.get_paginated_response(serializer.data).data
+        return self.ok(response_data)
 
-    @extend_schema(
-        description="Get top courses based on the number of students enrolled.",
-        responses={
-            200: TopCoursesSerializer,
-        },
-    )
     @action(detail=False, methods=["get"], url_path="top")
     def get_top_courses(self, request):
         """
@@ -396,9 +389,8 @@ class CourseViewSet(BaseModelViewSet):
         queryset = queryset.annotate(num_students=Count("enrollments"))
         queryset = queryset.order_by("-num_students")[: settings.TOP_COURSES_LIMIT]
 
-        serialized_data = CourseDataSerializer(queryset, many=True).data
-
-        return self.ok({"data": serialized_data})
+        response_data = self.format_list_data(queryset)
+        return self.ok(response_data)
 
 
 class CategoryViewSet(BaseGenericViewSet, ListModelMixin):

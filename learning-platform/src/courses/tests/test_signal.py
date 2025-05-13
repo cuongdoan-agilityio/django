@@ -3,7 +3,7 @@ from unittest.mock import patch
 from django.conf import settings
 
 from accounts.factories import UserFactory
-from core.constants import Role
+from core.constants import Role, Status
 from core.tests.base import BaseTestCase
 from courses.models import Enrollment
 from courses.factories import CourseFactory, EnrollmentFactory
@@ -24,8 +24,7 @@ class SendEmailToInstructorSignalTest(BaseTestCase):
         self.instructor = UserFactory(role=Role.INSTRUCTOR.value)
         self.student = UserFactory(role=Role.STUDENT.value)
         self.course = CourseFactory(
-            instructor=self.instructor,
-            enrollment_limit=2,
+            instructor=self.instructor, enrollment_limit=2, status=Status.ACTIVATE.value
         )
 
         post_save.connect(receiver=send_email_to_instructor, sender=Enrollment)

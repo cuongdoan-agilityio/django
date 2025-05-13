@@ -15,10 +15,12 @@ course_response_schema = OpenApiResponse(
                     "description": "String",
                     "category": {
                         "id": "da544541-1511-4bad-8780-6dcd710a9abb",
-                        "name": "String",
+                        "name": "string",
+                        "description": "string",
                     },
                     "instructor": {
                         "id": "6e3ecf3d-7d0b-46ff-9d69-c081dfc096f8",
+                        "username": "string",
                         "first_name": "String",
                         "last_name": "String",
                         "email": "instructor@example.com",
