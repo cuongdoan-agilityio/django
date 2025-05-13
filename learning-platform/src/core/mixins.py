@@ -17,7 +17,7 @@ class FormatDataMixin:
 
     def format_list_data(self, data, *args, **kwargs):
         """
-        Format the response data for list view.
+        Format the response of list data.
         """
 
         serializer_class = self.get_serializer_class()
