@@ -1,10 +1,15 @@
 import pytest
-from notifications.factories import NotificationFactory
-from accounts.factories import UserFactory
 from faker import Faker
+from django.db.models.signals import post_save
+from django.contrib.auth import get_user_model
+from accounts.signals import send_verify_email
+from accounts.factories import UserFactory
 from core.constants import Role
+from notifications.factories import NotificationFactory
+
 
 fake = Faker()
+User = get_user_model()
 
 
 @pytest.fixture
@@ -22,6 +27,7 @@ def share_data():
 
 @pytest.fixture
 def fake_user(share_data):
+    post_save.disconnect(receiver=send_verify_email, sender=User)
     return UserFactory(
         password=share_data["password"],
         username=share_data["username"],

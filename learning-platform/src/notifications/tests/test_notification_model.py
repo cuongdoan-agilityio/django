@@ -6,19 +6,21 @@ from notifications.models import Notification
 
 
 @pytest.mark.django_db
-class NotificationModelTestCase:
+class TestNotificationModel:
     """
     Test case for the Notification model.
     """
 
-    def test_create_notification_success(self, fake_notification):
+    def test_create_notification_success(
+        self, fake_notification, fake_user, share_data
+    ):
         """
         Test that a notification can be created successfully.
         """
 
-        self.assertEqual(fake_notification.user, self.user)
-        self.assertEqual(fake_notification.message, self.message)
-        self.assertEqual(fake_notification.is_read, self.is_read)
+        assert fake_notification.user == fake_user
+        assert fake_notification.message == share_data["message"]
+        assert fake_notification.is_read == share_data["is_read"]
 
     def test_create_notification_without_user(self):
         """
@@ -33,27 +35,27 @@ class NotificationModelTestCase:
             )
             notification.full_clean()
 
-    def test_create_notification_without_message(self):
+    def test_create_notification_without_message(self, fake_user):
         """
         Test that a notification cannot be created without a message.
         """
 
         with pytest.raises(ValidationError):
             notification = Notification(
-                user=self.user,
+                user=fake_user,
                 is_read=False,
                 message=None,
             )
             notification.full_clean()
 
-    def test_create_notification_with_empty_message(self):
+    def test_create_notification_with_empty_message(self, fake_user):
         """
         Test that a notification cannot be created with an empty message.
         """
 
         with pytest.raises(ValidationError):
             notification = Notification(
-                user=self.user,
+                user=fake_user,
                 message="",
                 is_read=False,
             )
