@@ -4,7 +4,10 @@ from faker import Faker
 from django.db.models.signals import post_save
 from accounts.signals import send_verify_email
 from django.contrib.auth import get_user_model
-
+from accounts.factories import UserFactory
+from core.constants import Role
+from core.constants import Status
+from courses.factories import EnrollmentFactory
 
 User = get_user_model()
 
@@ -47,7 +50,9 @@ def fake_course(course_data, db):
 
     post_save.disconnect(receiver=send_verify_email, sender=User)
     return CourseFactory(
-        title=course_data["title"], description=course_data["description"]
+        title=course_data["title"],
+        description=course_data["description"],
+        status=Status.ACTIVATE.value,
     )
 
 
@@ -69,3 +74,18 @@ def fake_category(category_data):
     Fixture to create a Category instance.
     """
     return CategoryFactory(**category_data)
+
+
+@pytest.fixture
+def fake_student():
+    post_save.disconnect(receiver=send_verify_email, sender=User)
+    return UserFactory(
+        password="Password@123",
+        role=Role.STUDENT.value,
+    )
+
+
+@pytest.fixture
+def fake_enrollment(fake_course, fake_student):
+    """Fixture tạo một Enrollment với course và student_user."""
+    return EnrollmentFactory(course=fake_course, student=fake_student)

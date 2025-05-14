@@ -1,61 +1,45 @@
+import pytest
 from django.core.exceptions import ValidationError
 from courses.models import Enrollment
-from courses.factories import CourseFactory, EnrollmentFactory
-from core.constants import Status
-from core.tests.base import BaseTestCase
+from courses.factories import EnrollmentFactory
 
 
-class EnrollmentModelTest(BaseTestCase):
+@pytest.mark.django_db
+class TestEnrollmentModel:
     """
-    Test case for the Enrollment model.
+    Test case for the Enrollment model using pytest.
     """
 
-    def setUp(self):
-        """
-        Set up the test case with a sample enrollment.
-        """
-        super().setUp()
-
-        self.course = CourseFactory(status=Status.ACTIVATE.value)
-        self.enrollment = EnrollmentFactory(
-            course=self.course, student=self.student_user
-        )
-
-    def test_enrollment_success(self):
+    def test_enrollment_success(self, fake_enrollment):
         """
         Test that an enrollment can be created successfully.
         """
+        assert isinstance(fake_enrollment, Enrollment)
 
-        self.assertIsInstance(self.enrollment, Enrollment)
-
-    def test_enrollment_course_relationship(self):
+    def test_enrollment_course_relationship(self, fake_enrollment, fake_course):
         """
         Test the relationship between Enrollment and Course.
         """
+        assert fake_enrollment.course == fake_course
 
-        self.assertEqual(self.enrollment.course, self.course)
-
-    def test_enrollment_student_relationship(self):
+    def test_enrollment_student_relationship(self, fake_enrollment, fake_student):
         """
         Test the relationship between Enrollment and Student.
         """
+        assert fake_enrollment.student == fake_student
 
-        self.assertEqual(self.enrollment.student, self.student_user)
-
-    def test_enrollment_without_course(self):
+    def test_enrollment_without_course(self, fake_student):
         """
         Test that an enrollment cannot be created with an invalid course.
         """
-
-        with self.assertRaises(ValidationError):
-            invalid_enrollment = EnrollmentFactory.build(course=None)
+        with pytest.raises(ValidationError):
+            invalid_enrollment = EnrollmentFactory.build(course=None, student=fake_student)
             invalid_enrollment.full_clean()
 
-    def test_enrollment_without_student(self):
+    def test_enrollment_without_student(self, fake_course):
         """
         Test that an enrollment cannot be created with an invalid student.
         """
-
-        with self.assertRaises(ValidationError):
-            invalid_enrollment = EnrollmentFactory.build(course=self.course)
+        with pytest.raises(ValidationError):
+            invalid_enrollment = EnrollmentFactory.build(course=fake_course, student=None)
             invalid_enrollment.full_clean()
