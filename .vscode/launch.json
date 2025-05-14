@@ -1,0 +1,35 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Django",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/learning-platform/src/manage.py",
+      "args": [
+        "runserver",
+        "127.0.0.1:8000",
+      ],
+      "django": true,
+      "justMyCode": false,
+      "jinja": true,
+      "envFile": "${workspaceFolder}/learning-platform/.env"
+    },
+    {
+      "name": "Python: Debug Tests",
+      "type": "debugpy",
+      "request": "launch",
+      "purpose": [
+        "debug-test"
+      ],
+      "console": "integratedTerminal",
+      "django": true,
+      "justMyCode": true,
+      "envFile": "${workspaceFolder}/learning-platform/.env",
+      "program": "${workspaceFolder}/learning-platform/.venv/Scripts/pytest.exe",
+      "args": [
+        "learning-platform/src/"
+      ],
+    }
+  ]
+}
