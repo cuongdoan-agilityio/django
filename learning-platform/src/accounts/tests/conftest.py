@@ -42,7 +42,7 @@ def user_data(random_gender):
     first_name = fake.first_name()
     last_name = fake.last_name()
     phone_number = "0953625482"
-    date_of_birth = fake.date_between(start_date="-60y", end_date="-18y")
+    date_of_birth = fake.date_between(start_date="-90y", end_date="-18y")
     gender = random_gender
     return {
         "username": username,
