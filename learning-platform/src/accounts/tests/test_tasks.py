@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import patch
 from django.conf import settings
 from sendgrid import SendGridAPIClient
@@ -42,7 +41,9 @@ class TestSendWelcomeEmail:
 
     @patch("core.helpers.send_capture_message")
     @patch.object(SendGridAPIClient, "send")
-    def test_send_welcome_email_failure(self, mock_send, mock_send_capture_message, user_data):
+    def test_send_welcome_email_failure(
+        self, mock_send, mock_send_capture_message, user_data
+    ):
         """
         Test that the send_welcome_email task handles email sending failure.
         """
@@ -91,7 +92,9 @@ class TestSendPasswordResetEmail:
         mock_send_capture_message.assert_called_once()
 
     @patch.object(SendGridAPIClient, "send")
-    def test_send_password_reset_email_success_call_sendgrid(self, mock_send, reset_email_data):
+    def test_send_password_reset_email_success_call_sendgrid(
+        self, mock_send, reset_email_data
+    ):
         """
         Test that the send_password_reset_email task successfully calls SendGridAPIClient.send.
         """

@@ -15,7 +15,6 @@ class TestUserManager:
     def test_create_user(
         self,
         user_data,
-        disconnect_send_verify_email_signal,
     ):
         """
         Test create user.
@@ -35,7 +34,6 @@ class TestUserManager:
         user_data,
         student_role,
         random_scholarship,
-        disconnect_send_verify_email_signal,
     ):
         """
         Test create a user without an email.
@@ -58,7 +56,6 @@ class TestUserManager:
         instructor_role,
         random_degree,
         fake_specialization,
-        disconnect_send_verify_email_signal,
     ):
         """
         Test create a user without an email.
@@ -81,7 +78,6 @@ class TestUserManager:
         user_data,
         student_role,
         random_scholarship,
-        disconnect_send_verify_email_signal
     ):
         """
         Test create a user without a password.
@@ -104,7 +100,6 @@ class TestUserManager:
         instructor_role,
         random_degree,
         fake_specialization,
-        disconnect_send_verify_email_signal,
     ):
         """
         Test create a user without a password.
@@ -122,8 +117,11 @@ class TestUserManager:
                 password="",
             )
 
-
-    def test_create_superuser(self, user_data, admin_role, disconnect_send_verify_email_signal):
+    def test_create_superuser(
+        self,
+        user_data,
+        admin_role,
+    ):
         """
         Test create a superuser.
         """
@@ -159,7 +157,6 @@ class TestUserModel:
         self,
         user_data,
         student_role,
-        disconnect_send_verify_email_signal
     ):
         """
         Test create a user with all fields.
@@ -185,7 +182,10 @@ class TestUserModel:
         assert new_user.gender == user_data["gender"]
         assert new_user.role == student_role
 
-    def test_user_str(self, user_data, disconnect_send_verify_email_signal):
+    def test_user_str(
+        self,
+        user_data,
+    ):
         """
         Test the string representation of the user.
         """

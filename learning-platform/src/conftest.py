@@ -20,7 +20,7 @@ def faker():
     return Faker()
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def disconnect_send_verify_email_signal():
     """
     Fixture to disconnect the signal.
@@ -78,6 +78,9 @@ def random_scholarship():
 
 @pytest.fixture
 def random_degree():
+    """
+    Fixture for random degree.
+    """
 
     degrees = [choice.value for choice in Degree]
     return random.choice(degrees)
