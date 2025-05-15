@@ -1,10 +1,8 @@
 import pytest
 from faker import Faker
 from django.contrib.auth import get_user_model
-from django.db.models.signals import post_save
 
 from accounts.factories import SpecializationFactory
-from accounts.signals import send_verify_email, enroll_intro_course
 
 
 fake = Faker()
@@ -34,7 +32,7 @@ def fake_specialization(specialization_data):
 
 
 @pytest.fixture
-def user_data():
+def user_data(random_gender):
     """
     Fixture to provide sample user data.
     Includes fields like username, email, and password.
@@ -43,31 +41,21 @@ def user_data():
     username = fake.user_name()
     email = fake.email()
     password = "Password@123"
-    return {"username": username, "email": email, "password": password}
-
-
-@pytest.fixture
-def send_verify_email_signal():
-    """
-    Fixture to connect the `send_verify_email` signal for the User model.
-    Disconnects the signal after the test to avoid side effects.
-    """
-
-    post_save.connect(receiver=send_verify_email, sender=User)
-    yield
-    post_save.disconnect(receiver=send_verify_email, sender=User)
-
-
-@pytest.fixture
-def enroll_intro_course_signal():
-    """
-    Fixture to connect the `enroll_intro_course` signal for the User model.
-    Disconnects the signal after the test to avoid side effects.
-    """
-
-    post_save.connect(receiver=enroll_intro_course, sender=User)
-    yield
-    post_save.disconnect(receiver=enroll_intro_course, sender=User)
+    first_name = fake.first_name()
+    last_name = fake.last_name()
+    phone_number = "0953625482"
+    date_of_birth = fake.date_between(start_date="-60y", end_date="-18y")
+    gender = random_gender
+    return {
+        "username": username,
+        "email": email,
+        "password": password,
+        "first_name": first_name,
+        "last_name": last_name,
+        "phone_number": phone_number,
+        "date_of_birth": date_of_birth,
+        "gender": gender,
+    }
 
 
 @pytest.fixture
@@ -78,3 +66,8 @@ def reset_email_data(user_data):
 
     token = "mocked_token"
     return {**user_data, "token": token}
+
+
+@pytest.fixture
+def specialization(specialization_factory):
+    return specialization_factory()
