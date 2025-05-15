@@ -89,3 +89,49 @@ def fake_student():
 def fake_enrollment(fake_course, fake_student):
     """Fixture tạo một Enrollment với course và student_user."""
     return EnrollmentFactory(course=fake_course, student=fake_student)
+
+
+@pytest.fixture
+def fake_instructor():
+    """Fixture to create an instructor user."""
+    post_save.disconnect(receiver=send_verify_email, sender=User)
+    return UserFactory(role=Role.INSTRUCTOR.value)
+
+
+@pytest.fixture
+def math_course(fake_instructor):
+    return CourseFactory(
+        title="Math course",
+        status=Status.ACTIVATE.value,
+        instructor=fake_instructor,
+    )
+
+
+@pytest.fixture
+def music_course(fake_instructor):
+    return CourseFactory(
+        title="Music Course",
+        status=Status.ACTIVATE.value,
+        instructor=fake_instructor,
+    )
+
+
+@pytest.fixture
+def other_student_user():
+    post_save.disconnect(receiver=send_verify_email, sender=User)
+    return UserFactory(role=Role.STUDENT.value)
+
+
+@pytest.fixture
+def math_enrollment(math_course, fake_student):
+    return EnrollmentFactory(course=math_course, student=fake_student)
+
+
+@pytest.fixture
+def math_enrollment_other(math_course, other_student_user):
+    return EnrollmentFactory(course=math_course, student=other_student_user)
+
+
+@pytest.fixture
+def music_enrollment(music_course, fake_student):
+    return EnrollmentFactory(course=music_course, student=fake_student)
