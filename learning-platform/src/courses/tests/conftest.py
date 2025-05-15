@@ -1,8 +1,6 @@
 import pytest
 from courses.factories import CourseFactory, CategoryFactory
-from faker import Faker
 from django.db.models.signals import post_save
-from accounts.signals import send_verify_email
 from django.contrib.auth import get_user_model
 from accounts.factories import UserFactory
 from core.constants import Role, Status
@@ -12,24 +10,6 @@ from courses.signals import send_email_to_instructor
 
 
 User = get_user_model()
-
-
-@pytest.fixture
-def faker():
-    """
-    Fixture to provide an isolated Faker instance for generating fake data.
-    """
-
-    return Faker()
-
-
-@pytest.fixture
-def disconnect_signal():
-    """
-    Fixture to disconnect the signal.
-    """
-
-    post_save.disconnect(receiver=send_verify_email, sender=User)
 
 
 @pytest.fixture
@@ -62,7 +42,7 @@ def course_data(faker):
 
 
 @pytest.fixture
-def fake_course(course_data, disconnect_signal, db):
+def fake_course(course_data, disconnect_send_verify_email_signal, db):
     """
     Fixture to create a sample Course instance.
     Disconnects the `send_verify_email` signal to avoid side effects.
@@ -98,7 +78,7 @@ def fake_category(category_data):
 
 
 @pytest.fixture
-def fake_student(disconnect_signal):
+def fake_student(disconnect_send_verify_email_signal):
     """
     Fixture to create a sample student user.
     Disconnects the `send_verify_email` signal to avoid side effects.
@@ -120,7 +100,7 @@ def fake_enrollment(fake_course, fake_student):
 
 
 @pytest.fixture
-def fake_instructor(disconnect_signal):
+def fake_instructor(disconnect_send_verify_email_signal):
     """
     Fixture to create a sample instructor user.
     Disconnects the `send_verify_email` signal to avoid side effects.
@@ -157,7 +137,7 @@ def music_course(fake_instructor):
 
 
 @pytest.fixture
-def other_student_user(disconnect_signal):
+def other_student_user(disconnect_send_verify_email_signal):
     """
     Fixture to create another sample student user.
     Disconnects the `send_verify_email` signal to avoid side effects.
@@ -194,7 +174,7 @@ def music_enrollment(music_course, fake_student):
 
 
 @pytest.fixture
-def connect_signal():
+def connect_send_email_to_instructor_signal():
     """
     Fixture to connect the signal, and disconnect after the test
     """

@@ -14,7 +14,7 @@ class TestSendEmailToInstructorSignal:
         self,
         fake_instructor,
         math_course,
-        connect_signal
+        connect_send_email_to_instructor_signal
     ):
         """
         Test that an email is sent to the instructor when the course reaches its enrollment limit.
@@ -34,7 +34,7 @@ class TestSendEmailToInstructorSignal:
                 template_id=settings.INSTRUCTOR_EMAIL_TEMPLATE_ID,
             )
 
-    def test_no_email_when_course_is_not_full(self, fake_student, fake_course, connect_signal):
+    def test_no_email_when_course_is_not_full(self, fake_student, fake_course, connect_send_email_to_instructor_signal):
         """
         Test that no email is sent to the instructor when the course is not full.
         """
@@ -42,7 +42,7 @@ class TestSendEmailToInstructorSignal:
             Enrollment.objects.create(course=fake_course, student=fake_student)
             mock_send_email.assert_not_called()
 
-    def test_send_email_failure(self, math_course, connect_signal):
+    def test_send_email_failure(self, math_course, connect_send_email_to_instructor_signal):
         """
         Test that an exception is raised when sending email fails.
         """
