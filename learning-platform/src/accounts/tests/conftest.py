@@ -35,6 +35,11 @@ def fake_specialization(specialization_data):
 
 @pytest.fixture
 def user_data():
+    """
+    Fixture to provide sample user data.
+    Includes fields like username, email, and password.
+    """
+
     username = fake.user_name()
     email = fake.email()
     password = "Password@123"
@@ -43,6 +48,11 @@ def user_data():
 
 @pytest.fixture
 def send_verify_email_signal():
+    """
+    Fixture to connect the `send_verify_email` signal for the User model.
+    Disconnects the signal after the test to avoid side effects.
+    """
+
     post_save.connect(receiver=send_verify_email, sender=User)
     yield
     post_save.disconnect(receiver=send_verify_email, sender=User)
@@ -50,6 +60,21 @@ def send_verify_email_signal():
 
 @pytest.fixture
 def enroll_intro_course_signal():
+    """
+    Fixture to connect the `enroll_intro_course` signal for the User model.
+    Disconnects the signal after the test to avoid side effects.
+    """
+
     post_save.connect(receiver=enroll_intro_course, sender=User)
     yield
     post_save.disconnect(receiver=enroll_intro_course, sender=User)
+
+
+@pytest.fixture
+def reset_email_data(user_data):
+    """
+    Fixture for password reset email data, including a token.
+    """
+
+    token = "mocked_token"
+    return {**user_data, "token": token}
