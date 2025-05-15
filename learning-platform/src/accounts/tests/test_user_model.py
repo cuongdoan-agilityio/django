@@ -1,175 +1,198 @@
+import pytest
 from django.contrib.auth import get_user_model
 from accounts.factories import UserFactory
-from core.tests.base import BaseTestCase
 
 
 User = get_user_model()
 
 
-class UserManagerTests(BaseTestCase):
+@pytest.mark.django_db
+class TestUserManager:
     """
     Unit test for the custom user manager.
     """
 
-    def setUp(self):
-        return super().setUp()
-
-    def test_create_user(self):
+    def test_create_user(
+        self,
+        user_data,
+    ):
         """
         Test create user.
         """
 
-        self.assertEqual(self.user.email, self.email)
-        self.assertTrue(self.user.check_password(self.password))
-        self.assertEqual(self.user.username, self.username)
+        user = UserFactory(
+            username=user_data["username"],
+            email=user_data["email"],
+            password=user_data["password"],
+        )
+        assert user.email == user_data["email"]
+        assert user.check_password(user_data["password"])
+        assert user.username == user_data["username"]
 
-    def test_create_student_without_email(self):
+    def test_create_student_without_email(
+        self,
+        user_data,
+        student_role,
+        random_scholarship,
+    ):
         """
         Test create a user without an email.
         """
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             UserFactory(
-                username=self.fake.user_name(),
-                first_name=self.fake.first_name(),
-                last_name=self.fake.last_name(),
-                role=self.student_role,
+                username=user_data["username"],
+                first_name=user_data["first_name"],
+                last_name=user_data["last_name"],
+                role=student_role,
                 email="",
-                password=self.password,
-                scholarship=self.random_scholarship(),
+                password=user_data["password"],
+                scholarship=random_scholarship,
             )
 
-    def test_create_instructor_without_email(self):
+    def test_create_instructor_without_email(
+        self,
+        user_data,
+        instructor_role,
+        random_degree,
+        fake_specialization,
+    ):
         """
         Test create a user without an email.
         """
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             UserFactory(
-                username=self.fake.user_name(),
-                first_name=self.fake.first_name(),
-                last_name=self.fake.last_name(),
-                role=self.instructor_role,
+                username=user_data["username"],
+                first_name=user_data["first_name"],
+                last_name=user_data["last_name"],
+                role=instructor_role,
                 email="",
-                password=self.password,
-                degree=self.random_degree(),
-                specialization=self.specialization,
+                password=user_data["password"],
+                degree=random_degree,
+                specialization=fake_specialization,
             )
 
-    def test_create_student_without_password(self):
+    def test_create_student_without_password(
+        self,
+        user_data,
+        student_role,
+        random_scholarship,
+    ):
         """
         Test create a user without a password.
         """
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             UserFactory(
-                username=self.fake.user_name(),
-                first_name=self.fake.first_name(),
-                last_name=self.fake.last_name(),
-                email=self.fake.email(),
-                role=self.student_role,
-                scholarship=self.random_scholarship(),
+                username=user_data["username"],
+                first_name=user_data["first_name"],
+                last_name=user_data["last_name"],
+                email=user_data["email"],
+                role=student_role,
+                scholarship=random_scholarship,
                 password="",
             )
 
-    def test_create_instructor_without_password(self):
+    def test_create_instructor_without_password(
+        self,
+        user_data,
+        instructor_role,
+        random_degree,
+        fake_specialization,
+    ):
         """
         Test create a user without a password.
         """
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             UserFactory(
-                username=self.fake.user_name(),
-                first_name=self.fake.first_name(),
-                last_name=self.fake.last_name(),
-                email=self.fake.email(),
-                role=self.instructor_role,
-                degree=self.random_degree(),
-                specialization=self.specialization,
+                username=user_data["username"],
+                first_name=user_data["first_name"],
+                last_name=user_data["last_name"],
+                email=user_data["email"],
+                role=instructor_role,
+                degree=random_degree,
+                specialization=fake_specialization,
                 password="",
             )
 
-    def test_create_superuser(self):
+    def test_create_superuser(
+        self,
+        user_data,
+        admin_role,
+    ):
         """
-        Test create a superuser without an email.
+        Test create a superuser.
         """
-
-        username = self.fake.user_name()
-        first_name = self.fake.first_name()
-        last_name = self.fake.last_name()
-        email = self.fake.email()
-        password = self.password
-        phone_number = self.random_user_phone_number()
-        date_of_birth = self.random_date_of_birth(is_student=False)
-        gender = self.random_gender()
 
         superuser = User.objects.create_superuser(
-            username=username,
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            password=password,
-            phone_number=phone_number,
-            date_of_birth=date_of_birth,
-            gender=gender,
+            username=user_data["username"],
+            first_name=user_data["first_name"],
+            last_name=user_data["last_name"],
+            email=user_data["email"],
+            password=user_data["password"],
+            phone_number=user_data["phone_number"],
+            date_of_birth=user_data["date_of_birth"],
+            gender=user_data["gender"],
         )
 
-        self.assertEqual(superuser.email, email)
-        self.assertEqual(superuser.username, username)
-        self.assertTrue(superuser.is_staff)
-        self.assertTrue(superuser.is_superuser)
-        self.assertEqual(superuser.gender, gender)
-        self.assertEqual(superuser.first_name, first_name)
-        self.assertEqual(superuser.last_name, last_name)
-        self.assertEqual(superuser.role, self.admin_role)
+        assert superuser.email == user_data["email"]
+        assert superuser.username == user_data["username"]
+        assert superuser.is_staff
+        assert superuser.is_superuser
+        assert superuser.gender == user_data["gender"]
+        assert superuser.first_name == user_data["first_name"]
+        assert superuser.last_name == user_data["last_name"]
+        assert superuser.role == admin_role
 
 
-class UserModelTests(BaseTestCase):
+@pytest.mark.django_db
+class TestUserModel:
     """
     Unit test for the custom user model.
     """
 
-    def setUp(self):
-        super().setUp()
-
-        self.username = self.fake.user_name()
-        self.first_name = self.fake.first_name()
-        self.last_name = self.fake.last_name()
-        self.email = self.fake.email()
-        self.password = self.password
-        self.phone_number = self.random_user_phone_number()
-        self.date_of_birth = self.random_date_of_birth(is_student=False)
-        self.gender = self.random_gender()
-
-        self.new_user = UserFactory(
-            username=self.username,
-            first_name=self.first_name,
-            last_name=self.last_name,
-            email=self.email,
-            password=self.password,
-            phone_number=self.phone_number,
-            date_of_birth=self.date_of_birth,
-            gender=self.gender,
-            role=self.student_role,
-        )
-
-    def test_user_creation(self):
+    def test_user_creation(
+        self,
+        user_data,
+        student_role,
+    ):
         """
         Test create a user with all fields.
         """
+        new_user = UserFactory(
+            username=user_data["username"],
+            first_name=user_data["first_name"],
+            last_name=user_data["last_name"],
+            email=user_data["email"],
+            password=user_data["password"],
+            phone_number=user_data["phone_number"],
+            date_of_birth=user_data["date_of_birth"],
+            gender=user_data["gender"],
+            role=student_role,
+        )
 
-        self.assertEqual(self.new_user.username, self.username)
-        self.assertEqual(self.new_user.first_name, self.first_name)
-        self.assertEqual(self.new_user.last_name, self.last_name)
-        self.assertEqual(self.new_user.email, self.email)
-        self.assertEqual(self.new_user.phone_number, self.phone_number)
-        self.assertEqual(self.new_user.date_of_birth, self.date_of_birth)
-        self.assertEqual(self.new_user.gender, self.gender)
-        self.assertEqual(self.new_user.role, self.student_role)
+        assert new_user.username == user_data["username"]
+        assert new_user.first_name == user_data["first_name"]
+        assert new_user.last_name == user_data["last_name"]
+        assert new_user.email == user_data["email"]
+        assert new_user.phone_number == user_data["phone_number"]
+        assert new_user.date_of_birth == user_data["date_of_birth"]
+        assert new_user.gender == user_data["gender"]
+        assert new_user.role == student_role
 
-    def test_user_str(self):
+    def test_user_str(
+        self,
+        user_data,
+    ):
         """
         Test the string representation of the user.
         """
 
-        self.assertEqual(str(self.new_user), self.email)
+        new_user = UserFactory(
+            username=user_data["username"],
+            email=user_data["email"],
+            password=user_data["password"],
+        )
+        assert str(new_user) == user_data["email"]

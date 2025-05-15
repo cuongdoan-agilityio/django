@@ -1,75 +1,55 @@
-from django.db.models.signals import post_save
+import pytest
 from unittest.mock import patch
 from django.conf import settings
-
-from accounts.factories import UserFactory
-from core.constants import Role, Status
-from core.tests.base import BaseTestCase
 from courses.models import Enrollment
-from courses.factories import CourseFactory, EnrollmentFactory
-from courses.signals import send_email_to_instructor
+from courses.factories import EnrollmentFactory
 
 
-class SendEmailToInstructorSignalTest(BaseTestCase):
-    """
-    Unit tests for the send_email_to_instructor signal handler.
-    """
+@pytest.mark.django_db
+class TestSendEmailToInstructorSignal:
 
-    def setUp(self):
-        """
-        Set up test data for the signal.
-        """
-        super().setUp()
 
-        self.instructor = UserFactory(role=Role.INSTRUCTOR.value)
-        self.student = UserFactory(role=Role.STUDENT.value)
-        self.course = CourseFactory(
-            instructor=self.instructor, enrollment_limit=2, status=Status.ACTIVATE.value
-        )
 
-        post_save.connect(receiver=send_email_to_instructor, sender=Enrollment)
-
-    @patch("courses.signals.send_email")
-    def test_send_email_when_course_is_full(self, mock_send_email):
+    def test_send_email_when_course_is_full(
+        self,
+        fake_instructor,
+        math_course,
+        connect_send_email_to_instructor_signal
+    ):
         """
         Test that an email is sent to the instructor when the course reaches its enrollment limit.
         """
 
-        EnrollmentFactory(course=self.course)
-        EnrollmentFactory(course=self.course)
+        with patch("courses.signals.send_email", return_value=None) as mock_send_email:
+            EnrollmentFactory(course=math_course)
+            EnrollmentFactory(course=math_course)
+            mock_send_email.assert_called_once_with(
+                email=fake_instructor.email,
+                template_data={
+                    "user_name": fake_instructor.username,
+                    "course_title": math_course.title,
+                    "sender_name": settings.SENDER_NAME,
+                    "subject": "Course Enrollment Limit Reached",
+                },
+                template_id=settings.INSTRUCTOR_EMAIL_TEMPLATE_ID,
+            )
 
-        mock_send_email.assert_called_once_with(
-            email=self.instructor.email,
-            template_data={
-                "user_name": self.instructor.username,
-                "course_title": self.course.title,
-                "sender_name": settings.SENDER_NAME,
-                "subject": "Course Enrollment Limit Reached",
-            },
-            template_id=settings.INSTRUCTOR_EMAIL_TEMPLATE_ID,
-        )
-
-    @patch("courses.signals.send_email")
-    def test_no_email_when_course_is_not_full(self, mock_send_email):
+    def test_no_email_when_course_is_not_full(self, fake_student, fake_course, connect_send_email_to_instructor_signal):
         """
         Test that no email is sent to the instructor when the course is not full.
         """
+        with patch("courses.signals.send_email", return_value=None) as mock_send_email:
+            Enrollment.objects.create(course=fake_course, student=fake_student)
+            mock_send_email.assert_not_called()
 
-        Enrollment.objects.create(course=self.course, student=self.student)
-        mock_send_email.assert_not_called()
-
-    @patch("courses.signals.send_email")
-    def test_send_email_failure(self, mock_send_email):
+    def test_send_email_failure(self, math_course, connect_send_email_to_instructor_signal):
         """
         Test that an exception is raised when sending email fails.
         """
-        mock_send_email.side_effect = Exception("Email sending failed")
 
-        try:
-            EnrollmentFactory(course=self.course)
-            EnrollmentFactory(course=self.course)
+        with patch("courses.signals.send_email", side_effect=Exception("Email sending failed")) as mock_send_email:
+            with pytest.raises(Exception, match="Email sending failed"):
+                EnrollmentFactory(course=math_course)
+                EnrollmentFactory(course=math_course)
 
-        except Exception as e:
-            self.assertEqual(e.args[0], "Email sending failed")
-
-        mock_send_email.assert_called_once()
+            mock_send_email.assert_called_once()
