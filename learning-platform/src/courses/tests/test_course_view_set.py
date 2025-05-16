@@ -1,4 +1,5 @@
 from rest_framework import status
+from django.core.cache import cache
 
 from accounts.factories import UserFactory
 from core.constants import Status, Role
@@ -41,6 +42,7 @@ class CourseViewSetTest(BaseTestCase):
         """
         super().tearDown()
         Enrollment.objects.all().delete()
+        cache.delete("top_courses")
 
     def test_list_courses_ok(self):
         """

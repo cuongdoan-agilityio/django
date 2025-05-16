@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from rest_framework import filters
 import django_filters
 from rest_framework.decorators import action
@@ -305,6 +306,13 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
                 user_name=student.username, course_name=course.title
             ),
         )
+        # Remove cache
+        keys_to_delete = [
+            "top_courses",
+            f"user_notifications_{course.instructor.id}",
+            f"course_{course.id}_students",
+        ]
+        cache.delete_many(keys_to_delete)
 
         enrollment_serializer = BaseSuccessResponseSerializer(
             {"data": {"success": True}}
@@ -348,6 +356,14 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
                     course_name=course.title
                 ),
             )
+            # remove caches
+            keys_to_delete = [
+                f"user_notifications_{student.id}",
+                f"course_{course.id}_students",
+                "top_courses",
+            ]
+            cache.delete_many(keys_to_delete)
+
             response_serializer = BaseSuccessResponseSerializer(
                 {"data": {"success": True}}
             )
@@ -370,6 +386,11 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         """
 
         course = self.get_object()
+        cache_key = f"course_{course.id}_students"
+        cached_data = cache.get(cache_key)
+
+        if cached_data is not None:
+            return self.ok(cached_data)
 
         enrollments = course.enrollments.all()
         users = [enrollment.student for enrollment in enrollments]
@@ -378,6 +399,8 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         page = paginator.paginate_queryset(users, request)
         serializer = self.get_serializer(page, many=True)
         response_data = paginator.get_paginated_response(serializer.data).data
+
+        cache.set(cache_key, response_data)
         return self.ok(response_data)
 
     @action(detail=False, methods=["get"], url_path="top")
@@ -385,11 +408,18 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         """
         Get top courses based on the number of students enrolled.
         """
+
+        cache_key = "top_courses"
+        cached_data = cache.get(cache_key)
+        if cached_data is not None:
+            return self.ok(cached_data)
+
         queryset = self.get_queryset()
         queryset = queryset.annotate(num_students=Count("enrollments"))
         queryset = queryset.order_by("-num_students")[: settings.TOP_COURSES_LIMIT]
 
         response_data = self.format_list_data(queryset)
+        cache.set(cache_key, response_data)
         return self.ok(response_data)
 
 
@@ -404,7 +434,18 @@ class CategoryViewSet(BaseGenericViewSet, ListModelMixin):
     resource_name = "categories"
 
     def get_queryset(self):
-        return Category.objects.all()
+        """
+        Retrieve the list of categories with caching.
+        """
+        cache_key = "categories_list"
+        cached_data = cache.get(cache_key)
+
+        if cached_data is not None:
+            return cached_data
+
+        queryset = Category.objects.all()
+        cache.set(cache_key, queryset)
+        return queryset
 
 
 apps = [CourseViewSet, CategoryViewSet]
