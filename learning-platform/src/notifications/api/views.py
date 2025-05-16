@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from rest_framework.permissions import IsAuthenticated
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -77,9 +78,28 @@ class NotificationViewSet(
 
     def get_queryset(self):
         """
-        Returns the queryset for the Notification model.
+        Returns the queryset for the Notification model with caching.
         """
-        return self.request.user.notifications.all()
+        user = self.request.user
+        cache_key = f"user_notifications_{user.id}"
+        cached_data = cache.get(cache_key)
+
+        if cached_data is not None:
+            return cached_data
+
+        queryset = user.notifications.all()
+        cache.set(cache_key, queryset)
+        return queryset
+
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Update a user notification and invalidate the cache.
+        """
+
+        response = super().partial_update(request, *args, **kwargs)
+        cache_key = f"user_notifications_{request.user.id}"
+        cache.delete(cache_key)
+        return response
 
 
 apps = [NotificationViewSet]
