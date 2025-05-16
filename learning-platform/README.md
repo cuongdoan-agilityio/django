@@ -24,16 +24,15 @@ Develop a functional “Student Course Management System” by building, testing
   - Course Management:
     - View, create, edit, delete, and filter courses
     - Perform bulk actions on courses
-  - Student Management:
-    - View, create, edit, delete, and filter students
+  - User Management:
+    - View, create, edit, delete, and filter users
     - Enroll and remove students from courses
+    - Set instructor to a course
   - Enrollment Management:
     - View, filter, and manage enrollments
-  - Instructor Management:
-    - View, create, edit, delete, and filter instructors
-    - Set instructor to a course
-
-- API endpoints:
+  - Notification Management:
+    - View, filter, and manage notification
+- API requirement:
   - Student Management
     - Students can register, log in.
     - Students can view and update their profiles.
@@ -41,11 +40,15 @@ Develop a functional “Student Course Management System” by building, testing
     - Students can enroll in or leave an active course.
     - Students can not enroll in inactive/not available courses.
     - Students can filter/search enrolled courses.
+    - Email confirmation is required for registration and password reset.
+    - Auto-enrollment in introduction courses for new users.
+    - Send an email welcome when the student successfully registers with the system.
 
   - Course Management
     - Anonymous/Student can view list courses (with pagination)
     - Anonymous/Student can view course detail
     - Anonymous/Student can filter list courses by category, name, status
+    - Dynamic statistics like average enrollments or top courses.
 
   - Instructor Management
     - Instructors can login to the system
@@ -53,6 +56,26 @@ Develop a functional “Student Course Management System” by building, testing
     - Instructors can create or update a course
     - Instructors can view all enrolled students in their course
     - Instructors can not disable a course if it is in progress and has students enrolled in it.
+    - Email confirmation is required password reset.
+    - Send an email to the instructors if a course reaches enrollment limitation.
+
+  - Notifications
+    - Users (students, instructors) can see a list of notifications in their dashboard
+    - Send notifications to the instructors when a student enrolls in the course
+    - Send notification to students when they are removed from their enrolled course
+
+  - Scheduling
+    - Scheduling a task for weekly clean-up data (courses inactive for 3 months)
+    - Scheduling a task for a monthly report (a CSV file sent via email)  sent to the instructor about the number of enrolled students per their course.
+
+  - Performance improvements
+    - Add caching (e.g., Redis, Django caching framework) for frequently accessed data
+    - Implement indexing for database optimization
+    - Optimize API queries using Django ORM
+
+  - Monitoring, testing
+    - Set up logging, and monitoring (e.g., Sentry)
+    - Achieve >85% test coverage, focus on additional features
 
 ## Code structure
 ```
@@ -78,6 +101,8 @@ Develop a functional “Student Course Management System” by building, testing
     |   |   admin.py
     |   |   apps.py
     |   |   factories.py
+    |   |   signals.py
+    |   |   tasks.py
     |   |   models.py
     |   |   views.py
     |   |
@@ -98,25 +123,47 @@ Develop a functional “Student Course Management System” by building, testing
     |   +---settings
     |   |   |   base.py
     |   |   |   local.py
-    |   |   |   production.py
     |   |   |   test.py
     |
     +---core
     |   |   api_views.py
     |   |   constants.py
+    |   |   error_messages.py
+    |   |   exception_handler.py
+    |   |   filters.py
+    |   |   helpers.py
+    |   |   mixins.py
     |   |   models.py
     |   |   pagination.py
     |   |   permissions.py
-    |   |   responses.py
     |   |   serializers.py
     |   |   validators.py
     |
     +---courses
     |   |   admin.py
     |   |   apps.py
+    |   |   constants.py
+    |   |   factories.py
+    |   |   forms.py
+    |   |   models.py
+    |   |   permissions.py
+    |   |   tasks.py
+    |   |   signals.py
+    |
+    |   +---api
+    |   |   |   response_schema.py
+    |   |   |   serializers.py
+    |   |   |   views.py
+    |   |
+    |   +---migrations
+    |   |
+    |   +---tests
+    +---courses
+    |   |   admin.py
+    |   |   apps.py
+    |   |   constants.py
     |   |   factories.py
     |   |   models.py
-    |   |   views.py
     |
     |   +---api
     |   |   |   response_schema.py
@@ -169,16 +216,20 @@ Setup environments: create `.env` follow `.env.example` with your own settings
 - Create Enrollments.
 
 ## Unit Testing
-- coverage run manage.py test
-- coverage report
-- coverage html
+- pytest --cov=src --cov-report html
 
 ## APIs
 - Auth
   - Login:
     - POST: /api/v1/auth/login/
-  - Signup
+  - Signup:
     - POST: /api/v1/auth/signup/
+  - Verify Signup Email
+    - POST: /api/v1/auth/verify-signup-email/
+  - Verify Reset Password
+    - POST: /api/v1/auth/verify-reset-password/
+  - Reset Password
+    - POST: /api/v1/auth/reset-password/
 - User
   - Get profile
     - GET: /api/v1/users/{id}/
@@ -194,6 +245,8 @@ Setup environments: create `.env` follow `.env.example` with your own settings
 - Courses
   - Get courses
     - GET: /api/v1/courses/
+  - Create courses
+    - POST: /api/v1/courses/
   - Get course detail
     - GET: /api/v1/courses/{id}/
   - Update course
@@ -204,6 +257,15 @@ Setup environments: create `.env` follow `.env.example` with your own settings
     - POST: /api/v1/courses/{id}/leave/
   - Get course student
     - GET: /api/v1/courses/{id}/students/
+  - Get top courses
+    - GET: /api/v1/courses/top/
+- Notifications
+  - Get notifications
+    - GET: /api/v1/notifications/
+  - Get notification detail
+    - GET: /api/v1/notifications/{id}/
+  - Update notification
+    - PATCH: /api/v1/notifications/{id}
 
 ## Issues
 - [Issues document](./documents/issues.md)
