@@ -5,6 +5,7 @@ With these settings, tests run faster.
 from .base import *  # noqa: F403
 from .base import TEMPLATES
 from .base import env
+from .base import BASE_DIR
 
 
 # GENERAL
@@ -32,3 +33,14 @@ TEMPLATES[0]["OPTIONS"]["debug"] = True  # type: ignore[index]
 MEDIA_URL = "http://media.testserver"
 # Your stuff...
 # ------------------------------------------------------------------------------
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db_test.sqlite3",
+        "TEST": {
+            "NAME": BASE_DIR / "db_test.sqlite3",
+        },
+        "ATOMIC_REQUESTS": True,
+    }
+}

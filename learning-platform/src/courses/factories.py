@@ -1,4 +1,4 @@
-from factory import Faker, SubFactory, Iterator, Sequence
+from factory import Faker, SubFactory, Iterator
 from factory.django import DjangoModelFactory as ModelFactory
 
 from accounts.factories import UserFactory
@@ -11,8 +11,8 @@ class CategoryFactory(ModelFactory):
     Faker for Category model.
     """
 
-    name = Sequence(lambda n: f"Category_{n}")
-    description = Faker("words")
+    name = Faker("sentence", nb_words=3)
+    description = Faker("paragraph", nb_sentences=2)
 
     class Meta:
         """

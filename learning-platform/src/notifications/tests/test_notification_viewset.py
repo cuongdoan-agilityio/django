@@ -231,4 +231,7 @@ class NotificationViewSetTestCase(BaseTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         response_data = response.json()
-        self.assertEqual(response_data["is_read"][0], "Must be a valid boolean.")
+        self.assertEqual(response_data["errors"][0]["field"], "is_read")
+        self.assertEqual(
+            response_data["errors"][0]["message"][0], "Must be a valid boolean."
+        )

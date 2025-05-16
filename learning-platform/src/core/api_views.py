@@ -34,25 +34,55 @@ class CommonViewSet:
         """
         if not data:
             data = {
-                "detail": "You do not have permission to perform this action.",
+                "errors": {
+                    "field": "detail",
+                    "message": "You do not have permission to perform this action.",
+                },
             }
 
         return Response(data=data, status=status.HTTP_403_FORBIDDEN)
 
-    def bad_request(self, message=None, code=None):
+    def bad_request(self, message=None, field=None):
         """
         Return bad request with message content & code
         """
         # Build up the error content.
         response_data = {
             "errors": {
-                "developerMessage": "API is not working properly.",
+                "field": field,
                 "message": [message],
-                "code": code,
             },
         }
 
         return Response(data=response_data, status=status.HTTP_400_BAD_REQUEST)
+
+    def unauthorized_request(self, field=None, message=None):
+        """
+        Return unauthorized request with message content
+        """
+        # Build up the error content.
+        response_data = {
+            "errors": {
+                "field": field,
+                "message": message,
+            },
+        }
+
+        return Response(data=response_data, status=status.HTTP_401_UNAUTHORIZED)
+
+    def not_found(self, field="detail", message="Not found"):
+        """
+        Return not found request with message content
+        """
+        # Build up the error content.
+        response_data = {
+            "errors": {
+                "field": field,
+                "message": message,
+            }
+        }
+
+        return Response(data=response_data, status=status.HTTP_404_NOT_FOUND)
 
 
 class BaseViewSet(ViewSet, CommonViewSet):

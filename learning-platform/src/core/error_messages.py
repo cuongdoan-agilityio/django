@@ -44,3 +44,4 @@ class ErrorMessage:
     TOKEN_INVALID = "Token is invalid or expired!"
     USER_NOT_ACTIVE = "User is not active, please activate your account."
     USER_NOT_FOUND = "User not found."
+    USER_NOT_STUDENT = "User is not student."

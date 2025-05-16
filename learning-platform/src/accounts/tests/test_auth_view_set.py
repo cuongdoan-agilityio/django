@@ -17,7 +17,7 @@ class AuthorViewSetTests(BaseTestCase):
 
         self.login_url = f"{self.root_url}auth/login/"
         self.signup = f"{self.root_url}auth/signup/"
-        self.verify_url = f"{self.root_url}auth/verify-email/"
+        self.verify_url = f"{self.root_url}auth/verify-signup-email/"
 
         self.verify_reset_password_url = f"{self.root_url}auth/verify-reset-password/"
         self.reset_password_url = f"{self.root_url}auth/reset-password/"
@@ -204,7 +204,10 @@ class AuthorViewSetTests(BaseTestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data, {"email": ["This field is required."]})
+        self.assertEqual(response.data.get("errors")[0]["field"], "email")
+        self.assertEqual(
+            response.data.get("errors")[0]["message"][0], "This field is required."
+        )
 
     def test_verify_reset_password_invalid_data(self):
         """
@@ -218,7 +221,10 @@ class AuthorViewSetTests(BaseTestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data, {"email": ["Enter a valid email address."]})
+        self.assertEqual(response.data.get("errors")[0]["field"], "email")
+        self.assertEqual(
+            response.data.get("errors")[0]["message"][0], "Enter a valid email address."
+        )
 
     @patch("accounts.tasks.send_password_reset_email.delay")
     def test_verify_reset_password_email_sending_failure(
@@ -275,7 +281,10 @@ class AuthorViewSetTests(BaseTestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data, {"token": [ErrorMessage.REQUIRED_FIELD]})
+        self.assertEqual(response.data.get("errors")[0]["field"], "token")
+        self.assertEqual(
+            response.data.get("errors")[0]["message"][0], ErrorMessage.REQUIRED_FIELD
+        )
 
     def test_reset_password_invalid_token(self):
         """
