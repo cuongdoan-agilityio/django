@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
@@ -344,7 +345,18 @@ class SpecializationViewSet(BaseGenericViewSet, ListModelMixin):
     resource_name = "specializations"
 
     def get_queryset(self):
-        return Specialization.objects.all()
+        """
+        Retrieve the list of specializations with caching.
+        """
+        cache_key = "specializations_list"
+        cached_data = cache.get(cache_key)
+
+        if cached_data is not None:
+            return cached_data
+
+        queryset = Specialization.objects.all()
+        cache.set(cache_key, queryset)
+        return queryset
 
 
 apps = [AuthenticationViewSet, UserViewSet, SpecializationViewSet]
