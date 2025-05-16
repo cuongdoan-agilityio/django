@@ -12,7 +12,7 @@ User = get_user_model()
 
 @receiver(post_save, sender=User)
 def send_verify_email(sender, instance, created, **kwargs):
-    if created:
+    if created and instance.is_student:
         dynamic_template_data = {
             "user_name": instance.username,
             "token": create_token(instance.id),
