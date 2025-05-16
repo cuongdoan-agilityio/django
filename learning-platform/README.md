@@ -204,10 +204,11 @@ Setup environments: create `.env` follow `.env.example` with your own settings
 - Swagger documents: `http://127.0.0.1:8000/docs/swagger/`
 - Admin page: `http://127.0.0.1:8000/admin-dashboard/`
 7. Init data
-- Init students data: `uv run ./src/manage.py init_courses`
-- Init instructors and courses data: `uv run ./src/manage.py init_students`
+- Init instructors and courses data: `uv run ./src/manage.py init_courses`
+- Init students data: `uv run ./src/manage.py init_students`
+- Init enrollments data: `uv run ./src/manage.py init_enrollments`
 
-8. Flow create data with admin page
+1. Flow create data with admin page
 - Login to [admin page](http://127.0.0.1:8000/admin-dashboard/) with admin info.
 - Create course specializations.
 - Create students.

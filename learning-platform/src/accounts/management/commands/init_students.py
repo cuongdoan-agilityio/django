@@ -1,8 +1,10 @@
 import random
 from faker import Faker
 from django.core.management.base import BaseCommand
-from core.constants import ScholarshipChoices, Gender, Role
+from django.db.models.signals import post_save
 from django.contrib.auth import get_user_model
+from accounts.signals import send_verify_email, enroll_intro_course
+from core.constants import ScholarshipChoices, Gender, Role
 from core.tests.utils.helpers import random_birthday, random_phone_number
 
 
@@ -18,7 +20,11 @@ class Command(BaseCommand):
     help = "Init student from Faker."
 
     def handle(self, *args, **options):
-        for _ in range(50):
+        # Disconnect the signal.
+        post_save.disconnect(receiver=send_verify_email, sender=User)
+        post_save.disconnect(receiver=enroll_intro_course, sender=User)
+
+        for _ in range(500):
             student_first_name = fake.first_name()
             student_last_name = fake.last_name()
             student_email = fake.email()
@@ -48,3 +54,7 @@ class Command(BaseCommand):
                 scholarship=scholarship,
                 role=Role.STUDENT.value,
             )
+
+        # Connect the signal.
+        post_save.connect(receiver=send_verify_email, sender=User)
+        post_save.connect(receiver=enroll_intro_course, sender=User)

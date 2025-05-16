@@ -3,8 +3,8 @@ from faker import Faker
 from django.core.management.base import BaseCommand
 from courses.models import Course, Category
 from accounts.models import Specialization
-from core.constants import Degree, Status, Gender, Role
 from django.contrib.auth import get_user_model
+from core.constants import Degree, Status, Gender, Role
 from core.tests.utils.helpers import random_birthday, random_phone_number
 
 
@@ -20,11 +20,26 @@ class Command(BaseCommand):
     help = "Init courses, instructors, categories and specializations using Faker."
 
     def handle(self, *args, **options):
-        for _ in range(50):
+        # Init categories and specializations using Faker."
+        for _ in range(100):
             category_name = fake.word()
+            specialization_name = fake.word()
             category_description = fake.paragraph(nb_sentences=1)
             specialization_description = fake.paragraph(nb_sentences=1)
 
+            Category.objects.get_or_create(
+                name=category_name, defaults={"description": category_description}
+            )
+
+            Specialization.objects.get_or_create(
+                name=specialization_name,
+                defaults={"description": specialization_description},
+            )
+
+        list_specialization = list(Specialization.objects.all())
+
+        # Init instructor using Faker."
+        for _ in range(200):
             instructor_first_name = fake.first_name()
             instructor_last_name = fake.last_name()
             instructor_email = fake.email()
@@ -33,17 +48,11 @@ class Command(BaseCommand):
             if (User.objects.filter(username=username).exists()) or (
                 User.objects.filter(email=instructor_email).exists()
             ):
-                return
+                continue
 
             instructor_phone_number = random_phone_number()
             instructor_day_of_birthday = random_birthday()
             instructor_gender = random.choice([gender.value for gender in Gender])
-            category, _ = Category.objects.get_or_create(
-                name=category_name, defaults={"description": category_description}
-            )
-            specialization, _ = Specialization.objects.get_or_create(
-                name=category_name, defaults={"description": specialization_description}
-            )
             degree = random.choice([degree.value for degree in Degree])
 
             user_instance = User.objects.create_user(
@@ -58,12 +67,18 @@ class Command(BaseCommand):
                 degree=degree,
                 role=Role.INSTRUCTOR.value,
             )
+            specialization = random.choice(list_specialization)
             user_instance.specializations.set([str(specialization.id)])
 
+        list_category = list(Category.objects.all())
+        list_instructor = list(User.objects.filter(role=Role.INSTRUCTOR.value).all())
+
+        # Init course using Faker."
+        for _ in range(500):
             status = random.choice([status.value for status in Status])
             Course.objects.create(
-                category=category,
-                instructor=user_instance,
+                category=random.choice(list_category),
+                instructor=random.choice(list_instructor),
                 title=fake.sentence(nb_words=6),
                 description=fake.paragraph(nb_sentences=3),
                 status=status,
