@@ -1,4 +1,3 @@
-from django.core.cache import cache
 from rest_framework import status
 from courses.models import Category
 from courses.factories import CategoryFactory
@@ -19,10 +18,6 @@ class CategoryViewSetTest(BaseTestCase):
 
         CategoryFactory()
         self.url = f"{self.root_url}categories/"
-
-    def tearDown(self):
-        super().tearDown()
-        cache.delete("categories_list")
 
     def test_list_categories_success(self):
         """
