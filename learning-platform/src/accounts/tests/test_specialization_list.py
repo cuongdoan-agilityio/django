@@ -2,7 +2,6 @@ from rest_framework import status
 from accounts.models import Specialization
 from accounts.factories import SpecializationFactory
 from core.tests.base import BaseTestCase
-from django.core.cache import cache
 
 
 class SpecializationViewSetTest(BaseTestCase):
@@ -24,10 +23,6 @@ class SpecializationViewSetTest(BaseTestCase):
 
         self.url = f"{self.root_url}specializations/"
 
-    def tearDown(self):
-        super().tearDown()
-        cache.delete("specializations_list")
-
     def test_list_specializations_ok(self):
         """
         Test listing all specializations.
@@ -39,11 +34,6 @@ class SpecializationViewSetTest(BaseTestCase):
         self.assertEqual(len(data), 2)
         self.assertEqual(data[0]["name"], self.specialization_name)
         self.assertEqual(data[1]["name"], self.another_specialization_name)
-
-        # Verify that the data is cached
-        cached_data = cache.get("specializations_list")
-        self.assertIsNotNone(cached_data)
-        self.assertEqual(len(cached_data), 2)
 
     def test_list_specializations_empty(self):
         """
