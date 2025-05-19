@@ -221,16 +221,15 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         except Exception as e:
             return self.bad_request(message=str(e))
 
-    @action(detail=False, methods=["post"], url_path="reset-password")
+    @action(detail=False, methods=["get"], url_path="reset-password")
     def reset_password(self, request):
         """
         Reset the password of a user using a token.
         """
 
-        serializer = ResetUserPasswordSerializer(data=request.data)
+        token = request.query_params.get("token", "")
+        serializer = ResetUserPasswordSerializer(data={"token": token})
         serializer.is_valid(raise_exception=True)
-
-        token = serializer.validated_data["token"]
 
         signer = TimestampSigner()
 
