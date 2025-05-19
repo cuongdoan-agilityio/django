@@ -194,6 +194,7 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         """
 
         queryset = super().get_queryset()
+        queryset = queryset.select_related("category", "instructor")
         enrolled = self.request.query_params.get("enrolled", None)
 
         if (
@@ -412,8 +413,7 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
 
         course = self.get_object()
 
-        enrollments = course.enrollments.all()
-        users = [enrollment.student for enrollment in enrollments]
+        users = User.objects.filter(enrollments__course=course).distinct()
 
         paginator = self.paginator
         page = paginator.paginate_queryset(users, request)

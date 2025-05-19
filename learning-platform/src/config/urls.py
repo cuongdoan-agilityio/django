@@ -17,6 +17,8 @@ urlpatterns = [
 # API URLS
 urlpatterns += [
     path(settings.API_ROOT_ENDPOINT, include("config.api_router")),
+    path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
+    path("silk/", include("silk.urls", namespace="silk")),
 ]
 
 if settings.DEBUG:

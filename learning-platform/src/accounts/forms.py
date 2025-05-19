@@ -57,6 +57,7 @@ class UserBaseForm(forms.ModelForm):
             "scholarship",
             "specializations",
             "degree",
+            "is_active",
         )
 
     def clean_phone_number(self):
