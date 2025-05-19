@@ -166,16 +166,16 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         serializer.save()
         return self.ok()
 
-    @action(detail=False, methods=["post"], url_path="verify-signup-email")
-    def verify_signup_email(self, request):
+    @action(detail=False, methods=["get"], url_path="confirm-signup-email")
+    def confirm_signup_email(self, request):
         """
-        Verify the email of a user using a token.
+        Confirm the email of a user using a token.
         """
 
-        serializer = VerifySignupEmailSerializer(data=request.data)
+        token = request.query_params.get("token", "")
+        serializer = VerifySignupEmailSerializer(data={"token": token})
         serializer.is_valid(raise_exception=True)
 
-        token = serializer.validated_data["token"]
         signer = TimestampSigner()
 
         try:
