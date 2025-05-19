@@ -225,12 +225,12 @@ Setup environments: create `.env` follow `.env.example` with your own settings
     - POST: /api/v1/auth/login/
   - Signup:
     - POST: /api/v1/auth/signup/
-  - Verify Signup Email
-    - POST: /api/v1/auth/verify-signup-email/
-  - Verify Reset Password
-    - POST: /api/v1/auth/verify-reset-password/
+  - Confirm Signup Email
+    - GET: /api/v1/auth/confirm-signup-email/?token=xxxxxxxxx
+  - Confirm Reset Password
+    - POST: /api/v1/auth/confirm-reset-password/
   - Reset Password
-    - POST: /api/v1/auth/reset-password/
+    - GET: /api/v1/auth/reset-password/?token=xxxxxxxxx
 - User
   - Get profile
     - GET: /api/v1/users/{id}/
