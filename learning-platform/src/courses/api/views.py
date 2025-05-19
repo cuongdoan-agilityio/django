@@ -194,6 +194,7 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         """
 
         queryset = super().get_queryset()
+        queryset = queryset.select_related("category", "instructor")
         enrolled = self.request.query_params.get("enrolled", None)
 
         if (
