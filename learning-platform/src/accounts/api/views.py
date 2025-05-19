@@ -138,7 +138,7 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         else:
             inactive_user = User.objects.filter(email=email).first()
 
-            if not inactive_user.is_active:
+            if inactive_user and not inactive_user.is_active:
                 return self.bad_request(
                     field="Email", message=ErrorMessage.USER_NOT_ACTIVE
                 )
@@ -344,6 +344,10 @@ class SpecializationViewSet(BaseGenericViewSet, ListModelMixin):
     resource_name = "specializations"
 
     def get_queryset(self):
+        """
+        Retrieve the list of specializations.
+        """
+
         return Specialization.objects.all()
 
 

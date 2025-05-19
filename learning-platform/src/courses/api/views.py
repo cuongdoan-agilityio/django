@@ -1,5 +1,8 @@
-from rest_framework import filters
+import re
+from django.core.cache import cache
+from django_redis import get_redis_connection
 import django_filters
+from rest_framework import filters
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
 from django.db.models import Count
@@ -7,6 +10,7 @@ from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
 from rest_framework.permissions import AllowAny
+from urllib.parse import urlencode
 
 from accounts.api.serializers import UserBaseSerializer
 from core.api_views import BaseModelViewSet, BaseGenericViewSet
@@ -201,6 +205,34 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
 
         return queryset
 
+    def get_course_list_cache_key(self, request):
+        """
+        Generate a unique cache key for the course list API.
+
+        The cache key is based on the query parameters and the user's authentication status.
+        This ensures that different users or query parameter combinations have separate cache entries.
+        """
+
+        query_string = urlencode(request.GET, doseq=True)
+        user_id = str(request.user.id) if request.user.is_authenticated else "anonymous"
+        return f"course_list:{user_id}:{query_string}"
+
+    def list(self, request, *args, **kwargs):
+        """
+        List all courses with caching and pagination.
+        """
+
+        cache_key = self.get_course_list_cache_key(request)
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return self.ok(cached_data)
+
+        response = super().list(request, *args, **kwargs)
+        response_data = response.data
+        cache.set(cache_key, response_data)
+
+        return self.ok(response_data)
+
     def create(self, request, *args, **kwargs):
         """
         Create a new course by an instructor.
@@ -226,6 +258,10 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
             course = serializer.save(
                 instructor=request.user,
             )
+
+        # Remove cache
+        cache_keys = self.get_cache_key_by_regex("course_list:.*")
+        self.delete_cache(cache_keys)
 
         response_data = self.format_data(course)
         return self.created(response_data)
@@ -260,6 +296,11 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         serializer.is_valid(raise_exception=True)
         course = serializer.save()
         response_data = self.format_data(course)
+
+        # Remove cache, include top course
+        cache_keys = self.get_cache_key_by_regex("course_list:.*")
+        self.delete_cache(cache_keys=cache_keys + ["top_courses"])
+
         return self.ok(response_data)
 
     @action(detail=True, methods=["post"])
@@ -378,6 +419,7 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         page = paginator.paginate_queryset(users, request)
         serializer = self.get_serializer(page, many=True)
         response_data = paginator.get_paginated_response(serializer.data).data
+
         return self.ok(response_data)
 
     @action(detail=False, methods=["get"], url_path="top")
@@ -385,12 +427,49 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         """
         Get top courses based on the number of students enrolled.
         """
+
+        cache_key = "top_courses"
+        cached_data = cache.get(cache_key)
+        if cached_data is not None:
+            return self.ok(cached_data)
+
         queryset = self.get_queryset()
         queryset = queryset.annotate(num_students=Count("enrollments"))
         queryset = queryset.order_by("-num_students")[: settings.TOP_COURSES_LIMIT]
 
         response_data = self.format_list_data(queryset)
+        cache.set(cache_key, response_data)
         return self.ok(response_data)
+
+    def get_cache_key_by_regex(self, pattern):
+        """
+        Get cache keys by regex.
+        """
+
+        redis_client = get_redis_connection("default")
+        regex = re.compile(pattern)
+        cursor = 0
+        cache_keys = []
+
+        while True:
+            cursor, keys = redis_client.scan(cursor=cursor, match="*", count=100)
+            for key in keys:
+                key_str = key.decode("utf-8")
+                if regex.search(key_str):
+                    cache_keys.append(key_str)
+            if cursor == 0:
+                break
+
+        return cache_keys
+
+    def delete_cache(self, cache_keys):
+        """
+        Delete cache by redis.
+        """
+
+        redis_client = get_redis_connection("default")
+        if cache_keys:
+            redis_client.delete(*cache_keys)
 
 
 class CategoryViewSet(BaseGenericViewSet, ListModelMixin):
@@ -404,6 +483,10 @@ class CategoryViewSet(BaseGenericViewSet, ListModelMixin):
     resource_name = "categories"
 
     def get_queryset(self):
+        """
+        Retrieve the list of categories.
+        """
+
         return Category.objects.all()
 
 

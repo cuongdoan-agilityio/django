@@ -77,8 +77,9 @@ class NotificationViewSet(
 
     def get_queryset(self):
         """
-        Returns the queryset for the Notification model.
+        Returns the queryset for the user notification.
         """
+
         return self.request.user.notifications.all()
 
 

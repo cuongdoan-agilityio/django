@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from rest_framework import status
 
 from accounts.factories import UserFactory
@@ -291,8 +292,9 @@ class CourseViewSetTest(BaseTestCase):
         """
         Test retrieving the top courses successfully.
         """
-        self.create_courses()
 
+        self.create_courses()
+        cache.clear()
         response = self.client.get(self.url_top_courses)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -312,6 +314,7 @@ class CourseViewSetTest(BaseTestCase):
         Test retrieving top courses when no courses exist.
         """
         Course.objects.all().delete()
+        cache.clear()
         response = self.client.get(self.url_top_courses)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("data", response.data)
