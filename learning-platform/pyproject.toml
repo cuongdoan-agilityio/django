@@ -26,6 +26,8 @@ dependencies = [
     "gunicorn>=22.0.0",
     "whitenoise>=6.7.0",
     "drf-yasg>=1.21.7",
+    "django-redis>=5.4.0",
+    "django-silk>=5.3.2",
 ]
 
 [dependency-groups]

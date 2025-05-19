@@ -172,6 +172,7 @@ class UserAdmin(admin.ModelAdmin):
         "scholarship",
         "get_specializations",
         "degree",
+        "is_active",
         "modified",
     ]
 
