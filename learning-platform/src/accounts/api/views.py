@@ -195,10 +195,10 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         except (BadSignature, SignatureExpired, User.DoesNotExist, ValueError):
             return self.bad_request(field="token", message=ErrorMessage.TOKEN_INVALID)
 
-    @action(detail=False, methods=["post"], url_path="verify-reset-password")
-    def verify_reset_password(self, request):
+    @action(detail=False, methods=["post"], url_path="confirm-reset-password")
+    def confirm_reset_password(self, request):
         """
-        Verify reset the password of a user using a token.
+        Confirm reset the password of a user using a token.
         """
 
         serializer = VerifyResetUserPasswordSerializer(data=request.data)
