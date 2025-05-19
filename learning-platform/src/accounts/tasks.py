@@ -26,9 +26,9 @@ def send_password_reset_email(user: dict, token: str) -> None:
 
     template_data = {
         "user_name": user.get("username"),
-        "token": token,
         "sender_name": settings.SENDER_NAME,
         "subject": "Verify Password Change",
+        "activation_link": f"{settings.API_DOMAIN}/api/v1/auth/reset-password/?token={token}",
     }
 
     send_email(

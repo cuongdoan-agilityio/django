@@ -8,7 +8,6 @@ from unittest.mock import patch
 from accounts.factories import UserFactory
 from core.tests.base import BaseTestCase
 from core.helpers import create_token
-from core.error_messages import ErrorMessage
 
 
 class AuthorViewSetTests(BaseTestCase):
@@ -17,9 +16,9 @@ class AuthorViewSetTests(BaseTestCase):
 
         self.login_url = f"{self.root_url}auth/login/"
         self.signup = f"{self.root_url}auth/signup/"
-        self.verify_url = f"{self.root_url}auth/verify-signup-email/"
+        self.verify_url = f"{self.root_url}auth/confirm-signup-email/"
 
-        self.verify_reset_password_url = f"{self.root_url}auth/verify-reset-password/"
+        self.verify_reset_password_url = f"{self.root_url}auth/confirm-reset-password/"
         self.reset_password_url = f"{self.root_url}auth/reset-password/"
         self.new_password = "NewPassword@123"
         self.email_token = create_token(self.user.email)
@@ -106,9 +105,7 @@ class AuthorViewSetTests(BaseTestCase):
         Test verifying email with a valid token.
         """
 
-        response = self.client.post(
-            self.verify_url, {"token": self.token}, format="json"
-        )
+        response = self.client.get(f"{self.verify_url}?token={self.token}")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
@@ -122,9 +119,7 @@ class AuthorViewSetTests(BaseTestCase):
         """
         Test verifying email with an invalid token.
         """
-        response = self.client.post(
-            self.verify_url, {"token": "invalid_token"}, format="json"
-        )
+        response = self.client.get(f"{self.verify_url}?token=invalid_token")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("errors", response.data)
@@ -138,9 +133,7 @@ class AuthorViewSetTests(BaseTestCase):
         with patch("django.core.signing.TimestampSigner.unsign") as mock_unsign:
             mock_unsign.side_effect = SignatureExpired("Token has expired")
 
-            response = self.client.post(
-                self.verify_url, {"token": self.token}, format="json"
-            )
+            response = self.client.get(f"{self.verify_url}?token={self.token}")
 
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             self.assertIn("errors", response.data)
@@ -154,7 +147,7 @@ class AuthorViewSetTests(BaseTestCase):
         signed_value = self.signer.sign(value)
         token = urlsafe_base64_encode(force_bytes(signed_value))
 
-        response = self.client.post(self.verify_url, {"token": token}, format="json")
+        response = self.client.get(f"{self.verify_url}?token={token}")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("errors", response.data)
@@ -168,9 +161,7 @@ class AuthorViewSetTests(BaseTestCase):
         self.new_user.is_active = True
         self.new_user.save()
 
-        response = self.client.post(
-            self.verify_url, {"token": self.token}, format="json"
-        )
+        response = self.client.get(f"{self.verify_url}?token={self.token}")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
@@ -260,10 +251,8 @@ class AuthorViewSetTests(BaseTestCase):
         Test reset password with a valid token.
         """
 
-        response = self.client.post(
-            self.reset_password_url,
-            self.reset_password_data,
-            format="json",
+        response = self.client.get(
+            f"{self.reset_password_url}?token={self.reset_password_data.get('token')}",
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -274,27 +263,23 @@ class AuthorViewSetTests(BaseTestCase):
         Test changing password with a missing token.
         """
 
-        response = self.client.post(
-            self.reset_password_url,
-            data={},
-            format="json",
+        response = self.client.get(
+            f"{self.reset_password_url}?token=",
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data.get("errors")[0]["field"], "token")
         self.assertEqual(
-            response.data.get("errors")[0]["message"][0], ErrorMessage.REQUIRED_FIELD
+            response.data.get("errors")[0]["message"][0], "This field may not be blank."
         )
 
     def test_reset_password_invalid_token(self):
         """
         Test changing password with an invalid token.
         """
-        data = {"token": "InvalidToken"}
-        response = self.client.post(
-            self.reset_password_url,
-            data=data,
-            format="json",
+
+        response = self.client.get(
+            f"{self.reset_password_url}?token=InvalidToken",
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -306,11 +291,8 @@ class AuthorViewSetTests(BaseTestCase):
 
         with patch("django.core.signing.TimestampSigner.unsign") as mock_unsign:
             mock_unsign.side_effect = SignatureExpired("Token has expired")
-            data = {"token": self.email_token}
-            response = self.client.post(
-                self.reset_password_url,
-                data,
-                format="json",
+            response = self.client.get(
+                f"{self.reset_password_url}?token={self.email_token}",
             )
 
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -320,12 +302,16 @@ class AuthorViewSetTests(BaseTestCase):
         Test reset password with invalid HTTP methods.
         """
 
-        response = self.client.get(self.reset_password_url)
+        response = self.client.post(
+            f"{self.reset_password_url}?token={self.email_token}",
+            data={},
+            format="json",
+        )
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
         data = {"token": self.email_token}
         response = self.client.patch(
-            self.reset_password_url,
+            f"{self.reset_password_url}?token={self.email_token}",
             data=data,
             format="json",
         )

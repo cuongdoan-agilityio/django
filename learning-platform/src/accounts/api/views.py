@@ -166,16 +166,16 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         serializer.save()
         return self.ok()
 
-    @action(detail=False, methods=["post"], url_path="verify-signup-email")
-    def verify_signup_email(self, request):
+    @action(detail=False, methods=["get"], url_path="confirm-signup-email")
+    def confirm_signup_email(self, request):
         """
-        Verify the email of a user using a token.
+        Confirm the email of a user using a token.
         """
 
-        serializer = VerifySignupEmailSerializer(data=request.data)
+        token = request.query_params.get("token", "")
+        serializer = VerifySignupEmailSerializer(data={"token": token})
         serializer.is_valid(raise_exception=True)
 
-        token = serializer.validated_data["token"]
         signer = TimestampSigner()
 
         try:
@@ -195,10 +195,10 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         except (BadSignature, SignatureExpired, User.DoesNotExist, ValueError):
             return self.bad_request(field="token", message=ErrorMessage.TOKEN_INVALID)
 
-    @action(detail=False, methods=["post"], url_path="verify-reset-password")
-    def verify_reset_password(self, request):
+    @action(detail=False, methods=["post"], url_path="confirm-reset-password")
+    def confirm_reset_password(self, request):
         """
-        Verify reset the password of a user using a token.
+        Confirm reset the password of a user using a token.
         """
 
         serializer = VerifyResetUserPasswordSerializer(data=request.data)
@@ -221,16 +221,15 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         except Exception as e:
             return self.bad_request(message=str(e))
 
-    @action(detail=False, methods=["post"], url_path="reset-password")
+    @action(detail=False, methods=["get"], url_path="reset-password")
     def reset_password(self, request):
         """
         Reset the password of a user using a token.
         """
 
-        serializer = ResetUserPasswordSerializer(data=request.data)
+        token = request.query_params.get("token", "")
+        serializer = ResetUserPasswordSerializer(data={"token": token})
         serializer.is_valid(raise_exception=True)
-
-        token = serializer.validated_data["token"]
 
         signer = TimestampSigner()
 

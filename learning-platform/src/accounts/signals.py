@@ -15,9 +15,9 @@ def send_verify_email(sender, instance, created, **kwargs):
     if created and instance.is_student:
         dynamic_template_data = {
             "user_name": instance.username,
-            "token": create_token(instance.id),
             "sender_name": settings.SENDER_NAME,
             "subject": "Verification Email",
+            "activation_link": f"{settings.API_DOMAIN}/api/v1/auth/confirm-signup-email/?token={create_token(instance.id)}",
         }
         send_email(
             instance.email, dynamic_template_data, settings.VERIFY_SIGNUP_TEMPLATE_ID

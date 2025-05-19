@@ -56,3 +56,7 @@ CACHES = {
         },
     }
 }
+
+
+# Domain
+API_DOMAIN = env("API_DOMAIN", default="http://localhost:8000")
