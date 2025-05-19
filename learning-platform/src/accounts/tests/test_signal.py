@@ -42,9 +42,9 @@ class TestUserSignals:
             user.email,
             {
                 "user_name": user.username,
-                "token": "mocked_token",
                 "sender_name": settings.SENDER_NAME,
                 "subject": "Verification Email",
+                "activation_link": f"{settings.API_DOMAIN}/api/v1/auth/confirm-signup-email/?token=mocked_token",
             },
             settings.VERIFY_SIGNUP_TEMPLATE_ID,
         )
@@ -72,19 +72,25 @@ class TestUserSignals:
         mock_send_email.assert_called_once()
 
     @patch("accounts.signals.send_email")
-    def test_enroll_intro_course_success(self, mock_send_email, enroll_intro_course_signal):
+    def test_enroll_intro_course_success(
+        self, mock_send_email, enroll_intro_course_signal
+    ):
         """
         Test that enroll_intro_course signal enrolls a student in intro courses.
         """
 
         mock_send_email.return_value = None
         intro_course = CourseFactory(instructor=None, status=Status.ACTIVATE.value)
-        other_intro_course = CourseFactory(instructor=None, status=Status.ACTIVATE.value)
+        other_intro_course = CourseFactory(
+            instructor=None, status=Status.ACTIVATE.value
+        )
 
         user = UserFactory()
 
         assert Enrollment.objects.filter(student=user, course=intro_course).exists()
-        assert Enrollment.objects.filter(student=user, course=other_intro_course).exists()
+        assert Enrollment.objects.filter(
+            student=user, course=other_intro_course
+        ).exists()
 
     @patch("accounts.signals.send_email")
     def test_enroll_intro_course_no_intro_courses(
