@@ -23,6 +23,7 @@ dependencies = [
     "split-settings>=1.0.0",
     "sentry-sdk>=2.26.1",
     "pytest-cov>=6.1.1",
+    "django-redis>=5.4.0",
 ]
 
 [dependency-groups]
