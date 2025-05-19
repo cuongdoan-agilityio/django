@@ -345,7 +345,7 @@ class SpecializationViewSet(BaseGenericViewSet, ListModelMixin):
 
     def get_queryset(self):
         """
-        Retrieve the list of specializations with caching.
+        Retrieve the list of specializations.
         """
 
         return Specialization.objects.all()

@@ -484,7 +484,7 @@ class CategoryViewSet(BaseGenericViewSet, ListModelMixin):
 
     def get_queryset(self):
         """
-        Retrieve the list of categories with caching.
+        Retrieve the list of categories.
         """
 
         return Category.objects.all()

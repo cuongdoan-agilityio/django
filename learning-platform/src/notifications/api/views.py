@@ -77,11 +77,10 @@ class NotificationViewSet(
 
     def get_queryset(self):
         """
-        Returns the queryset for the Notification model with caching.
+        Returns the queryset for the user notification.
         """
 
-        user = self.request.user
-        return user.notifications.all()
+        return self.request.user.notifications.all()
 
 
 apps = [NotificationViewSet]
