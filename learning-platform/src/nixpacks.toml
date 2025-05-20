@@ -1,0 +1,22 @@
+[environment]
+python = "python3.12.3"
+
+[entrypoint]
+command = "/app/env/bin/gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
+
+[phases.setup]
+commands = [
+    "python3 -m venv /app/env",
+    "/app/env/bin/python -m pip install --upgrade pip",
+    "/app/env/bin/python -m pip install -r requirements/base.txt",
+    "/app/env/bin/python -m pip install -r requirements/prod.txt"
+]
+
+[phases.build]
+commands = [
+    "/app/env/bin/python manage.py collectstatic --noinput",
+    "/app/env/bin/python manage.py migrate"
+]
+
+[phases.start]
+command = "/app/env/bin/gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
