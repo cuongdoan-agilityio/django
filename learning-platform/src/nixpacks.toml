@@ -2,21 +2,19 @@
 python = "python3.12.3"
 
 [entrypoint]
-command = "/app/env/bin/gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
+command = "uv run gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
 
 [phases.setup]
 commands = [
-    "python3 -m venv /app/env",
-    "/app/env/bin/python -m pip install --upgrade pip",
-    "/app/env/bin/python -m pip install -r requirements/base.txt",
-    "/app/env/bin/python -m pip install -r requirements/prod.txt"
+    "uv sync",  # Sync dependencies and create the environment
+    "uv install --upgrade pip"  # Ensure pip is upgraded
 ]
 
 [phases.build]
 commands = [
-    "/app/env/bin/python manage.py collectstatic --noinput",
-    "/app/env/bin/python manage.py migrate"
+    "uv run python manage.py collectstatic --noinput",  # Collect static files
+    "uv run python manage.py migrate"  # Apply database migrations
 ]
 
 [phases.start]
-command = "/app/env/bin/gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
+command = "uv run gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
