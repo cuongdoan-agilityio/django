@@ -13,7 +13,7 @@ commands = [
 
 [phases.build]
 commands = [
-    "/app/env/bin/python manage.py collectstatic --noinput",files
+    "/app/env/bin/python manage.py collectstatic --noinput",
     "/app/env/bin/python manage.py migrate"
 ]
 
