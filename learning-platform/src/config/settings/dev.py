@@ -1,231 +1,103 @@
-# ruff: noqa: ERA001, E501
-"""Base settings to build other settings files upon."""
-
-from pathlib import Path
-
-import environ
-
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
-
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
-# Setup read environment variables from .env file with a flag, default is True
-env = environ.Env()
-
-READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=True)
-if READ_DOT_ENV_FILE:
-    # OS environment variables take precedence over variables from django-practice/.env
-    env.read_env(str(BASE_DIR.parent / ".env"))
+# ruff: noqa: E501
+import os
+from .base import *  # noqa: F403
+from .base import INSTALLED_APPS
+from .base import MIDDLEWARE
+from .base import env
+from celery.schedules import crontab
 
 # GENERAL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool("DJANGO_DEBUG", False)
-# Local time zone. Choices are
-# http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
-# though not all of them may be available with every OS.
-# In Windows, this must be set to your system time zone.
-TIME_ZONE = "UTC"
-# https://docs.djangoproject.com/en/dev/ref/settings/#language-code
-LANGUAGE_CODE = "en-us"
+DEBUG = True
+# https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
+SECRET_KEY = env("DJANGO_SECRET_KEY")
+# https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
+ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1"]  # noqa: S104
 
 
-# DATABASE
+# CACHES
 # ------------------------------------------------------------------------------
-# https://docs.djangoproject.com/en/dev/ref/settings/#databases
-DATABASES = {
+# https://docs.djangoproject.com/en/dev/ref/settings/#caches
+CACHES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        "KEY_PREFIX": "learning_platform",
+        "TIMEOUT": 3600,
     }
 }
-DATABASES["default"]["ATOMIC_REQUESTS"] = True
-# https://docs.djangoproject.com/en/stable/ref/settings/#std:setting-DEFAULT_AUTO_FIELD
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# URLS
+# django-debug-toolbar
 # ------------------------------------------------------------------------------
-ROOT_URLCONF = "config.urls"
-# https://docs.djangoproject.com/en/dev/ref/settings/#wsgi-application
-WSGI_APPLICATION = "config.wsgi.application"
-
-# APPS
-# ------------------------------------------------------------------------------
-
-DJANGO_APPS = [
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    "config.apps.CustomAdminConfig",
-]
-THIRD_PARTY_APPS = [
-    "rest_framework",
-    "rest_framework.authtoken",
-    "drf_spectacular",
-]
-LOCAL_APPS = [
-    "accounts",
-    "courses",
-    "notifications",
-]
-# https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
-
-# MIGRATIONS
-# ------------------------------------------------------------------------------
-
-# AUTHENTICATION
-# ------------------------------------------------------------------------------
-# https://docs.djangoproject.com/en/dev/ref/settings/#authentication-backends
-# AUTHENTICATION_BACKENDS
-# https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
-# AUTH_USER_MODEL
-AUTH_USER_MODEL = "accounts.User"
-
-# https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-# LOGIN_REDIRECT_URL
-# https://docs.djangoproject.com/en/dev/ref/settings/#login-url
-# LOGIN_URL
-
-# PASSWORDS
-# ------------------------------------------------------------------------------
-# https://docs.djangoproject.com/en/dev/ref/settings/#password-hashers
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        "OPTIONS": {
-            "min_length": env.int("MIN_PASSWORD_LENGTH", 8),
-        },
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
-    {
-        "NAME": "accounts.validators.ComplexPasswordValidator",
-    },
-]
-
-# MIDDLEWARE
-# ------------------------------------------------------------------------------
-# https://docs.djangoproject.com/en/dev/ref/settings/#middleware
-MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
-]
-
-# STATIC
-# ------------------------------------------------------------------------------
-# https://docs.djangoproject.com/en/dev/ref/settings/#static-root
-STATIC_ROOT = str(BASE_DIR / "staticfiles")
-# https://docs.djangoproject.com/en/dev/ref/settings/#static-url
-STATIC_URL = "/static/"
-
-# MEDIA
-# ------------------------------------------------------------------------------
-MEDIA_URL = "/media/"
-
-# TEMPLATES
-# ------------------------------------------------------------------------------
-# https://docs.djangoproject.com/en/dev/ref/settings/#templates
-TEMPLATES = [
-    {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
-        "APP_DIRS": True,
-        "OPTIONS": {
-            "context_processors": [
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
-            ],
-        },
-    },
-]
-
-
-# django-rest-framework
-# -------------------------------------------------------------------------------
-# django-rest-framework - https://www.django-rest-framework.org/api-guide/settings/
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.TokenAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_PAGINATION_CLASS": "core.pagination.CustomPagination",
-    "PAGE_SIZE": env.int("PAGE_SIZE", 20),
-    "EXCEPTION_HANDLER": "core.exception_handler.process_exception",
-}
-
-
-# drf_spectacular
-# -------------------------------------------------------------------------------
-# drf_spectacular - https://drf-spectacular.readthedocs.io/en/latest/
-SPECTACULAR_SETTINGS = {
-    "TITLE": "Learning platform web APIs",
-    "DESCRIPTION": "This API provides documentation for the learning platform.",
-    "VERSION": "0.0.1",
-    "SCHEMA_PATH_PREFIX": r"/api/v[0-9]",
-}
-
-
-# Your stuff...
-# ------------------------------------------------------------------------------
-# Project settings example
-API_ROOT_ENDPOINT = env("API_ROOT_ENDPOINT", default="api/v1/")
-
-
-# Admin pagination settings
-ADMIN_PAGE_SIZE = 20
-
-
-# Top corses
-TOP_COURSES_LIMIT = env("TOP_COURSES_LIMIT", default=5)
-
-
-# SendGrid settings
-SENDGRID_API_KEY = env("SENDGRID_API_KEY")
-EMAIL_BACKEND = env("EMAIL_BACKEND")
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
-VERIFY_SIGNUP_TEMPLATE_ID = env("VERIFY_SIGNUP_TEMPLATE_ID")
-WELCOME_TEMPLATE_ID = env("WELCOME_TEMPLATE_ID")
-VERIFY_RESET_PASSWORD_TEMPLATE_ID = env("VERIFY_RESET_PASSWORD_TEMPLATE_ID")
-INSTRUCTOR_EMAIL_TEMPLATE_ID = env("INSTRUCTOR_EMAIL_TEMPLATE_ID")
-SENDER_NAME = env("SENDER_NAME")
-
-
-# Course enrollment limit
-DEFAULT_COURSE_ENROLLMENT_LIMIT = env("DEFAULT_COURSE_ENROLLMENT_LIMIT", default=10)
-
-
-# Sentry settings
-# ------------------------------------------------------------------------------
-# https://docs.sentry.io/platforms/python/
-sentry_sdk.init(
-    dsn=env("SENTRY_DSN"),
-    integrations=[
-        DjangoIntegration(),
+# https://django-debug-toolbar.readthedocs.io/en/latest/installation.html#prerequisites
+INSTALLED_APPS += ["debug_toolbar"]
+# https://django-debug-toolbar.readthedocs.io/en/latest/installation.html#middleware
+MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
+# https://django-debug-toolbar.readthedocs.io/en/latest/configuration.html#debug-toolbar-config
+DEBUG_TOOLBAR_CONFIG = {
+    "DISABLE_PANELS": [
+        "debug_toolbar.panels.redirects.RedirectsPanel",
+        # Disable profiling panel due to an issue with Python 3.11:
+        # https://github.com/jazzband/django-debug-toolbar/issues/1875
+        "debug_toolbar.panels.profiling.ProfilingPanel",
     ],
-    traces_sample_rate=env("SENTRY_TRACES_SAMPLE_RATE", default=0.1),
-    send_default_pii=env("SENTRY_SEND_DEFAULT_PII", default=False),
-    debug=env("SENTRY_DEBUG", default=False),
-)
+    "SHOW_TEMPLATE_CONTEXT": True,
+}
+# https://django-debug-toolbar.readthedocs.io/en/latest/installation.html#internal-ips
+INTERNAL_IPS = ["127.0.0.1"]
+
+# django-extensions
+# ------------------------------------------------------------------------------
+# https://django-extensions.readthedocs.io/en/latest/installation_instructions.html#configuration
+INSTALLED_APPS += ["django_extensions"]
+
+# Celery
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "Asia/Ho_Chi_Minh"
+
+CELERY_BEAT_SCHEDULE = {
+    "run-weekly-task": {
+        "task": "courses.tasks.clean_up_inactive_courses",
+        "schedule": crontab(hour=1, minute=0, day_of_week="mon"),
+    },
+    "run-monthly-task": {
+        "task": "courses.tasks.send_monthly_report",
+        "schedule": crontab(hour=1, minute=0, day_of_month=1),
+    },
+}
+
+# Domain
+API_DOMAIN = env("API_DOMAIN", default="http://localhost:8000")
+
+
+# Database
+# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+
+# Set default values for the environment variables if they’re not already set
+os.environ.setdefault("PGDATABASE", "learning_platform_dev")
+os.environ.setdefault("PGUSER", "username")
+os.environ.setdefault("PGPASSWORD", "")
+os.environ.setdefault("PGHOST", "localhost")
+os.environ.setdefault("PGPORT", "5432")
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ["PGDATABASE"],
+        "USER": os.environ["PGUSER"],
+        "PASSWORD": os.environ["PGPASSWORD"],
+        "HOST": os.environ["PGHOST"],
+        "PORT": os.environ["PGPORT"],
+    }
+}
+
+
+ALLOWED_HOSTS = ["*"]
