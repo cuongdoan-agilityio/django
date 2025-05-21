@@ -45,3 +45,4 @@ class ErrorMessage:
     USER_NOT_ACTIVE = "User is not active, please activate your account."
     USER_NOT_FOUND = "User not found."
     USER_NOT_STUDENT = "User is not student."
+    COURSE_IS_FULL = "The course is fully booked."

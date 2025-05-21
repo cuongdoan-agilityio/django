@@ -116,7 +116,7 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ["id", "name", "description", "modified"]
     list_per_page = settings.ADMIN_PAGE_SIZE
     search_fields = ["name"]
-    ordering = ["name"]
+    ordering = ["name", "-modified"]
 
 
 @admin.register(Enrollment)
@@ -151,7 +151,7 @@ class EnrollmentAdmin(admin.ModelAdmin):
         "student__username",
     ]
     list_per_page = settings.ADMIN_PAGE_SIZE
-    ordering = ["course__title"]
+    ordering = ["course__title", "-modified"]
     form = EnrollmentForm
     autocomplete_fields = ["course", "student"]
 

@@ -149,6 +149,9 @@ class EnrollmentSerializer(serializers.ModelSerializer):
                 {"student": ErrorMessage.ALREADY_ENROLLED}
             )
 
+        if course.is_full:
+            raise serializers.ValidationError({"course": ErrorMessage.COURSE_IS_FULL})
+
         return data
 
     def create(self, validated_data):
