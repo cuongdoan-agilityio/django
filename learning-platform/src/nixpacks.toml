@@ -8,6 +8,8 @@ NIXPACKS_UV_VERSION = "0.5.29"
 
 [phases.setup]
 commands = [
+    "pip install uv",
+    "uv --version",
     "uv sync"
 ]
 
