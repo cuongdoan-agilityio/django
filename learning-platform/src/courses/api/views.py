@@ -479,15 +479,8 @@ class CategoryViewSet(BaseGenericViewSet, ListModelMixin):
 
     permission_classes = [AllowAny]
     serializer_class = CategorySerializer
-    http_method_names = ["get"]
     resource_name = "categories"
-
-    def get_queryset(self):
-        """
-        Retrieve the list of categories.
-        """
-
-        return Category.objects.all()
+    queryset = Category.objects.all()
 
 
 apps = [CourseViewSet, CategoryViewSet]

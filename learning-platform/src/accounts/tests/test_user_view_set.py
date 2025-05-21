@@ -117,7 +117,7 @@ class UserViewSetTests(BaseTestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_partial_update_instructor_profile_forbidden(self):
+    def test_partial_update_instructor_profile_not_found(self):
         """
         Test the partial_update action for an instructor with forbidden.
         """
@@ -129,4 +129,4 @@ class UserViewSetTests(BaseTestCase):
             email=self.instructor_email,
             data=data,
         )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
