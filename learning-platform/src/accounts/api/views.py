@@ -29,8 +29,6 @@ from core.permissions import IsAdminOrOwner
 
 from .response_schema import (
     user_profile_response_schema,
-    signup_success_response_schema,
-    verify_success_response_schema,
     reset_password_response_schema,
 )
 from .serializers import (
@@ -65,7 +63,7 @@ User = get_user_model()
         description="API to sign up a new user.",
         request=RegisterSerializer,
         responses={
-            201: signup_success_response_schema,
+            200: BaseSuccessResponseSerializer,
             400: BaseBadRequestResponseSerializer,
         },
     ),
@@ -73,7 +71,7 @@ User = get_user_model()
         description="API to confirm signup email.",
         request=VerifySignupEmailSerializer,
         responses={
-            201: verify_success_response_schema,
+            200: BaseSuccessResponseSerializer,
             400: BaseBadRequestResponseSerializer,
         },
     ),
