@@ -156,7 +156,7 @@ class CourseViewSetTest(BaseTestCase):
         Test leaving a course.
         """
 
-        Enrollment.objects.create(course=self.course, student=self.student_user)
+        self.course.students.add(self.student_user)
         response = self.post_json(
             url=self.url_leave,
             data=None,
@@ -169,7 +169,7 @@ class CourseViewSetTest(BaseTestCase):
         Test leaving a course without logging in.
         """
 
-        Enrollment.objects.create(course=self.course, student=self.student_user)
+        self.course.students.add(self.student_user)
         response = self.post_json(
             url=self.url_leave,
             data=None,
@@ -182,7 +182,7 @@ class CourseViewSetTest(BaseTestCase):
         Test listing all students enrolled in a course.
         """
 
-        Enrollment.objects.create(course=self.course, student=self.student_user)
+        self.course.students.add(self.student_user)
         response = self.get_json(
             url=self.url_students,
             email=self.instructor_email,
@@ -197,7 +197,7 @@ class CourseViewSetTest(BaseTestCase):
         Test listing all students enrolled in a course without logging in.
         """
 
-        Enrollment.objects.create(course=self.course, student=self.student_user)
+        self.course.students.add(self.student_user)
         response = self.get_json(
             url=self.url_students,
             email=self.email,
@@ -259,7 +259,7 @@ class CourseViewSetTest(BaseTestCase):
         Test filtering courses by enrollment status.
         """
 
-        Enrollment.objects.create(course=self.course, student=self.student_user)
+        self.course.students.add(self.student_user)
 
         self.client.login(email=self.email, password=self.password)
 
