@@ -17,10 +17,10 @@ commands = [
 [phases.build]
 commands = [
     "uv run manage.py collectstatic --noinput",
-    "uv run manage.py migrate"  # Apply database migrations
+    "uv run manage.py migrate"
 ]
 
 [phases.start]
 commands = [
-    "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"  # Start the application
+    "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
 ]
