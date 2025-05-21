@@ -338,7 +338,7 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
             }
         )
         enrollment_serializer.is_valid(raise_exception=True)
-        enrollment_serializer.save()
+        course.students.add(student)
 
         # Send notification.
         Notification.objects.create(
