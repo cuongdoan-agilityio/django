@@ -25,6 +25,7 @@ from core.serializers import (
 )
 from core.error_messages import ErrorMessage
 from core.helpers import create_token
+from core.permissions import IsAdminOrOwner
 
 from .response_schema import (
     user_profile_response_schema,
@@ -68,16 +69,16 @@ User = get_user_model()
             400: BaseBadRequestResponseSerializer,
         },
     ),
-    verify_signup_email=extend_schema(
-        description="API to verify signup email.",
+    confirm_signup_email=extend_schema(
+        description="API to confirm signup email.",
         request=VerifySignupEmailSerializer,
         responses={
             201: verify_success_response_schema,
             400: BaseBadRequestResponseSerializer,
         },
     ),
-    verify_reset_password=extend_schema(
-        description="Verify reset password of a user using a token.",
+    confirm_reset_password=extend_schema(
+        description="Confirm reset user password using a token.",
         request=VerifyResetUserPasswordSerializer,
         responses={
             200: BaseSuccessResponseSerializer,
@@ -85,7 +86,7 @@ User = get_user_model()
         },
     ),
     reset_password=extend_schema(
-        description="Reset the password of a user using a token.",
+        description="Reset user password using a token.",
         request=ResetUserPasswordSerializer,
         responses={
             200: reset_password_response_schema,
@@ -164,7 +165,8 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
 
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return self.ok()
+        response = BaseSuccessResponseSerializer({"data": {"success": True}})
+        return self.ok(response.data)
 
     @action(detail=False, methods=["get"], url_path="confirm-signup-email")
     def confirm_signup_email(self, request):
@@ -190,7 +192,8 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
                 serializer.save()
                 user_data = model_to_dict(user, fields=["username", "email"])
                 send_welcome_email.delay(user_data)
-            return self.ok()
+            response = BaseSuccessResponseSerializer({"data": {"success": True}})
+            return self.ok(response.data)
 
         except (BadSignature, SignatureExpired, User.DoesNotExist, ValueError):
             return self.bad_request(field="token", message=ErrorMessage.TOKEN_INVALID)
@@ -217,7 +220,8 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
                 {"username": user.username, "email": user.email},
                 token,
             )
-            return self.ok()
+            response = BaseSuccessResponseSerializer({"data": {"success": True}})
+            return self.ok(response.data)
         except Exception as e:
             return self.bad_request(message=str(e))
 
@@ -258,13 +262,11 @@ class UserViewSet(
     It includes custom Swagger documentation for the retrieve and partial_update actions.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrOwner]
     serializer_class = UserProfileDataSerializer
     http_method_names = ["get", "patch"]
     resource_name = "users"
-
-    def get_queryset(self):
-        return User.objects.all()
+    queryset = User.objects.all()
 
     @extend_schema(
         description="Retrieve a user profile (Instructor or Student, admin) by id. "
@@ -284,12 +286,11 @@ class UserViewSet(
         user = request.user
         pk = kwargs.get("pk")
 
-        if not user.is_superuser and (pk not in ["me", str(user.id)]):
-            return self.forbidden()
-
         user = user if pk == "me" else self.get_queryset().filter(id=pk).first()
         if not user:
             return self.not_found(message=ErrorMessage.USER_NOT_FOUND)
+
+        self.check_object_permissions(request, user)
 
         response_data = self.format_data(user)
         return self.ok(response_data)
@@ -317,13 +318,12 @@ class UserViewSet(
 
         pk = kwargs.get("pk")
 
-        if not user.is_superuser and (pk not in ["me", str(user.id)]):
-            return self.forbidden()
-
         try:
             user = user if pk == "me" else User.objects.get(id=pk)
         except User.DoesNotExist:
             return self.not_found(message=ErrorMessage.USER_NOT_FOUND)
+
+        self.check_object_permissions(request, user)
 
         serializer = UserProfileUpdateSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -341,13 +341,7 @@ class SpecializationViewSet(BaseGenericViewSet, ListModelMixin):
     serializer_class = SpecializationSerializer
     http_method_names = ["get"]
     resource_name = "specializations"
-
-    def get_queryset(self):
-        """
-        Retrieve the list of specializations.
-        """
-
-        return Specialization.objects.all()
+    queryset = Specialization.objects.all()
 
 
 apps = [AuthenticationViewSet, UserViewSet, SpecializationViewSet]
