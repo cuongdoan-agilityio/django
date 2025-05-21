@@ -22,5 +22,5 @@ commands = [
 
 [phases.start]
 commands = [
-    "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
+    "uv run --with gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
 ]
