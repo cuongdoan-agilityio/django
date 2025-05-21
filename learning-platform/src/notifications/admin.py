@@ -12,7 +12,7 @@ class NotificationAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("user")
 
-    list_display = ("id", "user", "message", "is_read", "modified")
+    list_display = ["id", "user", "message", "is_read", "modified"]
     list_per_page = settings.ADMIN_PAGE_SIZE
     list_filter = ["is_read", "user"]
     search_fields = ["message"]
