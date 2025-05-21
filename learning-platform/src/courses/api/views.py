@@ -340,7 +340,7 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         enrollment_serializer.is_valid(raise_exception=True)
         course.students.add(student)
 
-        # Send notification.
+        # Create notification.
         Notification.objects.create(
             user=course.instructor,
             message=NotificationMessage.STUDENT_ENROLLED.format(
@@ -383,7 +383,7 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         if enrollment := student.enrollments.filter(course=course).first():
             enrollment.delete()
 
-            # Send notification.
+            # Create notification.
             Notification.objects.create(
                 user=student,
                 message=NotificationMessage.STUDENT_UNENROLLED.format(
