@@ -22,12 +22,9 @@ class LoginRequestSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
 
-class LoginResponseDataSerializer(serializers.Serializer):
+class TokenSerializer(serializers.Serializer):
     """
-    Serializer for the data in the login response.
-
-    Fields:
-        token (CharField): The authentication token for the user.
+    Serializer for the token.
     """
 
     token = serializers.CharField()
@@ -38,10 +35,10 @@ class LoginResponseSerializer(serializers.Serializer):
     Serializer for the login response.
 
     Fields:
-        data (LoginResponseDataSerializer): The data containing the authentication token.
+        data (TokenSerializer): The data containing the authentication token.
     """
 
-    data = LoginResponseDataSerializer()
+    data = TokenSerializer()
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -81,14 +78,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.full_clean()
         user.save()
         return user
-
-
-class VerifySignupEmailSerializer(serializers.Serializer):
-    """
-    Serializer for verifying signup email addresses
-    """
-
-    token = serializers.CharField(help_text="Token for email verification")
 
 
 class UserActivateSerializer(serializers.ModelSerializer):
@@ -263,14 +252,6 @@ class VerifyResetUserPasswordSerializer(serializers.Serializer):
     """
 
     email = serializers.EmailField(help_text="Email for reset user password")
-
-
-class ResetUserPasswordSerializer(serializers.Serializer):
-    """
-    Serializer for reset user password.
-    """
-
-    token = serializers.CharField(help_text="Token for reset user password")
 
 
 class ResetUserPasswordResponseSerializer(serializers.Serializer):

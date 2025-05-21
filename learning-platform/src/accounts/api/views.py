@@ -10,6 +10,7 @@ from django.forms.models import model_to_dict
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
+    OpenApiParameter,
 )
 
 from accounts.tasks import send_welcome_email, send_password_reset_email
@@ -38,12 +39,10 @@ from .serializers import (
     UserProfileUpdateSerializer,
     SpecializationSerializer,
     UserProfileDataSerializer,
-    VerifySignupEmailSerializer,
     UserActivateSerializer,
-    ResetUserPasswordSerializer,
     VerifyResetUserPasswordSerializer,
     ResetUserPasswordResponseSerializer,
-    LoginResponseDataSerializer,
+    TokenSerializer,
 )
 
 User = get_user_model()
@@ -69,7 +68,15 @@ User = get_user_model()
     ),
     confirm_signup_email=extend_schema(
         description="API to confirm signup email.",
-        request=VerifySignupEmailSerializer,
+        parameters=[
+            OpenApiParameter(
+                name="token",
+                description="Token to verify email.",
+                location=OpenApiParameter.QUERY,
+                type=str,
+                required=True,
+            )
+        ],
         responses={
             200: BaseSuccessResponseSerializer,
             400: BaseBadRequestResponseSerializer,
@@ -85,7 +92,15 @@ User = get_user_model()
     ),
     reset_password=extend_schema(
         description="Reset user password using a token.",
-        request=ResetUserPasswordSerializer,
+        parameters=[
+            OpenApiParameter(
+                name="token",
+                description="Token to verify reset password.",
+                location=OpenApiParameter.QUERY,
+                type=str,
+                required=True,
+            )
+        ],
         responses={
             200: reset_password_response_schema,
             400: BaseBadRequestResponseSerializer,
@@ -105,7 +120,7 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
     def get_serializer_class(self):
         if action := self.action:
             if action == "login":
-                return LoginResponseDataSerializer
+                return TokenSerializer
             if action == "reset_password":
                 return ResetUserPasswordResponseSerializer
         return LoginRequestSerializer
@@ -173,7 +188,7 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         """
 
         token = request.query_params.get("token", "")
-        serializer = VerifySignupEmailSerializer(data={"token": token})
+        serializer = TokenSerializer(data={"token": token})
         serializer.is_valid(raise_exception=True)
 
         signer = TimestampSigner()
@@ -230,7 +245,7 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         """
 
         token = request.query_params.get("token", "")
-        serializer = ResetUserPasswordSerializer(data={"token": token})
+        serializer = TokenSerializer(data={"token": token})
         serializer.is_valid(raise_exception=True)
 
         signer = TimestampSigner()
