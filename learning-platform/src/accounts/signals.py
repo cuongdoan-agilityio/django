@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 
 from core.helpers import send_email, create_token
-from courses.models import Course, Enrollment
+from courses.models import Course
 
 
 User = get_user_model()
@@ -35,7 +35,5 @@ def enroll_intro_course(sender, instance, created, **kwargs):
     """
 
     if created and instance.is_student:
-        intro_courses = Course.objects.filter(instructor__isnull=True)
-
-        for course in intro_courses:
-            Enrollment.objects.get_or_create(student=instance, course=course)
+        intro_courses = Course.objects.filter(instructor__isnull=True).all()
+        instance.enrolled_courses.set(intro_courses)
