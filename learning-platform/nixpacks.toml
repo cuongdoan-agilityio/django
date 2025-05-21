@@ -1,6 +1,11 @@
 [environment]
 python = "python3.12.3"
 
+[variables]
+NIXPACKS_PYTHON_PACKAGE_MANAGER = "uv"
+NIXPACKS_PYTHON_VERSION = "3.12.3"
+NIXPACKS_UV_VERSION = "0.5.29"
+
 [entrypoint]
 command = "uv run gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
 
@@ -13,11 +18,11 @@ commands = [
 
 [phases.build]
 commands = [
-    "uv run ./src/manage.py collectstatic --noinput",  # Collect static files
-    "uv run ./src/manage.py migrate"  # Apply database migrations
+    "uv run manage.py collectstatic --noinput",  # Collect static files
+    "uv run manage.py migrate"  # Apply database migrations
 ]
 
 [phases.start]
 commands = [
-    "uv run ./src/gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"  # Start the application
+    "uv run gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"  # Start the application
 ]
