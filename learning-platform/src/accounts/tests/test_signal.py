@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from accounts.factories import UserFactory
 from core.constants import Status, Role
-from courses.models import Course, Enrollment
+from courses.models import Course
 from courses.factories import CourseFactory
 
 
@@ -87,10 +87,8 @@ class TestUserSignals:
 
         user = UserFactory()
 
-        assert Enrollment.objects.filter(student=user, course=intro_course).exists()
-        assert Enrollment.objects.filter(
-            student=user, course=other_intro_course
-        ).exists()
+        assert intro_course.students.filter(id=user.id).exists()
+        assert other_intro_course.students.filter(id=user.id).exists()
 
     @patch("accounts.signals.send_email")
     def test_enroll_intro_course_no_intro_courses(
@@ -106,7 +104,7 @@ class TestUserSignals:
 
         user = UserFactory()
 
-        assert not Enrollment.objects.filter(student=user).exists()
+        assert not user.enrolled_courses.exists()
 
     @patch("accounts.signals.send_email")
     def test_enroll_intro_course_non_student(
@@ -126,4 +124,4 @@ class TestUserSignals:
             role=Role.INSTRUCTOR.value,
         )
 
-        assert not Enrollment.objects.filter(student=user).exists()
+        assert not user.enrolled_courses.exists()
