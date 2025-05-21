@@ -28,7 +28,6 @@ class SpecializationAdmin(admin.ModelAdmin):
     """
 
     list_display = ["id", "name", "description", "modified"]
-
     search_fields = ["name"]
     list_per_page = settings.ADMIN_PAGE_SIZE
     ordering = ["name", "-modified"]

@@ -12,6 +12,10 @@ User = get_user_model()
 
 @receiver(post_save, sender=User)
 def send_verify_email(sender, instance, created, **kwargs):
+    """
+    Signal to send a verification email to newly created student users.
+    """
+
     if created and instance.is_student:
         dynamic_template_data = {
             "user_name": instance.username,
@@ -26,6 +30,10 @@ def send_verify_email(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=User)
 def enroll_intro_course(sender, instance, created, **kwargs):
+    """
+    Signal to automatically enroll newly created student users in intro courses.
+    """
+
     if created and instance.is_student:
         intro_courses = Course.objects.filter(instructor__isnull=True)
 
