@@ -61,30 +61,6 @@ user_profile_response_schema = OpenApiResponse(
     ],
 )
 
-signup_success_response_schema = OpenApiResponse(
-    response=BaseDetailSerializer,
-    description="Signup success",
-    examples=[
-        OpenApiExample(
-            "Signup Success",
-            value={"data": {"success": True}},
-            response_only=True,
-        ),
-    ],
-)
-
-verify_success_response_schema = OpenApiResponse(
-    response=BaseDetailSerializer,
-    description="Verify success",
-    examples=[
-        OpenApiExample(
-            "Verify success",
-            value={"data": {"success": True}},
-            response_only=True,
-        ),
-    ],
-)
-
 reset_password_response_schema = OpenApiResponse(
     response=BaseDetailSerializer,
     description="Reset password success",
