@@ -71,7 +71,7 @@ class AuthorViewSetTests(BaseTestCase):
         }
         response = self.client.post(self.signup, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, {"success": True})
+        self.assertEqual(response.data, {"data": {"success": True}})
 
     def test_signup_with_invalid_username(self):
         """

@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 
 from core.helpers import send_email, create_token
-from courses.models import Course, Enrollment
+from courses.models import Course
 
 
 User = get_user_model()
@@ -12,6 +12,10 @@ User = get_user_model()
 
 @receiver(post_save, sender=User)
 def send_verify_email(sender, instance, created, **kwargs):
+    """
+    Signal to send a verification email to newly created student users.
+    """
+
     if created and instance.is_student:
         dynamic_template_data = {
             "user_name": instance.username,
@@ -26,8 +30,10 @@ def send_verify_email(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=User)
 def enroll_intro_course(sender, instance, created, **kwargs):
-    if created and instance.is_student:
-        intro_courses = Course.objects.filter(instructor__isnull=True)
+    """
+    Signal to automatically enroll newly created student users in intro courses.
+    """
 
-        for course in intro_courses:
-            Enrollment.objects.get_or_create(student=instance, course=course)
+    if created and instance.is_student:
+        intro_courses = Course.objects.filter(instructor__isnull=True).all()
+        instance.enrolled_courses.set(intro_courses)

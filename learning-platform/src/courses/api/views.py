@@ -338,9 +338,9 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
             }
         )
         enrollment_serializer.is_valid(raise_exception=True)
-        enrollment_serializer.save()
+        course.students.add(student)
 
-        # Send notification.
+        # Create notification.
         Notification.objects.create(
             user=course.instructor,
             message=NotificationMessage.STUDENT_ENROLLED.format(
@@ -383,7 +383,7 @@ class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin)
         if enrollment := student.enrollments.filter(course=course).first():
             enrollment.delete()
 
-            # Send notification.
+            # Create notification.
             Notification.objects.create(
                 user=student,
                 message=NotificationMessage.STUDENT_UNENROLLED.format(
@@ -479,15 +479,8 @@ class CategoryViewSet(BaseGenericViewSet, ListModelMixin):
 
     permission_classes = [AllowAny]
     serializer_class = CategorySerializer
-    http_method_names = ["get"]
     resource_name = "categories"
-
-    def get_queryset(self):
-        """
-        Retrieve the list of categories.
-        """
-
-        return Category.objects.all()
+    queryset = Category.objects.all()
 
 
 apps = [CourseViewSet, CategoryViewSet]

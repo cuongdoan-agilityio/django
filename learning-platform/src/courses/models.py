@@ -69,7 +69,7 @@ class Course(AbstractBaseModel):
 
     @property
     def is_full(self):
-        return self.count_enrollments == self.enrollment_limit
+        return self.count_enrollments >= self.enrollment_limit
 
     def __str__(self):
         return self.title
@@ -106,5 +106,8 @@ class Enrollment(AbstractBaseModel):
                 and self.student.enrollments.filter(course=self.course).exists()
             ):
                 raise ValidationError(ErrorMessage.STUDENT_ALREADY_ENROLLED)
+
+            if self.course.is_full:
+                raise ValidationError(ErrorMessage.COURSE_IS_FULL)
 
         super().save(*args, **kwargs)

@@ -4,7 +4,6 @@ from django.core.management.base import BaseCommand
 from courses.models import Course
 from django.contrib.auth import get_user_model
 from core.constants import Status, Role
-from courses.models import Enrollment
 
 User = get_user_model()
 fake = Faker()
@@ -28,7 +27,7 @@ class Command(BaseCommand):
             student = random.choice(list_students)
             course = random.choice(list_courses)
 
-            if Enrollment.objects.filter(student=student, course=course).exists():
+            if course.students.filter(id=student.id).exists():
                 continue
 
-            Enrollment.objects.create(student=student, course=course)
+            course.students.add(student)

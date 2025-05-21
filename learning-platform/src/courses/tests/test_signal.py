@@ -1,20 +1,13 @@
 import pytest
 from unittest.mock import patch
 from django.conf import settings
-from courses.models import Enrollment
 from courses.factories import EnrollmentFactory
 
 
 @pytest.mark.django_db
 class TestSendEmailToInstructorSignal:
-
-
-
     def test_send_email_when_course_is_full(
-        self,
-        fake_instructor,
-        math_course,
-        connect_send_email_to_instructor_signal
+        self, fake_instructor, math_course, connect_send_email_to_instructor_signal
     ):
         """
         Test that an email is sent to the instructor when the course reaches its enrollment limit.
@@ -34,20 +27,26 @@ class TestSendEmailToInstructorSignal:
                 template_id=settings.INSTRUCTOR_EMAIL_TEMPLATE_ID,
             )
 
-    def test_no_email_when_course_is_not_full(self, fake_student, fake_course, connect_send_email_to_instructor_signal):
+    def test_no_email_when_course_is_not_full(
+        self, fake_student, fake_course, connect_send_email_to_instructor_signal
+    ):
         """
         Test that no email is sent to the instructor when the course is not full.
         """
         with patch("courses.signals.send_email", return_value=None) as mock_send_email:
-            Enrollment.objects.create(course=fake_course, student=fake_student)
+            fake_course.students.add(fake_student)
             mock_send_email.assert_not_called()
 
-    def test_send_email_failure(self, math_course, connect_send_email_to_instructor_signal):
+    def test_send_email_failure(
+        self, math_course, connect_send_email_to_instructor_signal
+    ):
         """
         Test that an exception is raised when sending email fails.
         """
 
-        with patch("courses.signals.send_email", side_effect=Exception("Email sending failed")) as mock_send_email:
+        with patch(
+            "courses.signals.send_email", side_effect=Exception("Email sending failed")
+        ) as mock_send_email:
             with pytest.raises(Exception, match="Email sending failed"):
                 EnrollmentFactory(course=math_course)
                 EnrollmentFactory(course=math_course)
