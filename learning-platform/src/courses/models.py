@@ -56,6 +56,12 @@ class Course(AbstractBaseModel):
     enrollment_limit = models.PositiveIntegerField(
         default=settings.DEFAULT_COURSE_ENROLLMENT_LIMIT
     )
+    students = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        through="Enrollment",
+        related_name="enrolled_courses",
+        help_text="Students enrolled in the course.",
+    )
 
     @property
     def count_enrollments(self):

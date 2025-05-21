@@ -43,3 +43,35 @@ class EnrollmentForm(forms.ModelForm):
             self.add_error("student", ErrorMessage.STUDENT_ALREADY_ENROLLED)
 
         return cleaned_data
+
+
+class EnrollmentInlineForm(forms.ModelForm):
+    """
+    Custom form for the Enrollment inline to validate conditions.
+    """
+
+    class Meta:
+        model = Enrollment
+        fields = ["student"]
+
+    def clean(self):
+        """
+        Custom validation for the Enrollment inline form.
+        """
+
+        cleaned_data = super().clean()
+        student = cleaned_data.get("student")
+        course = self.instance.course if self.instance.pk else None
+
+        if self.has_changed():
+            if not course:
+                course = self.parent_object if hasattr(self, "parent_object") else None
+
+            if course and student:
+                if course.status != Status.ACTIVATE.value:
+                    raise forms.ValidationError(ErrorMessage.INACTIVE_COURSE)
+
+                if student.enrollments.filter(course=course).exists():
+                    raise forms.ValidationError(ErrorMessage.STUDENT_ALREADY_ENROLLED)
+
+        return cleaned_data

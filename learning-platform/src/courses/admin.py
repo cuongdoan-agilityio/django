@@ -5,8 +5,22 @@ from core.constants import Status
 from core.error_messages import ErrorMessage
 
 from .models import Course, Category, Enrollment
-from .forms import EnrollmentForm
+from .forms import EnrollmentForm, EnrollmentInlineForm
 from .constants import CourseAdminMessage
+
+
+class EnrollmentInline(admin.TabularInline):
+    """
+    Inline form for managing enrollments in the Course admin.
+    """
+
+    model = Enrollment
+    form = EnrollmentInlineForm
+    extra = 1
+    autocomplete_fields = ["student"]
+    readonly_fields = ["created", "modified"]
+    verbose_name = "Student Enrollment"
+    verbose_name_plural = "Student Enrollments"
 
 
 @admin.register(Course)
@@ -82,6 +96,7 @@ class CourseAdmin(admin.ModelAdmin):
     search_fields = ["title", "category__name", "instructor__username"]
     ordering = ["title"]
     autocomplete_fields = ["category", "instructor"]
+    inlines = [EnrollmentInline]
 
     actions = [activate_all, deactivate_all]
 
