@@ -6,9 +6,6 @@ NIXPACKS_PYTHON_PACKAGE_MANAGER = "uv"
 NIXPACKS_PYTHON_VERSION = "3.12.3"
 NIXPACKS_UV_VERSION = "0.5.29"
 
-[entrypoint]
-command = "uv run gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
-
 [phases.setup]
 commands = [
     "uv sync"
@@ -22,5 +19,5 @@ commands = [
 
 [phases.start]
 commands = [
-    "uv run --with gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
+    "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
 ]
