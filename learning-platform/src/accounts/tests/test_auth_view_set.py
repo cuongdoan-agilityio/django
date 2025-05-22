@@ -1,318 +1,393 @@
+import pytest
 from uuid import uuid4
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
-from django.core.signing import TimestampSigner, SignatureExpired
+from django.core.signing import SignatureExpired
 from rest_framework import status
 from unittest.mock import patch
 
-from accounts.factories import UserFactory
-from core.tests.base import BaseTestCase
 from core.helpers import create_token
 
 
-class AuthorViewSetTests(BaseTestCase):
-    def setUp(self):
-        super().setUp()
+@pytest.mark.django_db
+class TestAuthorViewSet:
+    """
+    Test suite for the AuthorViewSet.
+    """
 
-        self.login_url = f"{self.root_url}auth/login/"
-        self.signup = f"{self.root_url}auth/signup/"
-        self.verify_url = f"{self.root_url}auth/confirm-signup-email/"
-
-        self.verify_reset_password_url = f"{self.root_url}auth/confirm-reset-password/"
-        self.reset_password_url = f"{self.root_url}auth/reset-password/"
-        self.new_password = "NewPassword@123"
-        self.email_token = create_token(self.user.email)
-
-        self.new_user = UserFactory(
-            is_active=False,
-        )
-        self.signer = TimestampSigner()
-        self.token = create_token(self.new_user.id)
-
-        self.verify_reset_password_data = {"email": self.new_user.email}
-        self.reset_password_data = {"token": self.email_token}
-
-    def test_login_success(self):
+    def test_login_success(
+        self,
+        api_client,
+        login_url,
+        fake_instructor,
+    ):
         """
         Test login success.
         """
 
-        data = {
-            "email": self.email,
-            "password": self.password,
-        }
-        response = self.client.post(self.login_url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = {"email": fake_instructor.email, "password": "Password@123"}
+        response = api_client.post(login_url, data, format="json")
+        assert response.status_code == status.HTTP_200_OK
 
-    def test_login_failure(self):
+    def test_login_failure(
+        self,
+        api_client,
+        login_url,
+        fake_student,
+    ):
         """
-        Test login invalid with invalid password.
+        Test login failure with invalid password.
         """
 
-        data = {"email": self.email, "password": "wrong_password"}
-        response = self.client.post(self.login_url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        data = {"email": fake_student.email, "password": "wrong_password"}
+        response = api_client.post(login_url, data, format="json")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_signup(self):
+    def test_signup(
+        self, api_client, signup_url, faker, random_gender, random_scholarship
+    ):
         """
         Test the signup action.
         """
 
         data = {
-            "username": self.fake.user_name(),
-            "first_name": self.fake.first_name(),
-            "last_name": self.fake.last_name(),
-            "email": self.fake.email(),
+            "username": faker.user_name(),
+            "first_name": faker.first_name(),
+            "last_name": faker.last_name(),
+            "email": faker.email(),
             "password": "Newpassword@123",
-            "phone_number": self.random_user_phone_number(),
-            "date_of_birth": self.random_date_of_birth(is_student=True),
-            "gender": self.random_gender(),
-            "scholarship": self.random_scholarship(),
+            "phone_number": faker.phone_number(),
+            "date_of_birth": "2000-01-01",
+            "gender": random_gender,
+            "scholarship": random_scholarship,
         }
-        response = self.client.post(self.signup, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, {"data": {"success": True}})
+        response = api_client.post(signup_url, data, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == {"data": {"success": True}}
 
-    def test_signup_with_invalid_username(self):
+    def test_signup_with_invalid_username(
+        self,
+        fake_instructor,
+        faker,
+        signup_url,
+        api_client,
+    ):
         """
         Test the signup action with invalid user name.
         """
 
         data = {
-            "username": self.username,
-            "email": self.email,
-            "password": self.password,
+            "username": fake_instructor.username,
+            "email": faker.email(),
+            "password": "Password@123",
         }
-        response = self.client.post(self.signup, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        response = api_client.post(signup_url, data, format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_signup_with_invalid_email(self):
+    def test_signup_with_invalid_email(
+        self,
+        api_client,
+        signup_url,
+        faker,
+        fake_student,
+    ):
         """
-        Test the signup action with invalid email.
+        Test the signup action with an invalid email.
         """
 
         data = {
-            "username": self.fake.user_name(),
-            "email": self.email,
-            "password": self.password,
+            "username": faker.user_name(),
+            "email": fake_student.email,
+            "password": "password123",
         }
-        response = self.client.post(self.signup, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        response = api_client.post(signup_url, data, format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @patch("accounts.tasks.send_welcome_email.delay")
-    def test_verify_email_success(self, mock_send_welcome_email):
+    def test_verify_email_success(
+        self,
+        mock_send_welcome_email,
+        api_client,
+        verify_url,
+        fake_new_user,
+    ):
         """
         Test verifying email with a valid token.
         """
 
-        response = self.client.get(f"{self.verify_url}?token={self.token}")
+        token = create_token(fake_new_user.id)
+        response = api_client.get(f"{verify_url}?token={token}")
+        assert response.status_code == status.HTTP_200_OK
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.user.refresh_from_db()
-        self.assertTrue(self.user.is_active)
+        fake_new_user.refresh_from_db()
+        assert fake_new_user.is_active
 
         mock_send_welcome_email.assert_called_once_with(
-            {"username": self.new_user.username, "email": self.new_user.email}
+            {"username": fake_new_user.username, "email": fake_new_user.email}
         )
 
-    def test_verify_email_invalid_token(self):
+    def test_verify_email_invalid_token(
+        self,
+        api_client,
+        verify_url,
+    ):
         """
         Test verifying email with an invalid token.
         """
-        response = self.client.get(f"{self.verify_url}?token=invalid_token")
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("errors", response.data)
+        response = api_client.get(f"{verify_url}?token=invalid_token")
 
-    def test_verify_email_expired_token(self):
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.data
+
+    def test_verify_email_expired_token(
+        self,
+        api_client,
+        verify_url,
+        fake_new_user,
+    ):
         """
         Test verifying email with an expired token.
         """
 
-        # Simulate an expired token by using a past timestamp
+        token = create_token(fake_new_user.id)
+
         with patch("django.core.signing.TimestampSigner.unsign") as mock_unsign:
             mock_unsign.side_effect = SignatureExpired("Token has expired")
+            response = api_client.get(f"{verify_url}?token={token}")
 
-            response = self.client.get(f"{self.verify_url}?token={self.token}")
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+            assert "errors" in response.data
 
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            self.assertIn("errors", response.data)
-
-    def test_verify_email_nonexistent_user(self):
+    def test_verify_email_nonexistent_user(
+        self,
+        signer,
+        api_client,
+        verify_url,
+    ):
         """
         Test verifying email for a nonexistent user.
         """
 
         value = str(uuid4())
-        signed_value = self.signer.sign(value)
+        signed_value = signer.sign(value)
         token = urlsafe_base64_encode(force_bytes(signed_value))
 
-        response = self.client.get(f"{self.verify_url}?token={token}")
+        response = api_client.get(f"{verify_url}?token={token}")
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("errors", response.data)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.data
 
     @patch("accounts.tasks.send_welcome_email.delay")
-    def test_verify_email_user_already_active(self, mock_send_welcome_email):
+    def test_verify_email_user_already_active(
+        self,
+        mock_send_welcome_email,
+        api_client,
+        verify_url,
+        fake_new_user,
+    ):
         """
         Test verifying email for a user who is already active.
         """
 
-        self.new_user.is_active = True
-        self.new_user.save()
+        fake_new_user.is_active = True
+        fake_new_user.save()
+        token = create_token(fake_new_user.id)
 
-        response = self.client.get(f"{self.verify_url}?token={self.token}")
+        response = api_client.get(f"{verify_url}?token={token}")
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.user.refresh_from_db()
-        self.assertTrue(self.user.is_active)
+        fake_new_user.refresh_from_db()
+        assert response.status_code == status.HTTP_200_OK
+        assert fake_new_user.is_active
         mock_send_welcome_email.assert_not_called()
 
     @patch("accounts.tasks.send_password_reset_email.delay")
-    def test_verify_reset_password_success(self, mock_send_password_reset_email):
+    def test_verify_reset_password_success(
+        self,
+        mock_send_password_reset_email,
+        api_client,
+        verify_reset_password_url,
+        verify_reset_password_data,
+    ):
         """
         Test verifying reset password with a valid token.
         """
 
-        response = self.client.post(
-            self.verify_reset_password_url,
-            self.verify_reset_password_data,
-            format="json",
+        response = api_client.post(
+            verify_reset_password_url,
+            verify_reset_password_data,
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert response.status_code == status.HTTP_200_OK
         mock_send_password_reset_email.assert_called_once()
 
-    def test_verify_reset_password_missing_email(self):
+    def test_verify_reset_password_missing_email(
+        self,
+        api_client,
+        verify_reset_password_url,
+    ):
         """
         Test verifying reset password with a missing email.
         """
+
         data = {}
-        response = self.client.post(
-            self.verify_reset_password_url,
+        response = api_client.post(
+            verify_reset_password_url,
             data,
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data.get("errors")[0]["field"], "email")
-        self.assertEqual(
-            response.data.get("errors")[0]["message"][0], "This field is required."
-        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.data.get("errors")[0]["field"] == "email"
+        assert response.data.get("errors")[0]["message"][0] == "This field is required."
 
-    def test_verify_reset_password_invalid_data(self):
+    def test_verify_reset_password_invalid_data(
+        self,
+        api_client,
+        verify_reset_password_url,
+    ):
         """
         Test verifying reset password with an invalid data.
         """
+
         data = {"email": "InvalidEmail"}
-        response = self.client.post(
-            self.verify_reset_password_url,
+        response = api_client.post(
+            verify_reset_password_url,
             data,
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data.get("errors")[0]["field"], "email")
-        self.assertEqual(
-            response.data.get("errors")[0]["message"][0], "Enter a valid email address."
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.data.get("errors")[0]["field"] == "email"
+        assert (
+            response.data.get("errors")[0]["message"][0]
+            == "Enter a valid email address."
         )
 
     @patch("accounts.tasks.send_password_reset_email.delay")
     def test_verify_reset_password_email_sending_failure(
-        self, mock_send_password_reset_email
+        self,
+        mock_send_password_reset_email,
+        api_client,
+        verify_reset_password_url,
+        verify_reset_password_data,
     ):
         """
         Test verifying reset password when email sending fails.
         """
+
         mock_send_password_reset_email.side_effect = Exception("Email sending failed")
 
-        response = self.client.post(
-            self.verify_reset_password_url,
-            self.verify_reset_password_data,
+        response = api_client.post(
+            verify_reset_password_url,
+            verify_reset_password_data,
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_verify_reset_password_invalid_http_method(self):
+    def test_verify_reset_password_invalid_http_method(
+        self,
+        api_client,
+        verify_reset_password_url,
+        verify_reset_password_data,
+    ):
         """
         Test verifying reset password with invalid HTTP methods.
         """
 
-        response = self.client.patch(
-            self.verify_reset_password_url,
-            self.verify_reset_password_data,
+        response = api_client.patch(
+            verify_reset_password_url,
+            verify_reset_password_data,
             format="json",
         )
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_reset_password_success(self):
+    def test_reset_password_success(
+        self,
+        api_client,
+        reset_password_url,
+        fake_new_user,
+    ):
         """
         Test reset password with a valid token.
         """
 
-        response = self.client.get(
-            f"{self.reset_password_url}?token={self.reset_password_data.get('token')}",
-        )
+        token = create_token(fake_new_user.email)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data.get("data"), {"password": "Password@123"})
+        response = api_client.get(f"{reset_password_url}?token={token}")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data.get("data") == {"password": "Password@123"}
 
-    def test_reset_password_missing_token(self):
+    def test_reset_password_missing_token(
+        self,
+        api_client,
+        reset_password_url,
+    ):
         """
         Test changing password with a missing token.
         """
 
-        response = self.client.get(
-            f"{self.reset_password_url}?token=",
+        response = api_client.get(
+            f"{reset_password_url}?token=",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data.get("errors")[0]["field"], "token")
-        self.assertEqual(
-            response.data.get("errors")[0]["message"][0], "This field may not be blank."
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.data.get("errors")[0]["field"] == "token"
+        assert (
+            response.data.get("errors")[0]["message"][0]
+            == "This field may not be blank."
         )
 
-    def test_reset_password_invalid_token(self):
+    def test_reset_password_invalid_token(self, api_client, reset_password_url):
         """
-        Test changing password with an invalid token.
+        Test reset password with an invalid token.
         """
 
-        response = self.client.get(
-            f"{self.reset_password_url}?token=InvalidToken",
-        )
+        response = api_client.get(f"{reset_password_url}?token=InvalidToken")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_reset_password_expired_token(self):
+    def test_reset_password_expired_token(
+        self,
+        api_client,
+        reset_password_url,
+        fake_new_user,
+    ):
         """
         Test reset password with an expired token.
         """
 
+        token = create_token(fake_new_user.email)
+
         with patch("django.core.signing.TimestampSigner.unsign") as mock_unsign:
             mock_unsign.side_effect = SignatureExpired("Token has expired")
-            response = self.client.get(
-                f"{self.reset_password_url}?token={self.email_token}",
-            )
+            response = api_client.get(f"{reset_password_url}?token={token}")
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_reset_password_invalid_http_method(self):
+    def test_reset_password_invalid_http_method(
+        self,
+        api_client,
+        reset_password_url,
+        fake_new_user,
+    ):
         """
         Test reset password with invalid HTTP methods.
         """
 
-        response = self.client.post(
-            f"{self.reset_password_url}?token={self.email_token}",
+        token = create_token(fake_new_user.email)
+
+        response = api_client.post(
+            f"{reset_password_url}?token={token}",
             data={},
             format="json",
         )
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
-        data = {"token": self.email_token}
-        response = self.client.patch(
-            f"{self.reset_password_url}?token={self.email_token}",
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+        data = {"token": token}
+        response = api_client.patch(
+            f"{reset_password_url}?token={token}",
             data=data,
             format="json",
         )
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
