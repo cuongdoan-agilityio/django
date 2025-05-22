@@ -77,6 +77,18 @@ def specialization():
 
 
 @pytest.fixture
+def specializations(db, faker):
+    """
+    Fixture to create sample specializations.
+    """
+
+    return [
+        SpecializationFactory(),
+        SpecializationFactory(),
+    ]
+
+
+@pytest.fixture
 def student_data(user_data, student_role, random_scholarship):
     """
     Fixture to create a specialization instance.
@@ -107,6 +119,7 @@ def user_retrieve_url(root_url):
     """
     Fixture to provide the retrieve URL for user profiles.
     """
+
     return f"{root_url}users/me/"
 
 
@@ -115,4 +128,14 @@ def user_url(root_url):
     """
     Fixture to provide the user url.
     """
+
     return f"{root_url}users/"
+
+
+@pytest.fixture
+def specialization_url(root_url):
+    """
+    Fixture to provide the base URL for specializations.
+    """
+
+    return f"{root_url}specializations/"

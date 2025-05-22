@@ -1,87 +1,77 @@
+import pytest
 from rest_framework import status
 from accounts.models import Specialization
-from accounts.factories import SpecializationFactory
-from core.tests.base import BaseTestCase
 
 
-class SpecializationViewSetTest(BaseTestCase):
+@pytest.mark.django_db
+class TestSpecializationViewSet:
     """
-    Test case for the SpecializationViewSet.
+    Test suite for the SpecializationViewSet.
     """
 
-    def setUp(self):
-        """
-        Set up the test case with sample specializations.
-        """
-        super().setUp()
-
-        Specialization.objects.all().delete()
-        self.specialization_name = self.fake.sentence(nb_words=5)
-        self.another_specialization_name = self.fake.sentence(nb_words=5)
-        SpecializationFactory(name=self.specialization_name)
-        SpecializationFactory(name=self.another_specialization_name)
-
-        self.url = f"{self.root_url}specializations/"
-
-    def test_list_specializations_ok(self):
+    def test_list_specializations_ok(
+        self, api_client, specialization_url, specializations
+    ):
         """
         Test listing all specializations.
         """
 
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = api_client.get(specialization_url)
         data = response.data["data"]
-        self.assertEqual(len(data), 2)
-        self.assertEqual(data[0]["name"], self.specialization_name)
-        self.assertEqual(data[1]["name"], self.another_specialization_name)
+        list_name = [specializations.name for specializations in specializations]
 
-    def test_list_specializations_empty(self):
+        assert response.status_code == status.HTTP_200_OK
+        assert len(data) == 2
+        assert data[0]["name"] in list_name
+        assert data[1]["name"] in list_name
+
+    def test_list_specializations_empty(self, api_client, specialization_url):
         """
         Test listing specializations when there are no specializations.
         """
 
         Specialization.objects.all().delete()
-        response = self.client.get(self.url)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
+        response = api_client.get(specialization_url)
         data = response.data["data"]
-        self.assertEqual(data, [])
 
-    def test_specialization_viewset_permissions(self):
+        assert response.status_code == status.HTTP_200_OK
+        assert data == []
+
+    def test_specialization_viewset_permissions(self, api_client, specialization_url):
         """
         Test that the SpecializationViewSet allows any user to access the list of specializations.
         """
 
-        self.client.logout()
-        response = self.client.get(self.url)
+        api_client.logout()
+        response = api_client.get(specialization_url)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert response.status_code == status.HTTP_200_OK
 
-    def test_list_specializations_with_limit_offset(self):
+    def test_list_specializations_with_limit_offset(
+        self, api_client, specialization_url, specializations
+    ):
         """
         Test that specializations are listed in alphabetical order by default.
         """
 
-        response = self.client.get(f"{self.url}?limit=5&offset=1")
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
+        response = api_client.get(f"{specialization_url}?limit=5&offset=1")
         data = response.data["data"]
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]["name"], self.another_specialization_name)
-
+        list_name = [specializations.name for specializations in specializations]
         pagination = response.data["meta"]["pagination"]
-        self.assertEqual(pagination["limit"], 5)
-        self.assertEqual(pagination["offset"], 1)
-        self.assertEqual(pagination["total"], 2)
 
-    def test_list_specializations_failed(self):
+        assert response.status_code == status.HTTP_200_OK
+        assert len(data) == 1
+        assert data[0]["name"] in list_name
+        assert pagination["limit"] == 5
+        assert pagination["offset"] == 1
+        assert pagination["total"] == 2
+
+    def test_list_specializations_failed(self, api_client, root_url):
         """
         Test that the request to list specializations fails due to an invalid URL.
         """
 
-        invalid_url = f"{self.root_url}invalid_specializations/"
-        response = self.client.get(invalid_url)
+        invalid_url = f"{root_url}invalid_specializations/"
+        response = api_client.get(invalid_url)
 
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
