@@ -182,3 +182,21 @@ def connect_send_email_to_instructor_signal():
     post_save.connect(receiver=send_email_to_instructor, sender=Enrollment)
     yield
     post_save.disconnect(receiver=send_email_to_instructor, sender=Enrollment)
+
+
+@pytest.fixture
+def category_url(root_url):
+    """
+    Fixture to provide the base URL for categories.
+    """
+
+    return f"{root_url}categories/"
+
+
+@pytest.fixture
+def categories(db):
+    """
+    Fixture to create sample categories.
+    """
+
+    return [CategoryFactory(name="Programming"), CategoryFactory(name="Design")]
