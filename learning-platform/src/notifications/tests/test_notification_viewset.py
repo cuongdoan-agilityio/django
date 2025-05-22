@@ -1,237 +1,280 @@
+import pytest
 from uuid import uuid4
-from core.tests.base import BaseTestCase
 from rest_framework import status
 
-from notifications.factories import NotificationFactory
 from notifications.models import Notification
 
 
-class NotificationViewSetTestCase(BaseTestCase):
+@pytest.mark.django_db
+class TestNotificationViewSet:
     """
-    Test case for the NotificationViewSet.
-
-    This test cases covers the functionality of the NotificationViewSet,
-    including listing, retrieving, and updating notifications.
+    Test suite for the NotificationViewSet.
     """
 
-    def setUp(self):
-        super().setUp()
-        self.url_list = f"{self.root_url}notifications/"
-
-        self.first_notification = NotificationFactory(user=self.user, is_read=False)
-        self.more_notification = NotificationFactory(user=self.user, is_read=True)
-        self.instructor_user_notification = NotificationFactory(
-            user=self.instructor_user, is_read=False
-        )
-
-    def test_list_notifications(self):
+    def test_list_notifications(
+        self,
+        api_client,
+        authenticated_fake_student,
+        notification_url,
+        fake_student_notifications,
+    ):
         """
         Test that the list of notifications is returned correctly.
         """
-        response = self.get_json(
-            url=self.url_list,
-            email=self.user,
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = api_client.get(notification_url)
+        assert response.status_code == status.HTTP_200_OK
+
         response_data = response.data.get("data")
         response_pagination = response.data.get("meta").get("pagination")
-        self.assertEqual(len(response_data), 2)
-        self.assertEqual(response_pagination["total"], 2)
-        self.assertEqual(response_pagination["limit"], 20)
-        self.assertEqual(response_pagination["offset"], 0)
-        self.assertIn(str(self.first_notification.id), [n["id"] for n in response_data])
-        self.assertIn(str(self.more_notification.id), [n["id"] for n in response_data])
 
-    def test_get_empty_notifications(self):
+        assert len(response_data) == 2
+        assert response_pagination["total"] == 2
+        assert response_pagination["limit"] == 20
+        assert response_pagination["offset"] == 0
+        assert str(fake_student_notifications[0].id) in [n["id"] for n in response_data]
+        assert str(fake_student_notifications[1].id) in [n["id"] for n in response_data]
+
+    def test_get_empty_notifications(
+        self,
+        api_client,
+        authenticated_fake_student,
+        notification_url,
+    ):
         """
         Test that an empty list is returned when there are no notifications.
         """
-
         Notification.objects.all().delete()
 
-        response = self.get_json(
-            url=self.url_list,
-            email=self.user,
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = api_client.get(notification_url)
+        assert response.status_code == status.HTTP_200_OK
+
         response_data = response.data.get("data")
         response_pagination = response.data.get("meta").get("pagination")
-        self.assertEqual(len(response_data), 0)
-        self.assertEqual(response_pagination["total"], 0)
-        self.assertEqual(response_pagination["limit"], 20)
-        self.assertEqual(response_pagination["offset"], 0)
 
-    def test_get_notification_without_authentication(self):
+        assert len(response_data) == 0
+        assert response_pagination["total"] == 0
+        assert response_pagination["limit"] == 20
+        assert response_pagination["offset"] == 0
+
+    def test_get_notification_without_authentication(
+        self, api_client, notification_url
+    ):
         """
         Test that an authentication error is returned when trying to get notifications without authentication.
         """
+        response = api_client.get(notification_url)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-        response = self.client.get(self.url_list)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_get_notification_with_invalid_http_method(self):
+    def test_get_notification_with_invalid_http_method(
+        self, api_client, authenticated_fake_student, notification_url
+    ):
         """
         Test that an error is returned when using an invalid HTTP method.
         """
 
-        response = self.post_json(url=self.url_list, data=None, email=self.user)
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        response = api_client.post(notification_url, data=None)
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_get_other_user_notifications(self):
+    def test_get_other_user_notifications(
+        self,
+        api_client,
+        notification_url,
+        authenticated_fake_student,
+        fake_instructor_notifications,
+    ):
         """
         Test that a user cannot access notifications belonging to another user.
         """
-        response = self.get_json(
-            url=self.url_list,
-            email=self.user,
-        )
-        self.assertNotIn(
-            str(self.instructor_user_notification.id),
-            [n["id"] for n in response.data.get("data")],
-        )
 
-    def test_retrieve_notification(self):
+        response = api_client.get(notification_url)
+        assert str(fake_instructor_notifications[0].id) not in [
+            n["id"] for n in response.data.get("data")
+        ]
+        assert str(fake_instructor_notifications[1].id) not in [
+            n["id"] for n in response.data.get("data")
+        ]
+
+    def test_retrieve_notification(
+        self,
+        api_client,
+        authenticated_fake_student,
+        notification_url,
+        fake_student_notifications,
+    ):
         """
         Test that a single notification is retrieved correctly.
         """
+        notification = fake_student_notifications[0]
+        response = api_client.get(f"{notification_url}{notification.id}/")
 
-        response = self.get_json(
-            url=f"{self.url_list}{str(self.first_notification.id)}/",
-            email=self.user,
-        )
-
+        assert response.status_code == status.HTTP_200_OK
         response_data = response.data.get("data")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response_data["id"], str(self.first_notification.id))
-        self.assertEqual(response_data["is_read"], self.first_notification.is_read)
-        self.assertEqual(response_data["message"], self.first_notification.message)
+        assert response_data["id"] == str(notification.id)
+        assert response_data["is_read"] == notification.is_read
+        assert response_data["message"] == notification.message
 
-    def test_retrieve_notification_without_authentication(self):
+    def test_retrieve_notification_without_authentication(
+        self, api_client, notification_url, fake_student_notifications
+    ):
         """
         Test that an authentication error is returned when trying to retrieve a notification without authentication.
         """
+        notification = fake_student_notifications[0]
+        response = api_client.get(f"{notification_url}{notification.id}/")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-        response = self.client.get(f"{self.url_list}{str(self.first_notification.id)}/")
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_retrieve_notification_of_another_user(self):
-        """
-        Test that an error is returned when trying to retrieve a notification of another user.
-        """
-
-        response = self.get_json(
-            url=f"{self.url_list}{str(self.instructor_user_notification.id)}/",
-            email=self.user,
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-    def test_retrieve_notification_with_invalid_notification_id(self):
+    def test_retrieve_notification_with_invalid_notification_id(
+        self,
+        api_client,
+        authenticated_fake_student,
+        notification_url,
+    ):
         """
         Test that an error is returned when trying to retrieve a notification with an invalid ID.
         """
 
-        response = self.get_json(
-            url=f"{self.url_list}{str(uuid4())}/",
-            email=self.user,
+        response = api_client.get(
+            f"{notification_url}{str(uuid4())}/",
         )
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_retrieve_notification_with_invalid_http_method(self):
+    def test_retrieve_notification_of_another_user(
+        self,
+        api_client,
+        authenticated_fake_student,
+        notification_url,
+        fake_instructor_notifications,
+    ):
+        """
+        Test that an error is returned when trying to retrieve a notification of another user.
+        """
+        response = api_client.get(
+            f"{notification_url}{fake_instructor_notifications[0].id}/"
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_retrieve_notification_with_invalid_http_method(
+        self,
+        api_client,
+        authenticated_fake_student,
+        notification_url,
+        fake_student_notifications,
+    ):
         """
         Test that an error is returned when using an invalid HTTP method.
         """
 
-        response = self.post_json(
-            url=f"{self.url_list}{str(self.first_notification.id)}/",
+        response = api_client.post(
+            f"{notification_url}{str(fake_student_notifications[0].id)}/",
             data=None,
-            email=self.user,
         )
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_partial_update_notification(self):
+    def test_partial_update_notification(
+        self,
+        api_client,
+        authenticated_fake_student,
+        notification_url,
+        fake_student_notifications,
+        faker,
+    ):
         """
         Test that a notification is partially updated correctly.
         """
+        notification = fake_student_notifications[0]
+        payload = {"is_read": True, "message": faker.paragraph()}
 
-        payload = {
-            "is_read": False,
-            "message": self.fake.paragraph(),
-        }
-        response = self.patch_json(
-            url=f"{self.url_list}{str(self.first_notification.id)}/",
-            data=payload,
-            email=self.user,
+        response = api_client.patch(
+            f"{notification_url}{notification.id}/", data=payload
         )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.first_notification.refresh_from_db()
-        self.assertFalse(self.first_notification.is_read)
-        self.assertEqual(self.first_notification.message, payload["message"])
+        assert response.status_code == status.HTTP_200_OK
 
-    def test_partial_update_notification_without_authentication(self):
+        notification.refresh_from_db()
+        assert notification.is_read is True
+        assert notification.message == payload["message"]
+
+    def test_partial_update_notification_without_authentication(
+        self, api_client, notification_url, fake_instructor_notifications
+    ):
         """
         Test that an authentication error is returned when trying to partially update a notification without authentication.
         """
-
+        notification = fake_instructor_notifications[0]
         payload = {"is_read": True}
-        response = self.client.patch(
-            f"{self.url_list}{str(self.first_notification.id)}/", payload, format="json"
-        )
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_partial_update_notification_of_another_user(self):
+        response = api_client.patch(f"{notification_url}{notification.id}/", payload)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_partial_update_notification_of_another_user(
+        self,
+        api_client,
+        authenticated_fake_student,
+        notification_url,
+        fake_instructor_notifications,
+    ):
         """
         Test that an error is returned when trying to partially update a notification of another user.
         """
 
         payload = {"is_read": True}
-        response = self.patch_json(
-            url=f"{self.url_list}{str(self.instructor_user_notification.id)}/",
-            data=payload,
-            email=self.user,
+        response = api_client.patch(
+            f"{notification_url}{fake_instructor_notifications[0].id}/", data=payload
         )
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_partial_update_notification_with_invalid_notification_id(self):
+    def test_partial_update_notification_with_invalid_data(
+        self,
+        api_client,
+        authenticated_fake_student,
+        notification_url,
+        fake_student_notifications,
+    ):
+        """
+        Test that an error is returned when trying to partially update a notification with invalid data.
+        """
+
+        notification = fake_student_notifications[0]
+        payload = {"is_read": "invalid_value"}
+
+        response = api_client.patch(
+            f"{notification_url}{notification.id}/", data=payload
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        response_data = response.json()
+        assert response_data["errors"][0]["field"] == "is_read"
+        assert response_data["errors"][0]["message"][0] == "Must be a valid boolean."
+
+    def test_partial_update_notification_with_invalid_notification_id(
+        self,
+        api_client,
+        authenticated_fake_student,
+        notification_url,
+    ):
         """
         Test that an error is returned when trying to partially update a notification with an invalid ID.
         """
 
         payload = {"is_read": True}
-        response = self.patch_json(
-            url=f"{self.url_list}{str(uuid4())}/",
+        response = api_client.patch(
+            f"{notification_url}{str(uuid4())}/",
             data=payload,
-            email=self.user,
         )
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_partial_update_notification_with_invalid_http_method(self):
+    def test_partial_update_notification_with_invalid_http_method(
+        self,
+        api_client,
+        authenticated_fake_student,
+        notification_url,
+        fake_student_notifications,
+    ):
         """
         Test that an error is returned when using an invalid HTTP method.
         """
 
         payload = {"is_read": True}
-        response = self.put_json(
-            url=f"{self.url_list}{str(self.first_notification.id)}/",
+        response = api_client.put(
+            f"{notification_url}{str(fake_student_notifications[1].id)}/",
             data=payload,
-            email=self.user,
         )
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def test_partial_update_notification_with_invalid_data(self):
-        """
-        Test that an error is returned when trying to partially update a notification with invalid data.
-        """
-
-        payload = {"is_read": "invalid_value"}
-        response = self.patch_json(
-            url=f"{self.url_list}{str(self.first_notification.id)}/",
-            data=payload,
-            email=self.user,
-        )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        response_data = response.json()
-        self.assertEqual(response_data["errors"][0]["field"], "is_read")
-        self.assertEqual(
-            response_data["errors"][0]["message"][0], "Must be a valid boolean."
-        )
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
