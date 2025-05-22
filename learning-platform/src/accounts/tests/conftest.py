@@ -2,7 +2,7 @@ import pytest
 from faker import Faker
 from django.contrib.auth import get_user_model
 
-from accounts.factories import SpecializationFactory, UserFactory
+from accounts.factories import SpecializationFactory
 
 
 fake = Faker()
@@ -103,18 +103,16 @@ def instructor_data(user_data, random_degree, specialization, instructor_role):
 
 
 @pytest.fixture
-def fake_student(student_role):
+def user_retrieve_url(root_url):
     """
-    Fixture to create a sample student user instance.
+    Fixture to provide the retrieve URL for user profiles.
     """
-
-    return UserFactory(role=student_role)
+    return f"{root_url}users/me/"
 
 
 @pytest.fixture
-def fake_instructor(instructor_role):
+def user_url(root_url):
     """
-    Fixture to create a sample instructor user instance.
+    Fixture to provide the user url.
     """
-
-    return UserFactory(role=instructor_role)
+    return f"{root_url}users/"
