@@ -154,7 +154,7 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
 
             if inactive_user and not inactive_user.is_active:
                 return self.bad_request(
-                    field="Email", message=ErrorMessage.USER_NOT_ACTIVE
+                    field="email", message=ErrorMessage.USER_NOT_ACTIVE
                 )
 
             return self.unauthorized_request(

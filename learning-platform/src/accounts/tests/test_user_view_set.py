@@ -59,6 +59,18 @@ class TestUserViewSet:
         response = api_client.get(f"{user_url}{str(fake_student.id)}/")
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
+    def test_admin_retrieve_user_profile_with_invalid_id(
+        self, api_client, authenticated_fake_admin, user_url
+    ):
+        """
+        Test the retrieve action for a student.
+        """
+
+        fake_id = uuid.uuid4()
+
+        response = api_client.get(f"{user_url}{str(fake_id)}/")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
     def test_partial_update_student_profile(
         self,
         api_client,

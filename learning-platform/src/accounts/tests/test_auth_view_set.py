@@ -5,7 +5,7 @@ from django.utils.http import urlsafe_base64_encode
 from django.core.signing import SignatureExpired
 from rest_framework import status
 from unittest.mock import patch
-
+from core.error_messages import ErrorMessage
 from core.helpers import create_token
 
 
@@ -42,6 +42,23 @@ class TestAuthorViewSet:
         data = {"email": fake_student.email, "password": "wrong_password"}
         response = api_client.post(login_url, data, format="json")
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_login_failure_with_inactivate_user(
+        self,
+        api_client,
+        login_url,
+        fake_new_user,
+    ):
+        """
+        Test login failure with invalid password.
+        """
+
+        data = {"email": fake_new_user.email, "password": "Password@123"}
+        response = api_client.post(login_url, data, format="json")
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.data.get("errors")["field"] == "email"
+        assert response.data.get("errors")["message"][0] == ErrorMessage.USER_NOT_ACTIVE
 
     def test_signup(
         self, api_client, signup_url, faker, random_gender, random_scholarship
@@ -302,6 +319,25 @@ class TestAuthorViewSet:
             format="json",
         )
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    def test_verify_reset_password_with_not_found_user(
+        self,
+        api_client,
+        faker,
+        verify_reset_password_url,
+    ):
+        """
+        Test verifying reset password with user not found.
+        """
+
+        data = {"email": faker.email()}
+
+        response = api_client.post(
+            verify_reset_password_url,
+            data,
+            format="json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_reset_password_success(
         self,
