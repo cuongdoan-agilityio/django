@@ -198,12 +198,74 @@ def fake_instructor(faker, share_user_data):
 
 
 @pytest.fixture()
+def fake_admin(faker):
+    """
+    Fixture to create instructor user.
+    """
+
+    post_save.disconnect(receiver=send_verify_email, sender=User)
+
+    return UserFactory(
+        username=faker.user_name(),
+        password="Password@123",
+        email=faker.email(),
+        role=Role.ADMIN.value,
+        is_staff=True,
+        is_superuser=True,
+    )
+
+
+@pytest.fixture
+def fake_instructor_token(fake_instructor):
+    """
+    Fixture to create and return a token for the instructor user.
+    """
+
+    return Token.objects.create(user=fake_instructor)
+
+
+@pytest.fixture
+def fake_admin_token(fake_admin):
+    """
+    Fixture to create and return a token for the instructor user.
+    """
+
+    return Token.objects.create(user=fake_admin)
+
+
+@pytest.fixture()
 def authenticated_fake_student(api_client, fake_student_token):
     """
     Fixture to authenticate student user.
     """
 
     api_client.credentials(HTTP_AUTHORIZATION=f"Token {fake_student_token.key}")
+
+    yield api_client
+
+    api_client.logout()
+
+
+@pytest.fixture()
+def authenticated_fake_instructor(api_client, fake_instructor_token):
+    """
+    Fixture to authenticate instructor user.
+    """
+
+    api_client.credentials(HTTP_AUTHORIZATION=f"Token {fake_instructor_token.key}")
+
+    yield api_client
+
+    api_client.logout()
+
+
+@pytest.fixture()
+def authenticated_fake_admin(api_client, fake_admin_token):
+    """
+    Fixture to authenticate instructor user.
+    """
+
+    api_client.credentials(HTTP_AUTHORIZATION=f"Token {fake_admin_token.key}")
 
     yield api_client
 

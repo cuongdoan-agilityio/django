@@ -1,8 +1,12 @@
 import pytest
 from faker import Faker
 from django.contrib.auth import get_user_model
+from django.db.models.signals import post_save
+from django.core.signing import TimestampSigner
 
-from accounts.factories import SpecializationFactory, UserFactory
+from accounts.factories import SpecializationFactory
+from accounts.signals import send_verify_email
+from accounts.factories import UserFactory
 
 
 fake = Faker()
@@ -77,6 +81,18 @@ def specialization():
 
 
 @pytest.fixture
+def specializations(db, faker):
+    """
+    Fixture to create sample specializations.
+    """
+
+    return [
+        SpecializationFactory(),
+        SpecializationFactory(),
+    ]
+
+
+@pytest.fixture
 def student_data(user_data, student_role, random_scholarship):
     """
     Fixture to create a specialization instance.
@@ -103,18 +119,100 @@ def instructor_data(user_data, random_degree, specialization, instructor_role):
 
 
 @pytest.fixture
-def fake_student(student_role):
+def user_retrieve_url(root_url):
     """
-    Fixture to create a sample student user instance.
+    Fixture to provide the retrieve URL for user profiles.
     """
 
-    return UserFactory(role=student_role)
+    return f"{root_url}users/me/"
 
 
 @pytest.fixture
-def fake_instructor(instructor_role):
+def user_url(root_url):
     """
-    Fixture to create a sample instructor user instance.
+    Fixture to provide the user url.
     """
 
-    return UserFactory(role=instructor_role)
+    return f"{root_url}users/"
+
+
+@pytest.fixture
+def specialization_url(root_url):
+    """
+    Fixture to provide the base URL for specializations.
+    """
+
+    return f"{root_url}specializations/"
+
+
+@pytest.fixture
+def login_url(root_url):
+    """
+    Fixture to create login url.
+    """
+
+    return f"{root_url}auth/login/"
+
+
+@pytest.fixture
+def signup_url(root_url):
+    """
+    Fixture to create signup url.
+    """
+
+    return f"{root_url}auth/signup/"
+
+
+@pytest.fixture
+def verify_url(root_url):
+    """
+    Fixture to create verify signup url.
+    """
+
+    return f"{root_url}auth/confirm-signup-email/"
+
+
+@pytest.fixture
+def reset_password_url(root_url):
+    """
+    Fixture to create reset password url.
+    """
+
+    return f"{root_url}auth/reset-password/"
+
+
+@pytest.fixture
+def verify_reset_password_url(root_url):
+    """
+    Fixture to create verify reset password url.
+    """
+
+    return f"{root_url}auth/confirm-reset-password/"
+
+
+@pytest.fixture
+def fake_new_user(db):
+    """
+    Fixture to create new user.
+    """
+
+    post_save.disconnect(receiver=send_verify_email, sender=User)
+    return UserFactory(is_active=False)
+
+
+@pytest.fixture
+def signer():
+    """
+    Fixture to create TimestampSigner instance.
+    """
+
+    return TimestampSigner()
+
+
+@pytest.fixture
+def verify_reset_password_data(fake_new_user):
+    """
+    Fixture to reset password data.
+    """
+
+    return {"email": fake_new_user.email}
