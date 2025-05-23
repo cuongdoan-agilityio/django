@@ -1,339 +1,461 @@
+import pytest
+from uuid import uuid4
 from django.core.cache import cache
 from rest_framework import status
-
-from accounts.factories import UserFactory
-from core.constants import Status, Role
-from core.tests.base import BaseTestCase
-from courses.factories import CourseFactory, CategoryFactory, EnrollmentFactory
-from courses.models import Enrollment, Course
+from core.constants import Status
+from courses.models import Course
 
 
-class CourseViewSetTest(BaseTestCase):
+@pytest.mark.django_db
+class TestCourseViewSet:
     """
-    Test case for the CourseViewSet.
+    Test suite for the CourseViewSet.
     """
 
-    def setUp(self):
-        """
-        Set up the test case with sample data.
-        """
-
-        super().setUp()
-
-        self.course_title = self.fake.sentence(nb_words=6)
-        self.course_description = self.fake.paragraph(nb_sentences=2)
-        self.course = CourseFactory(
-            title=self.course_title,
-            instructor=self.instructor_user,
-            status=Status.ACTIVATE.value,
-            description=self.course_description,
-        )
-
-        self.url_list = f"{self.root_url}courses/"
-        self.url_detail = f"{self.root_url}courses/{self.course.id}/"
-        self.url_enroll = f"{self.root_url}courses/{self.course.id}/enroll/"
-        self.url_leave = f"{self.root_url}courses/{self.course.id}/leave/"
-        self.url_students = f"{self.root_url}courses/{self.course.id}/students/"
-        self.url_top_courses = f"{self.root_url}courses/top/"
-
-    def tearDown(self):
-        """
-        Clean up the test case by deleting the created course and enrollments.
-        """
-        super().tearDown()
-        Enrollment.objects.all().delete()
-
-    def test_list_courses_ok(self):
+    def test_list_courses_ok(self, api_client, course_url, fake_course):
         """
         Test listing all courses.
         """
 
-        response = self.client.get(self.url_list)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cache.clear()
+        response = api_client.get(course_url)
 
-    def test_retrieve_course_ok(self):
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["data"]) == 1
+
+        cache_data = cache.get("course_list:anonymous:")
+        response = api_client.get(course_url)
+        assert cache_data == response.data
+
+    def test_empty_list_courses_ok(self, api_client, course_url):
+        """
+        Test listing all courses.
+        """
+
+        cache.clear()
+        Course.objects.all().delete()
+
+        response = api_client.get(course_url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["data"] == []
+
+    def test_retrieve_course_ok(self, api_client, course_url, fake_course):
         """
         Test retrieving a single course.
         """
 
-        response = self.client.get(self.url_detail)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = api_client.get(f"{course_url}{str(fake_course.id)}/")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["data"]["title"] == fake_course.title
 
-    def test_create_course(self):
+    def test_retrieve_not_exists_course(self, api_client, course_url):
+        """
+        Test retrieving a single course.
+        """
+
+        response = api_client.get(f"{course_url}{str(uuid4())}/")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_create_course(
+        self,
+        api_client,
+        authenticated_fake_instructor,
+        fake_category,
+        faker,
+        course_url,
+    ):
         """
         Test creating a new course.
         """
 
         data = {
-            "title": self.fake.sentence(nb_words=6),
-            "description": self.fake.paragraph(nb_sentences=2),
-            "category": self.category.id,
+            "title": faker.sentence(nb_words=6),
+            "description": faker.paragraph(nb_sentences=2),
+            "category": fake_category.id,
         }
+        response = api_client.post(course_url, data, format="json")
 
-        response = self.post_json(
-            url=self.url_list,
-            data=data,
-            email=self.instructor_email,
-        )
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertIn("data", response.data)
-        self.assertEqual(response.data["data"]["title"], data.get("title"))
-        self.assertEqual(response.data["data"]["description"], data.get("description"))
-        self.assertEqual(response.data["data"]["status"], Status.ACTIVATE.value)
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data["data"]["title"] == data["title"]
+        assert response.data["data"]["description"] == data["description"]
+        assert response.data["data"]["status"] == Status.ACTIVATE.value
 
-    def test_create_course_unauthorized(self):
+    def test_create_course_unauthorized(
+        self, api_client, fake_category, authenticated_fake_student, faker, course_url
+    ):
         """
         Test creating a new course without logging in.
         """
 
         data = {
-            "title": self.fake.sentence(nb_words=6),
-            "description": self.fake.paragraph(nb_sentences=2),
-            "category": self.category.id,
+            "title": faker.sentence(nb_words=6),
+            "description": faker.paragraph(nb_sentences=2),
+            "category": fake_category.id,
         }
-        response = self.post_json(
-            url=self.url_list,
-            data=data,
-            email=self.email,
-        )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        response = api_client.post(course_url, data, format="json")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_partial_update_course_ok(self):
+    def test_create_course_invalid_data(
+        self, api_client, authenticated_fake_instructor, faker, course_url
+    ):
+        """
+        Test creating a new course without logging in.
+        """
+
+        data = {
+            "title": faker.sentence(nb_words=6),
+            "description": faker.paragraph(nb_sentences=2),
+            "category": str(uuid4()),
+        }
+        response = api_client.post(course_url, data, format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_partial_update_course_ok(
+        self,
+        api_client,
+        math_course,
+        authenticated_fake_instructor,
+        course_url,
+    ):
         """
         Test partially updating a course.
         """
 
-        data = {"title": self.fake.sentence(nb_words=6)}
-        response = self.patch_json(
-            url=self.url_detail,
-            data=data,
-            email=self.instructor_email,
+        data = {"title": "Updated Course Title"}
+        response = api_client.patch(
+            f"{course_url}{str(math_course.id)}/", data, format="json"
         )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["data"]["title"], data.get("title"))
-        self.assertEqual(response.data["data"]["status"], Status.ACTIVATE.value)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["data"]["title"] == data["title"]
 
-    def test_partial_update_course_unauthorized(self):
+    def test_partial_update_course_unauthorized(
+        self,
+        api_client,
+        math_course,
+        authenticated_fake_student,
+        course_url,
+    ):
         """
         Test partially updating a course without logging in.
         """
 
-        data = {"title": self.fake.sentence(nb_words=6)}
-        response = self.patch_json(
-            url=self.url_detail,
-            data=data,
-            email=self.email,
+        data = {"title": "Unauthorized Update"}
+        response = api_client.patch(
+            f"{course_url}{str(math_course.id)}/", data, format="json"
         )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_enroll_student_in_course(self):
+    def test_partial_update_course_invalid_data(
+        self,
+        api_client,
+        authenticated_fake_instructor,
+        course_url,
+        math_course,
+    ):
+        """
+        Test creating a new course without logging in.
+        """
+
+        data = {
+            "category": str(uuid4()),
+        }
+        response = api_client.patch(
+            f"{course_url}{str(math_course.id)}/", data, format="json"
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_admin_enroll_student_into_course(
+        self,
+        api_client,
+        authenticated_fake_admin,
+        fake_student,
+        course_url,
+        math_course,
+    ):
         """
         Test enrolling a student in a course.
         """
 
-        response = self.post_json(
-            url=self.url_enroll,
-            data=None,
-            email=self.email,
+        response = api_client.post(
+            f"{course_url}{str(math_course.id)}/enroll/",
+            data={
+                "student": str(fake_student.id),
+            },
+            format="json",
         )
+        assert response.status_code == status.HTTP_200_OK
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    def test_instructor_enroll_course(
+        self,
+        api_client,
+        authenticated_fake_instructor,
+        course_url,
+        math_course,
+    ):
+        """
+        Test enrolling a student in a course.
+        """
 
-    def test_enroll_student_in_course_unauthorized(self):
+        response = api_client.post(
+            f"{course_url}{str(math_course.id)}/enroll/", data=None, format="json"
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_student_enroll_course(
+        self,
+        api_client,
+        authenticated_fake_student,
+        course_url,
+        math_course,
+    ):
+        """
+        Test enrolling a student in a course.
+        """
+
+        response = api_client.post(
+            f"{course_url}{str(math_course.id)}/enroll/", data=None, format="json"
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_enroll_student_in_course_unauthorized(
+        self,
+        api_client,
+        course_url,
+        math_course,
+    ):
         """
         Test enrolling a student in a course without logging in.
         """
 
-        response = self.post_json(
-            url=self.url_enroll,
-            data=None,
-            email=self.instructor_email,
+        response = api_client.post(
+            f"{course_url}{str(math_course.id)}/enroll/", data=None, format="json"
         )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_leave_course(self):
+    def test_leave_course(
+        self,
+        api_client,
+        fake_student,
+        authenticated_fake_student,
+        course_url,
+        math_course,
+    ):
         """
-        Test leaving a course.
+        Test leaving a course as a student.
         """
 
-        self.course.students.add(self.student_user)
-        response = self.post_json(
-            url=self.url_leave,
-            data=None,
-            email=self.email,
+        math_course.students.add(fake_student)
+        response = api_client.post(
+            f"{course_url}{str(math_course.id)}/leave/", data=None, format="json"
         )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert response.status_code == status.HTTP_200_OK
+        assert not math_course.students.filter(id=str(fake_student.id)).exists()
 
-    def test_leave_course_unauthorized(self):
+    def test_instructor_leave_course(
+        self, api_client, course_url, authenticated_fake_instructor, math_course
+    ):
         """
         Test leaving a course without logging in.
         """
 
-        self.course.students.add(self.student_user)
-        response = self.post_json(
-            url=self.url_leave,
-            data=None,
-            email=self.instructor_email,
+        response = api_client.post(
+            f"{course_url}{str(math_course.id)}/leave/", data=None, format="json"
         )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_list_students_in_course(self):
+    def test_leave_course_unauthorized(self, api_client, course_url, math_course):
         """
-        Test listing all students enrolled in a course.
+        Test leaving a course without logging in.
         """
 
-        self.course.students.add(self.student_user)
-        response = self.get_json(
-            url=self.url_students,
-            email=self.instructor_email,
+        response = api_client.post(
+            f"{course_url}{str(math_course.id)}/leave/", data=None, format="json"
         )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("data", response.data)
-        self.assertEqual(len(response.data["data"]), 1)
-        self.assertEqual(response.data["data"][0]["id"], str(self.student_user.id))
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_list_students_in_course_unauthorized(self):
+    def test_admin_leave_student_of_course(
+        self,
+        api_client,
+        authenticated_fake_admin,
+        fake_student,
+        course_url,
+        math_course,
+    ):
         """
-        Test listing all students enrolled in a course without logging in.
+        Test enrolling a student in a course.
         """
 
-        self.course.students.add(self.student_user)
-        response = self.get_json(
-            url=self.url_students,
-            email=self.email,
+        math_course.students.add(fake_student)
+
+        response = api_client.post(
+            f"{course_url}{str(math_course.id)}/leave/",
+            data={"student": str(fake_student.id)},
+            format="json",
         )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        assert response.status_code == status.HTTP_200_OK
 
-    def test_filter_courses_by_status_ok(self):
+    def test_student_leave_unenrolled_course(
+        self,
+        api_client,
+        authenticated_fake_student,
+        course_url,
+        math_course,
+    ):
+        """
+        Test leave course, which not enrolled.
+        """
+
+        response = api_client.post(
+            f"{course_url}{str(math_course.id)}/leave/", data=None, format="json"
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_list_students_in_course(
+        self,
+        api_client,
+        fake_student,
+        authenticated_fake_instructor,
+        disconnect_send_verify_email_signal,
+        music_course,
+        course_url,
+    ):
+        """
+        Test listing students in a course as an instructor.
+        """
+
+        music_course.students.add(fake_student)
+        response = api_client.get(f"{course_url}{str(music_course.id)}/students/")
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["data"]) == 1
+
+    def test_list_students_in_course_unauthorized(
+        self,
+        api_client,
+        authenticated_fake_student,
+        music_course,
+        course_url,
+    ):
+        """
+        Test listing students in a course without logging in.
+        """
+
+        response = api_client.get(f"{course_url}{str(music_course.id)}/students/")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_filter_courses_by_status_ok(
+        self, api_client, math_course, music_course, fake_course, course_url
+    ):
         """
         Test filtering courses by status.
         """
 
-        CourseFactory(status=Status.INACTIVE.value)
-        response = self.client.get(self.url_list, {"status": Status.INACTIVE.value})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data["data"]), 1)
-        self.assertEqual(response.data["data"][0]["status"], Status.INACTIVE.value)
+        math_course.status = Status.ACTIVATE.value
+        math_course.save()
+        music_course.status = Status.ACTIVATE.value
+        music_course.save()
+        fake_course.status = Status.INACTIVE.value
+        fake_course.save()
 
-    def test_filter_courses_by_title_ok(self):
+        response = api_client.get(f"{course_url}?status={Status.ACTIVATE.value}")
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["data"]) == 2
+        assert response.data["data"][0]["status"] == Status.ACTIVATE.value
+        assert response.data["data"][1]["status"] == Status.ACTIVATE.value
+        assert str(fake_course.id) not in [
+            item.get("id") for item in response.data["data"]
+        ]
+
+    def test_filter_courses_by_search_ok(
+        self, api_client, math_course, music_course, fake_course, course_url
+    ):
         """
         Test filtering courses by title.
         """
 
-        response = self.client.get(self.url_list, {"title": self.course_title})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data["data"]), 1)
-        self.assertEqual(response.data["data"][0]["title"], self.course_title)
+        math_course.title = "Math course"
+        math_course.save()
+        music_course.title = "Music course"
+        music_course.save()
+        fake_course.title = "Python course"
+        fake_course.save()
 
-    def test_filter_courses_by_description_ok(self):
-        """
-        Test filtering courses by description.
-        """
+        response = api_client.get(f"{course_url}?search=Python")
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["data"]) == 1
+        assert "Python" in response.data["data"][0]["title"]
+        assert str(fake_course.id) == response.data["data"][0]["id"]
 
-        response = self.client.get(
-            self.url_list, {"description": self.course_description}
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data["data"]), 1)
-        self.assertEqual(
-            response.data["data"][0]["description"], self.course_description
-        )
-
-    def test_filter_courses_by_category_ok(self):
+    def test_filter_courses_by_category_ok(
+        self,
+        api_client,
+        fake_category,
+        math_course,
+        course_url,
+    ):
         """
         Test filtering courses by category.
         """
 
-        new_category = CategoryFactory()
-        CourseFactory(title="New Category Course", category=new_category)
-
-        response = self.client.get(self.url_list, {"category": new_category.id})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data["data"]), 1)
-        self.assertEqual(
-            response.data["data"][0]["category"]["id"], str(new_category.id)
-        )
-
-    def test_filter_courses_by_enrolled_ok(self):
-        """
-        Test filtering courses by enrollment status.
-        """
-
-        self.course.students.add(self.student_user)
-
-        self.client.login(email=self.email, password=self.password)
-
-        response = self.client.get(self.url_list, {"enrolled": True})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data["data"]), 1)
-        self.assertEqual(response.data["data"][0]["title"], self.course_title)
-
-    def create_courses(self):
-        """
-        Create multiple courses for testing top-courses API.
-        """
-
-        new_instructor = UserFactory(
-            username=self.fake.user_name(), role=Role.INSTRUCTOR.value
-        )
-        self.another_course_description = self.fake.paragraph(nb_sentences=2)
-        self.another_course_title = self.fake.sentence(nb_words=6)
-        self.another_course = CourseFactory(
-            title=self.another_course_title,
-            description=self.another_course_description,
-            status=Status.ACTIVATE.value,
-            instructor=new_instructor,
-        )
-
-        EnrollmentFactory.create_batch(30, course=self.course)
-        EnrollmentFactory.create_batch(20, course=self.another_course)
-
-    def test_get_top_courses_success(self):
-        """
-        Test retrieving the top courses successfully.
-        """
-
-        self.create_courses()
         cache.clear()
-        response = self.client.get(self.url_top_courses)
+        math_course.category = fake_category
+        math_course.save()
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("data", response.data)
-        self.assertEqual(len(response.data["data"]), 2)
-        self.assertEqual(response.data["data"][0]["title"], self.course_title)
-        self.assertEqual(
-            response.data["data"][0]["description"], self.course_description
-        )
-        self.assertEqual(response.data["data"][1]["title"], self.another_course_title)
-        self.assertEqual(
-            response.data["data"][1]["description"], self.another_course_description
-        )
+        response = api_client.get(f"{course_url}?category={str(fake_category.id)}")
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["data"]) == 1
+        assert response.data["data"][0]["category"]["id"] == str(fake_category.id)
 
-    def test_get_top_courses_empty(self):
+    def test_filter_courses_by_enrolled_ok(
+        self,
+        api_client,
+        fake_student,
+        course_url,
+        authenticated_fake_student,
+        math_course,
+    ):
         """
-        Test retrieving top courses when no courses exist.
+        Test filtering courses by enrolled status.
         """
-        Course.objects.all().delete()
+
+        math_course.students.add(fake_student)
+        response = api_client.get(f"{course_url}?enrolled=true")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["data"]) == 1
+        assert response.data["data"][0]["id"] == str(math_course.id)
+
+    def test_get_top_courses_success(
+        self,
+        api_client,
+        enroll_courses,
+        top_courses_url,
+    ):
+        """
+        Test fetching the top courses successfully.
+        """
+
         cache.clear()
-        response = self.client.get(self.url_top_courses)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("data", response.data)
-        self.assertEqual(len(response.data["data"]), 0)
+        response = api_client.get(top_courses_url)
+        data = response.data["data"]
 
-    def test_get_top_courses_unauthenticated(self):
-        """
-        Test retrieving top courses without authentication.
-        """
-        response = self.client.get(self.url_top_courses)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(data) == 2
+        assert data[0]["title"] == "Math course"
+        assert data[1]["title"] == "Music Course"
 
-    def test_top_courses_invalid_http_method(self):
+    def test_get_top_courses_empty(self, api_client, top_courses_url):
         """
-        Test using an invalid HTTP method for the top_courses API.
+        Test fetching top courses when there are no courses.
         """
-        response = self.post_json(
-            url=self.url_top_courses,
-            data=None,
-            email=self.instructor_email,
-        )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        cache.clear()
+        response = api_client.get(top_courses_url)
+        data = response.data["data"]
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(data) == 0
+
+        cache_data = cache.get("top_courses")
+        response = api_client.get(top_courses_url)
+        assert cache_data == response.data

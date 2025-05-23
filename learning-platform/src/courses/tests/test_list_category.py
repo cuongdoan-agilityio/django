@@ -10,7 +10,7 @@ class TestCategoryViewSet:
     Test suite for the CategoryViewSet.
     """
 
-    def test_list_categories_success(self, api_client, category_url, categories):
+    def test_list_categories_success(self, api_client, category_url, fake_categories):
         """
         Test listing all categories.
         """
