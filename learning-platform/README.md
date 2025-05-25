@@ -220,7 +220,7 @@ Setup environments: create `.env` follow `.env.example` with your own settings
 - pytest --cov=src --cov-report html
 
 ## APIs
-- Auth
+### Auth
   - Login:
     - POST: /api/v1/auth/login/
   - Signup:
@@ -231,19 +231,23 @@ Setup environments: create `.env` follow `.env.example` with your own settings
     - POST: /api/v1/auth/confirm-reset-password/
   - Reset Password
     - GET: /api/v1/auth/reset-password/?token=xxxxxxxxx
-- User
+
+###  User
   - Get profile
     - GET: /api/v1/users/{id}/
     - GET: /api/v1/users/me/
   - Update profile
     - PATCH: /api/v1/users/{id}/
-- Category
+
+### Category
   - Get category
     - GET: /api/v1/categories/
-- Specialization
+
+### Specialization
   - Get specialization
     - GET: /api/v1/specializations/
-- Courses
+
+### Courses
   - Get courses
     - GET: /api/v1/courses/
   - Create courses
@@ -260,7 +264,8 @@ Setup environments: create `.env` follow `.env.example` with your own settings
     - GET: /api/v1/courses/{id}/students/
   - Get top courses
     - GET: /api/v1/courses/top/
-- Notifications
+
+### Notifications
   - Get notifications
     - GET: /api/v1/notifications/
   - Get notification detail

@@ -143,6 +143,13 @@ def share_user_data(faker, random_degree):
             "last_name": faker.last_name(),
             "email": faker.email(),
         },
+        "other_student": {
+            "password": password,
+            "username": faker.user_name(),
+            "first_name": faker.first_name(),
+            "last_name": faker.last_name(),
+            "email": faker.email(),
+        },
         "instructor": {
             "password": password,
             "username": faker.user_name(),
@@ -194,6 +201,23 @@ def fake_instructor(faker, share_user_data):
         password=data.get("password"),
         email=data.get("email"),
         role=Role.INSTRUCTOR.value,
+    )
+
+
+@pytest.fixture
+def fake_other_student(faker, share_user_data):
+    """
+    Fixture to create a sample student user instance.
+    """
+
+    post_save.disconnect(receiver=send_verify_email, sender=User)
+    data = share_user_data.get("other_student")
+
+    return UserFactory(
+        password=data.get("password"),
+        username=data.get("username"),
+        email=data.get("email"),
+        role=Role.STUDENT.value,
     )
 
 

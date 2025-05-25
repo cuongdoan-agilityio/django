@@ -1,61 +1,55 @@
+import pytest
 from rest_framework import status
 from courses.models import Category
-from courses.factories import CategoryFactory
 from courses.api.serializers import CategorySerializer
-from core.tests.base import BaseTestCase
 
 
-class CategoryViewSetTest(BaseTestCase):
+@pytest.mark.django_db
+class TestCategoryViewSet:
     """
-    Test case for the CategoryViewSet.
+    Test suite for the CategoryViewSet.
     """
 
-    def setUp(self):
-        """
-        Set up the test case with sample categories.
-        """
-        super().setUp()
-
-        CategoryFactory()
-        self.url = f"{self.root_url}categories/"
-
-    def test_list_categories_success(self):
+    def test_list_categories_success(self, api_client, category_url, fake_categories):
         """
         Test listing all categories.
         """
 
-        response = self.client.get(self.url)
+        response = api_client.get(category_url)
+        assert response.status_code == status.HTTP_200_OK
+
         categories = Category.objects.all()
         serializer = CategorySerializer(categories, many=True)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["data"], serializer.data)
+        assert response.data["data"] == serializer.data
 
-    def test_list_categories_empty_success(self):
+    def test_list_categories_empty_success(self, api_client, category_url):
         """
         Test listing categories when there are no categories.
         """
 
         Category.objects.all().delete()
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["data"], [])
+        response = api_client.get(category_url)
 
-    def test_category_viewset_permissions(self):
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["data"] == []
+
+    def test_category_viewset_permissions(self, api_client, category_url):
         """
         Test that the CategoryViewSet allows any user to access the list of categories.
         """
 
-        self.client.logout()
-        response = self.client.get(self.url)
+        api_client.logout()
+        response = api_client.get(category_url)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assert response.status_code == status.HTTP_200_OK
 
-    def test_list_categories_failed(self):
+    def test_list_categories_failed(self, api_client, root_url):
         """
         Test listing categories with an incorrect endpoint.
         """
 
-        incorrect_url = f"{self.root_url}incorrect_categories/"
-        response = self.client.get(incorrect_url)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        incorrect_url = f"{root_url}incorrect_categories/"
+        response = api_client.get(incorrect_url)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
