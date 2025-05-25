@@ -73,7 +73,7 @@ def send_email(email: str, template_data: dict, template_id: str) -> None:
         sg.send(message)
 
     except Exception as e:
-        send_capture_message(e)
+        send_capture_message(str(e))
 
 
 def send_report_email(instructor, csv_file):

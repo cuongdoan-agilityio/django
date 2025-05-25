@@ -4,33 +4,40 @@ from django.conf import settings
 from core.helpers import send_email
 
 
-@shared_task
-def send_welcome_email(user: dict) -> None:
+@shared_task(bind=True, max_retries=2, default_retry_delay=60)
+def send_welcome_email(self, user: dict) -> None:
     """
     Send a welcome email to the user after registration.
     """
-    template_data = {
-        "user_name": user.get("username"),
-        "sender_name": settings.SENDER_NAME,
-        "subject": "Welcome to Our Platform",
-    }
 
-    send_email(user.get("email"), template_data, settings.WELCOME_TEMPLATE_ID)
+    try:
+        template_data = {
+            "user_name": user.get("username"),
+            "sender_name": settings.SENDER_NAME,
+            "subject": "Welcome to Our Platform",
+        }
+
+        send_email(user.get("email"), template_data, settings.WELCOME_TEMPLATE_ID)
+    except Exception as exc:
+        raise self.retry(exc=exc)
 
 
-@shared_task
-def send_password_reset_email(user: dict, token: str) -> None:
+@shared_task(bind=True, max_retries=2, default_retry_delay=60)
+def send_password_reset_email(self, user: dict, token: str) -> None:
     """
     Send a password reset email to the user.
     """
 
-    template_data = {
-        "user_name": user.get("username"),
-        "sender_name": settings.SENDER_NAME,
-        "subject": "Verify Password Change",
-        "activation_link": f"{settings.API_DOMAIN}/api/v1/auth/reset-password/?token={token}",
-    }
+    try:
+        template_data = {
+            "user_name": user.get("username"),
+            "sender_name": settings.SENDER_NAME,
+            "subject": "Verify Password Change",
+            "activation_link": f"{settings.API_DOMAIN}/api/v1/auth/reset-password/?token={token}",
+        }
 
-    send_email(
-        user.get("email"), template_data, settings.VERIFY_RESET_PASSWORD_TEMPLATE_ID
-    )
+        send_email(
+            user.get("email"), template_data, settings.VERIFY_RESET_PASSWORD_TEMPLATE_ID
+        )
+    except Exception as exc:
+        raise self.retry(exc=exc)

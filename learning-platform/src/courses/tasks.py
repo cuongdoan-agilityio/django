@@ -27,29 +27,32 @@ def clean_up_inactive_courses():
     ).delete()
 
 
-@shared_task
-def send_monthly_report():
+@shared_task(bind=True, max_retries=2, default_retry_delay=60)
+def send_monthly_report(self):
     """
     Sends a monthly report (a CSV file sent via email) to the instructor
     about statistical number of enrolled students per their course.
     """
 
     instructors = User.objects.filter(role=Role.INSTRUCTOR.value)
+    try:
+        for instructor in instructors:
+            courses = instructor.courses.all()
+            if not courses:
+                continue
 
-    for instructor in instructors:
-        courses = instructor.courses.all()
-        if not courses:
-            continue
+            csv_file = StringIO()
+            csv_writer = csv.writer(csv_file)
+            csv_writer.writerow(["Course Title", "Number of Enrolled"])
+            for course in courses:
+                student_count = course.enrollments.count()
 
-        csv_file = StringIO()
-        csv_writer = csv.writer(csv_file)
-        csv_writer.writerow(["Course Title", "Number of Enrolled"])
-        for course in courses:
-            student_count = course.enrollments.count()
+                csv_writer.writerow([course.title, student_count])
 
-            csv_writer.writerow([course.title, student_count])
+            csv_file.seek(0)
+            encoded_csv = base64.b64encode(csv_file.getvalue().encode()).decode()
 
-        csv_file.seek(0)
-        encoded_csv = base64.b64encode(csv_file.getvalue().encode()).decode()
+            send_report_email(instructor=instructor, csv_file=encoded_csv)
 
-        send_report_email(instructor=instructor, csv_file=encoded_csv)
+    except Exception as exc:
+        raise self.retry(exc=exc)
