@@ -84,14 +84,32 @@ class CommonViewSet:
 
         return Response(data=response_data, status=status.HTTP_404_NOT_FOUND)
 
+    def finalize_response(self, request, response, *args, **kwargs):
+        """
+        Finalize the response structure for API responses.
+        """
 
-class BaseViewSet(ViewSet, CommonViewSet):
+        data = response.data
+        if (
+            isinstance(response, Response)
+            and ("data" not in data)
+            and ("errors" not in data)
+        ):
+            if isinstance(response.data, dict):
+                response.data = {
+                    "data": response.data,
+                }
+
+        return super().finalize_response(request, response, *args, **kwargs)
+
+
+class BaseViewSet(CommonViewSet, ViewSet):
     """
     Base view set for views accept DTO data rather than Django model
     """
 
 
-class BaseModelViewSet(ModelViewSet, CommonViewSet):
+class BaseModelViewSet(CommonViewSet, ModelViewSet):
     """
     Base view set for Django model
     """
