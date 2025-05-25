@@ -11,7 +11,6 @@ from core.serializers import (
     BaseForbiddenResponseSerializer,
     BaseNotFoundResponseSerializer,
 )
-from core.mixins import CustomRetrieveModelMixin, CustomUpdateModelMixin
 from notifications.models import Notification
 from notifications.api.response_schema import notification_detail_response_schema
 from .serializers import NotificationSerializer
@@ -60,9 +59,7 @@ class NotificationFilter(filters.FilterSet):
         },
     ),
 )
-class NotificationViewSet(
-    CustomRetrieveModelMixin, CustomUpdateModelMixin, BaseModelViewSet
-):
+class NotificationViewSet(BaseModelViewSet):
     """
     A viewset for handling notifications.
     This viewset allows users to list, retrieve, and update their notifications.

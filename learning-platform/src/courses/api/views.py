@@ -21,7 +21,7 @@ from core.serializers import (
     BaseNotFoundResponseSerializer,
 )
 from core.error_messages import ErrorMessage
-from core.mixins import FormatDataMixin, CustomRetrieveModelMixin
+from core.mixins import FormatDataMixin
 from courses.permissions import CoursePermission
 from notifications.models import Notification
 from notifications.constants import NotificationMessage
@@ -156,7 +156,7 @@ class CustomFilter(django_filters.FilterSet):
         },
     ),
 )
-class CourseViewSet(CustomRetrieveModelMixin, BaseModelViewSet, FormatDataMixin):
+class CourseViewSet(BaseModelViewSet, FormatDataMixin):
     """
     Course view set
 
