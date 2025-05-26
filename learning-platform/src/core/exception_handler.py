@@ -16,6 +16,10 @@ def process_exception(exception, context) -> Response:
     response = exception_handler(exception, context)
 
     # Update the structure of the response data.
+    # Thanh Nguyen: must check 500 error
+    # Minh Tran: When making a feature, you should research around it.
+    # Minh Tran: With the feature verify signup email, verify reset password email, you need to create a django view, when the user clicks the link, it will lead to that view instead of the APIs view.
+
     if response is not None:
         customized_response = {"errors": []}
 

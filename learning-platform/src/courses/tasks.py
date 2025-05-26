@@ -27,6 +27,8 @@ def clean_up_inactive_courses():
     ).delete()
 
 
+# Thanh Nguyen: must check and split code to handle
+# Celery sub-task
 @shared_task(bind=True, max_retries=2, default_retry_delay=60)
 def send_monthly_report(self):
     """
@@ -41,10 +43,12 @@ def send_monthly_report(self):
             if not courses:
                 continue
 
+            # (Option) Thanh Nguyen: split create csv file to service and re-use
             csv_file = StringIO()
             csv_writer = csv.writer(csv_file)
             csv_writer.writerow(["Course Title", "Number of Enrolled"])
             for course in courses:
+                # Thanh Nguyen: should check Performance
                 student_count = course.enrollments.count()
 
                 csv_writer.writerow([course.title, student_count])

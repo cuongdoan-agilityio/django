@@ -53,6 +53,7 @@ def send_capture_message(data: Response | str) -> str:
     return message
 
 
+# Thanh Nguyen + Minh Tran: move send_report_email, send_email to email service.
 def send_email(email: str, template_data: dict, template_id: str) -> None:
     """
     Send an email using SendGrid.

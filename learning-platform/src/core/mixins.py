@@ -3,7 +3,7 @@ class FormatDataMixin:
     Format the response data.
     """
 
-    def format_data(self, instance, *args, **kwargs):
+    def format_data(self, instance, *args, **kwargs):  # Minh Tran: rename
         """
         Format the response data.
         """

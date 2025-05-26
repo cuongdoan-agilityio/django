@@ -173,7 +173,8 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         Returns:
             Response: The response indicating the sign-up status or an error message.
         """
-
+        # Minh Tran: must try - cache for all APIs that I custom
+        # Thanh Nguyen + Minh Tran: Unit test: need to ignore files that do not need to be tested.
         serializer = RegisterSerializer(data=request.data)
 
         serializer.is_valid(raise_exception=True)
@@ -236,8 +237,10 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
             response = BaseSuccessResponseSerializer({"data": {"success": True}})
             return self.ok(response.data)
         except Exception as e:
+            # Thanh Nguyen: must 500 error
             return self.bad_request(message=str(e))
 
+    # Thanh Nguyen: rename API reset_password and confirm_reset_password
     @action(detail=False, methods=["get"], url_path="reset-password")
     def reset_password(self, request):
         """
@@ -245,16 +248,21 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         """
 
         token = request.query_params.get("token", "")
+
+        # Minh Tran: must check valid token in serializer
         serializer = TokenSerializer(data={"token": token})
         serializer.is_valid(raise_exception=True)
 
         signer = TimestampSigner()
 
         try:
+            # Thanh nguyen: must try cache BadSignature
             signed_value = force_str(urlsafe_base64_decode(token))
             email = signer.unsign(signed_value, max_age=24 * 3600)
+            # Thanh Nguyen: must check user exits. try cache User.DoesNotExist
             user = User.objects.filter(email=email).first()
             # TODO: need replace with other password
+            # Thanh Nguyen + Minh Tran: User must be sent new password
             new_password = "Password@123"
             user.password = new_password
             user.save()
@@ -352,7 +360,7 @@ class SpecializationViewSet(BaseGenericViewSet, ListModelMixin):
 
     permission_classes = [AllowAny]
     serializer_class = SpecializationSerializer
-    http_method_names = ["get"]
+    # http_method_names = ["get"]
     resource_name = "specializations"
     queryset = Specialization.objects.all()
 

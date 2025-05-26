@@ -9,6 +9,10 @@ class TestUserViewSet:
     Test suite for the UserViewSet.
     """
 
+    # Thanh Nguyen [Presentation]: Create a slide comparing before and after refactoring.
+    # Thanh Nguyen [Presentation] [Slide] [Workflow slide]: present the workflow you like best. The remaining flows will be attached with links in the slide.
+    # Thanh Nguyen [Presentation]: Slide: Update text font size: Title: 28/30, normal text: 20/24
+
     def test_retrieve_student_profile(
         self, api_client, authenticated_fake_student, user_retrieve_url
     ):

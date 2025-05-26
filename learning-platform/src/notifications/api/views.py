@@ -59,6 +59,8 @@ class NotificationFilter(filters.FilterSet):
         },
     ),
 )
+# Minh Tran: Use appropriate viewset, for example NotificationViewSet, instead of inheriting from BaseModelViewSet, can inherit from RetrieveModelMixin, ListModelMixin, UpdateModelMixin, BaseGenericViewSet
+# Because NotificationViewSet does not have API to create new and delete notification.
 class NotificationViewSet(BaseModelViewSet):
     """
     A viewset for handling notifications.

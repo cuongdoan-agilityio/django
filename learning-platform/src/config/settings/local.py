@@ -62,7 +62,16 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Asia/Ho_Chi_Minh"
 
+# Thanh Nguyen: Demo celery task
+# Thanh Nguyen [demo]: Caching Demo + Caching Performance: API demo gets course list, creates slide comparing results of caching and not caching.
+# Thanh Nguyen: Demo Sentry
+# Minh Tran [Presentation]: Create an outline for your review.
+
 CELERY_BEAT_SCHEDULE = {
+    "run-minute-task": {
+        "task": "courses.tasks.clean_up_inactive_courses",
+        "schedule": crontab(minute="*/3"),
+    },
     "run-weekly-task": {
         "task": "courses.tasks.clean_up_inactive_courses",
         "schedule": crontab(hour=1, minute=0, day_of_week="mon"),

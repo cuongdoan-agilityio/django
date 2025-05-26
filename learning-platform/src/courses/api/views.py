@@ -222,7 +222,7 @@ class CourseViewSet(BaseModelViewSet, FormatDataMixin):
         """
         List all courses with caching and pagination.
         """
-
+        # Thanh Nguyen: Define a caching service to handle caching and reuse
         cache_key = self.get_course_list_cache_key(request)
         cached_data = cache.get(cache_key)
         if cached_data:
@@ -304,6 +304,7 @@ class CourseViewSet(BaseModelViewSet, FormatDataMixin):
 
         return self.ok(response_data)
 
+    # Thanh Nguyen: Need to create service layer (Apply for all API), to refactor code, reduce code for view and easy to unit test.
     @action(detail=True, methods=["post"])
     def enroll(self, request, **kwargs):
         """
