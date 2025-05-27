@@ -72,6 +72,3 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(hour=1, minute=0, day_of_month=1),
     },
 }
-
-# Domain
-API_DOMAIN = env("API_DOMAIN", default="http://localhost:8000")

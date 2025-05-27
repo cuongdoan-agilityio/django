@@ -237,3 +237,7 @@ sentry_sdk.init(
     send_default_pii=env("SENTRY_SEND_DEFAULT_PII", default=False),
     debug=env("SENTRY_DEBUG", default=False),
 )
+
+
+# Domain
+APP_DOMAIN = env("APP_DOMAIN", default="http://localhost:8000")

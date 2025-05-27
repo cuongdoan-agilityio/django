@@ -45,7 +45,7 @@ class TestUserSignals:
                 "user_name": user.username,
                 "sender_name": settings.SENDER_NAME,
                 "subject": "Verification Email",
-                "activation_link": f"{settings.API_DOMAIN}/{URL['VERIFY_SIGNUP']}/?token=mocked_token",
+                "activation_link": f"{settings.APP_DOMAIN}/{URL['VERIFY_SIGNUP']}/?token=mocked_token",
             },
             settings.VERIFY_SIGNUP_TEMPLATE_ID,
         )

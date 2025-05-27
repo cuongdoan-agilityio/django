@@ -33,7 +33,7 @@ def send_password_reset_email(self, user: dict, token: str) -> None:
             "user_name": user.get("username"),
             "sender_name": settings.SENDER_NAME,
             "subject": "Verify Password Change",
-            "activation_link": f"{settings.API_DOMAIN}/api/v1/auth/reset-password/?token={token}",
+            "activation_link": f"{settings.APP_DOMAIN}/api/v1/auth/reset-password/?token={token}",
         }
 
         send_email(
