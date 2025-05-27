@@ -7,6 +7,7 @@ from accounts.factories import UserFactory
 from core.constants import Status, Role
 from courses.models import Course
 from courses.factories import CourseFactory
+from core.constants import URL
 
 
 User = get_user_model()
@@ -44,7 +45,7 @@ class TestUserSignals:
                 "user_name": user.username,
                 "sender_name": settings.SENDER_NAME,
                 "subject": "Verification Email",
-                "activation_link": f"{settings.API_DOMAIN}/api/v1/auth/confirm-signup-email/?token=mocked_token",
+                "activation_link": f"{settings.API_DOMAIN}/{URL['VERIFY_SIGNUP']}/?token=mocked_token",
             },
             settings.VERIFY_SIGNUP_TEMPLATE_ID,
         )

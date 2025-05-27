@@ -3,6 +3,10 @@ from enum import Enum
 
 SPECIAL_CHARACTER_REGEX = r'[!@#$%^&*()_+="-]'
 
+URL = {
+    "VERIFY_SIGNUP": "verify-signup",
+}
+
 
 class BaseChoiceEnum(Enum):
     """
