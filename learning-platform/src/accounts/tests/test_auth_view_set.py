@@ -225,29 +225,29 @@ class TestAuthorViewSet:
         mock_send_welcome_email.assert_not_called()
 
     @patch("accounts.tasks.send_password_reset_email.delay")
-    def test_verify_reset_password_success(
+    def test_reset_password_success(
         self,
         mock_send_password_reset_email,
         api_client,
-        verify_reset_password_url,
-        verify_reset_password_data,
+        reset_password_url,
+        reset_password_data,
     ):
         """
         Test verifying reset password with a valid token.
         """
 
         response = api_client.post(
-            verify_reset_password_url,
-            verify_reset_password_data,
+            reset_password_url,
+            reset_password_data,
         )
 
         assert response.status_code == status.HTTP_200_OK
         mock_send_password_reset_email.assert_called_once()
 
-    def test_verify_reset_password_missing_email(
+    def test_reset_password_missing_email(
         self,
         api_client,
-        verify_reset_password_url,
+        reset_password_url,
     ):
         """
         Test verifying reset password with a missing email.
@@ -255,7 +255,7 @@ class TestAuthorViewSet:
 
         data = {}
         response = api_client.post(
-            verify_reset_password_url,
+            reset_password_url,
             data,
             format="json",
         )
@@ -264,10 +264,10 @@ class TestAuthorViewSet:
         assert response.data.get("errors")[0]["field"] == "email"
         assert response.data.get("errors")[0]["message"][0] == "This field is required."
 
-    def test_verify_reset_password_invalid_data(
+    def test_reset_password_invalid_data(
         self,
         api_client,
-        verify_reset_password_url,
+        reset_password_url,
     ):
         """
         Test verifying reset password with an invalid data.
@@ -275,7 +275,7 @@ class TestAuthorViewSet:
 
         data = {"email": "InvalidEmail"}
         response = api_client.post(
-            verify_reset_password_url,
+            reset_password_url,
             data,
             format="json",
         )
@@ -288,12 +288,12 @@ class TestAuthorViewSet:
         )
 
     @patch("accounts.tasks.send_password_reset_email.delay")
-    def test_verify_reset_password_email_sending_failure(
+    def test_reset_password_email_sending_failure(
         self,
         mock_send_password_reset_email,
         api_client,
-        verify_reset_password_url,
-        verify_reset_password_data,
+        reset_password_url,
+        reset_password_data,
     ):
         """
         Test verifying reset password when email sending fails.
@@ -302,35 +302,35 @@ class TestAuthorViewSet:
         mock_send_password_reset_email.side_effect = Exception("Email sending failed")
 
         response = api_client.post(
-            verify_reset_password_url,
-            verify_reset_password_data,
+            reset_password_url,
+            reset_password_data,
             format="json",
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_verify_reset_password_invalid_http_method(
+    def test_reset_password_invalid_http_method(
         self,
         api_client,
-        verify_reset_password_url,
-        verify_reset_password_data,
+        reset_password_url,
+        reset_password_data,
     ):
         """
         Test verifying reset password with invalid HTTP methods.
         """
 
         response = api_client.patch(
-            verify_reset_password_url,
-            verify_reset_password_data,
+            reset_password_url,
+            reset_password_data,
             format="json",
         )
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_verify_reset_password_with_not_found_user(
+    def test_reset_password_with_not_found_user(
         self,
         api_client,
         faker,
-        verify_reset_password_url,
+        reset_password_url,
     ):
         """
         Test verifying reset password with user not found.
@@ -339,16 +339,16 @@ class TestAuthorViewSet:
         data = {"email": faker.email()}
 
         response = api_client.post(
-            verify_reset_password_url,
+            reset_password_url,
             data,
             format="json",
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_reset_password_success(
+    def test_confirm_reset_password_success(
         self,
         api_client,
-        reset_password_url,
+        confirm_reset_password_url,
         fake_new_user,
     ):
         """
@@ -357,42 +357,47 @@ class TestAuthorViewSet:
 
         token = create_token(fake_new_user.email)
 
-        response = api_client.get(f"{reset_password_url}?token={token}")
+        response = api_client.post(
+            f"{confirm_reset_password_url}",
+            data={"token": token, "password": "Password@123"},
+        )
         assert response.status_code == status.HTTP_200_OK
-        assert response.data.get("data") == {"password": "Password@123"}
+        assert response.data.get("data") == {"success": True}
 
-    def test_reset_password_missing_token(
+    def test_confirm_reset_password_missing_password_and_token(
         self,
         api_client,
-        reset_password_url,
+        confirm_reset_password_url,
     ):
         """
         Test changing password with a missing token.
         """
 
-        response = api_client.get(
-            f"{reset_password_url}?token=",
-        )
+        response = api_client.post(f"{confirm_reset_password_url}", data={})
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.data.get("errors")[0]["field"] == "token"
-        assert (
-            response.data.get("errors")[0]["message"][0]
-            == "This field may not be blank."
-        )
+        assert response.data.get("errors")[1]["field"] == "password"
+        assert response.data.get("errors")[0]["message"][0] == "This field is required."
+        assert response.data.get("errors")[1]["message"][0] == "This field is required."
 
-    def test_reset_password_invalid_token(self, api_client, reset_password_url):
+    def test_confirm_reset_password_invalid_token(
+        self, api_client, confirm_reset_password_url
+    ):
         """
         Test reset password with an invalid token.
         """
 
-        response = api_client.get(f"{reset_password_url}?token=InvalidToken")
+        response = api_client.post(
+            f"{confirm_reset_password_url}",
+            data={"token": "InvalidToken", "password": "Password@123"},
+        )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_reset_password_expired_token(
+    def test_confirm_reset_password_expired_token(
         self,
         api_client,
-        reset_password_url,
+        confirm_reset_password_url,
         fake_new_user,
     ):
         """
@@ -403,13 +408,16 @@ class TestAuthorViewSet:
 
         with patch("django.core.signing.TimestampSigner.unsign") as mock_unsign:
             mock_unsign.side_effect = SignatureExpired("Token has expired")
-            response = api_client.get(f"{reset_password_url}?token={token}")
+            response = api_client.post(
+                f"{confirm_reset_password_url}",
+                data={"token": token, "password": "Password@123"},
+            )
             assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_reset_password_invalid_http_method(
+    def test_confirm_reset_password_invalid_http_method(
         self,
         api_client,
-        reset_password_url,
+        confirm_reset_password_url,
         fake_new_user,
     ):
         """
@@ -418,9 +426,8 @@ class TestAuthorViewSet:
 
         token = create_token(fake_new_user.email)
 
-        response = api_client.post(
-            f"{reset_password_url}?token={token}",
-            data={},
+        response = api_client.get(
+            f"{confirm_reset_password_url}",
             format="json",
         )
 
@@ -428,7 +435,7 @@ class TestAuthorViewSet:
 
         data = {"token": token}
         response = api_client.patch(
-            f"{reset_password_url}?token={token}",
+            f"{confirm_reset_password_url}",
             data=data,
             format="json",
         )

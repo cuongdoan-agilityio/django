@@ -3,6 +3,7 @@ from django.conf import settings
 from sendgrid import SendGridAPIClient
 
 from accounts.tasks import send_welcome_email, send_password_reset_email
+from core.constants import URL
 
 
 class TestSendWelcomeEmail:
@@ -73,7 +74,7 @@ class TestSendPasswordResetEmail:
                 "user_name": reset_email_data["username"],
                 "sender_name": settings.SENDER_NAME,
                 "subject": "Verify Password Change",
-                "activation_link": f"{settings.APP_DOMAIN}/api/v1/auth/reset-password/?token={reset_email_data['token']}",
+                "activation_link": f"{settings.APP_DOMAIN}/{URL['RESET_PASSWORD']}/?token={reset_email_data['token']}",
             },
             settings.VERIFY_RESET_PASSWORD_TEMPLATE_ID,
         )
