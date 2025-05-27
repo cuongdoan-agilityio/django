@@ -60,15 +60,3 @@ user_profile_response_schema = OpenApiResponse(
         ),
     ],
 )
-
-reset_password_response_schema = OpenApiResponse(
-    response=BaseDetailSerializer,
-    description="Reset password success",
-    examples=[
-        OpenApiExample(
-            "Reset password success",
-            value={"data": {"password": "Password"}},
-            response_only=True,
-        ),
-    ],
-)

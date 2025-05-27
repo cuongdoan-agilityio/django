@@ -199,8 +199,8 @@ Setup environments: create `.env` follow `.env.example` with your own settings
 - Run server: `uv run ./src/manage.py runserver`
 - Run Celery:
   - cd to `src` folder.
-  - celery -A config worker --pool=solo --loglevel=info
-  - celery -A config beat --loglevel=info
+  - `celery -A config worker --pool=solo --loglevel=info`
+  - `celery -A config beat --loglevel=info`
 - Swagger documents: `http://127.0.0.1:8000/docs/swagger/`
 - Admin page: `http://127.0.0.1:8000/admin-dashboard/`
 7. Init data
@@ -226,11 +226,11 @@ Setup environments: create `.env` follow `.env.example` with your own settings
   - Signup:
     - POST: /api/v1/auth/signup/
   - Confirm Signup Email
-    - GET: /api/v1/auth/confirm-signup-email/?token=xxxxxxxxx
+    - POST: /api/v1/auth/confirm-signup-email
+  - Reset Password
+    - POST: /api/v1/auth/reset-password/
   - Confirm Reset Password
     - POST: /api/v1/auth/confirm-reset-password/
-  - Reset Password
-    - GET: /api/v1/auth/reset-password/?token=xxxxxxxxx
 
 ###  User
   - Get profile

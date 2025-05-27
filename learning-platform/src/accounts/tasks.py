@@ -2,6 +2,7 @@ from celery import shared_task
 from django.conf import settings
 
 from core.helpers import send_email
+from core.constants import URL
 
 
 @shared_task(bind=True, max_retries=2, default_retry_delay=60)
@@ -33,7 +34,7 @@ def send_password_reset_email(self, user: dict, token: str) -> None:
             "user_name": user.get("username"),
             "sender_name": settings.SENDER_NAME,
             "subject": "Verify Password Change",
-            "activation_link": f"{settings.APP_DOMAIN}/api/v1/auth/reset-password/?token={token}",
+            "activation_link": f"{settings.APP_DOMAIN}/{URL['RESET_PASSWORD']}/?token={token}",
         }
 
         send_email(
