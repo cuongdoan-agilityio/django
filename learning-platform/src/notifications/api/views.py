@@ -4,7 +4,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django_filters import rest_framework as filters
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 
-from core.api_views import BaseModelViewSet
+from core.api_views import BaseGenericViewSet
+from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin, ListModelMixin
 from core.permissions import IsOwner
 from core.serializers import (
     BaseBadRequestResponseSerializer,
@@ -59,7 +60,9 @@ class NotificationFilter(filters.FilterSet):
         },
     ),
 )
-class NotificationViewSet(BaseModelViewSet):
+class NotificationViewSet(
+    BaseGenericViewSet, ListModelMixin, RetrieveModelMixin, UpdateModelMixin
+):
     """
     A viewset for handling notifications.
     This viewset allows users to list, retrieve, and update their notifications.

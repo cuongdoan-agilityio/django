@@ -1,6 +1,6 @@
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet, ViewSet, GenericViewSet
+from rest_framework.viewsets import ViewSet, GenericViewSet
 
 
 class CommonViewSet:
@@ -106,12 +106,6 @@ class CommonViewSet:
 class BaseViewSet(CommonViewSet, ViewSet):
     """
     Base view set for views accept DTO data rather than Django model
-    """
-
-
-class BaseModelViewSet(CommonViewSet, ModelViewSet):
-    """
-    Base view set for Django model
     """
 
 
