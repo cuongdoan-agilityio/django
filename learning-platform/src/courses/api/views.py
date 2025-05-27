@@ -4,7 +4,12 @@ from django_redis import get_redis_connection
 import django_filters
 from rest_framework import filters
 from rest_framework.decorators import action
-from rest_framework.mixins import ListModelMixin
+from rest_framework.mixins import (
+    ListModelMixin,
+    RetrieveModelMixin,
+    UpdateModelMixin,
+    CreateModelMixin,
+)
 from django.db.models import Count
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
@@ -13,7 +18,7 @@ from rest_framework.permissions import AllowAny
 from urllib.parse import urlencode
 
 from accounts.api.serializers import UserBaseSerializer
-from core.api_views import BaseModelViewSet, BaseGenericViewSet
+from core.api_views import BaseGenericViewSet
 from core.serializers import (
     BaseSuccessResponseSerializer,
     BaseBadRequestResponseSerializer,
@@ -156,7 +161,14 @@ class CustomFilter(django_filters.FilterSet):
         },
     ),
 )
-class CourseViewSet(BaseModelViewSet, FormatDataMixin):
+class CourseViewSet(
+    FormatDataMixin,
+    BaseGenericViewSet,
+    ListModelMixin,
+    RetrieveModelMixin,
+    UpdateModelMixin,
+    CreateModelMixin,
+):
     """
     Course view set
 
