@@ -5,6 +5,7 @@ SPECIAL_CHARACTER_REGEX = r'[!@#$%^&*()_+="-]'
 
 URL = {
     "VERIFY_SIGNUP": "verify-signup",
+    "RESET_PASSWORD": "reset-password",
 }
 
 

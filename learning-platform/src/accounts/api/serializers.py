@@ -30,6 +30,14 @@ class TokenSerializer(serializers.Serializer):
     token = serializers.CharField()
 
 
+class ConfirmResetPasswordSerializer(TokenSerializer):
+    """
+    Serializer for confirm reset password.
+    """
+
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+
+
 class LoginResponseSerializer(serializers.Serializer):
     """
     Serializer for the login response.
@@ -103,8 +111,7 @@ class UserActivateSerializer(serializers.ModelSerializer):
 
         instance.is_active = validated_data.get("is_active", True)
         instance.password = None
-        instance.save()
-
+        instance.save(update_fields=["is_active"])
         return instance
 
 
@@ -246,7 +253,7 @@ class UserProfileDataSerializer(UserBaseSerializer):
         ]
 
 
-class VerifyResetUserPasswordSerializer(serializers.Serializer):
+class ResetUserPasswordSerializer(serializers.Serializer):
     """
     Serializer for verify reset user passwords.
     """

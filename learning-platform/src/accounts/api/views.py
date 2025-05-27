@@ -28,10 +28,7 @@ from core.error_messages import ErrorMessage
 from core.helpers import create_token
 from core.permissions import IsAdminOrOwner
 
-from .response_schema import (
-    user_profile_response_schema,
-    reset_password_response_schema,
-)
+from .response_schema import user_profile_response_schema
 from .serializers import (
     LoginRequestSerializer,
     LoginResponseSerializer,
@@ -40,9 +37,10 @@ from .serializers import (
     SpecializationSerializer,
     UserProfileDataSerializer,
     UserActivateSerializer,
-    VerifyResetUserPasswordSerializer,
+    ResetUserPasswordSerializer,
     ResetUserPasswordResponseSerializer,
     TokenSerializer,
+    ConfirmResetPasswordSerializer,
 )
 
 User = get_user_model()
@@ -84,7 +82,7 @@ User = get_user_model()
     ),
     confirm_reset_password=extend_schema(
         description="Confirm reset user password using a token.",
-        request=VerifyResetUserPasswordSerializer,
+        request=ConfirmResetPasswordSerializer,
         responses={
             200: BaseSuccessResponseSerializer,
             400: BaseBadRequestResponseSerializer,
@@ -92,17 +90,9 @@ User = get_user_model()
     ),
     reset_password=extend_schema(
         description="Reset user password using a token.",
-        parameters=[
-            OpenApiParameter(
-                name="token",
-                description="Token to verify reset password.",
-                location=OpenApiParameter.QUERY,
-                type=str,
-                required=True,
-            )
-        ],
+        request=ResetUserPasswordSerializer,
         responses={
-            200: reset_password_response_schema,
+            200: BaseSuccessResponseSerializer,
             400: BaseBadRequestResponseSerializer,
         },
     ),
@@ -195,7 +185,7 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
 
         try:
             signed_value = force_str(urlsafe_base64_decode(token))
-            user_id = signer.unsign(signed_value, max_age=60)
+            user_id = signer.unsign(signed_value, max_age=24 * 3600)
             user = User.objects.get(id=user_id)
             if not user.is_active:
                 serializer = UserActivateSerializer(
@@ -217,13 +207,13 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         except User.DoesNotExist:
             return self.bad_request(field="user", message=ErrorMessage.USER_NOT_FOUND)
 
-    @action(detail=False, methods=["post"], url_path="confirm-reset-password")
-    def confirm_reset_password(self, request):
+    @action(detail=False, methods=["post"], url_path="reset-password")
+    def reset_password(self, request):
         """
         Confirm reset the password of a user using a token.
         """
 
-        serializer = VerifyResetUserPasswordSerializer(data=request.data)
+        serializer = ResetUserPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data["email"]
 
@@ -244,15 +234,16 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         except Exception as e:
             return self.bad_request(message=str(e))
 
-    @action(detail=False, methods=["get"], url_path="reset-password")
-    def reset_password(self, request):
+    @action(detail=False, methods=["POST"], url_path="confirm-reset-password")
+    def confirm_reset_password(self, request):
         """
         Reset the password of a user using a token.
         """
 
-        token = request.query_params.get("token", "")
-        serializer = TokenSerializer(data={"token": token})
+        serializer = ConfirmResetPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        token = serializer.validated_data["token"]
+        password = serializer.validated_data["password"]
 
         signer = TimestampSigner()
 
@@ -260,15 +251,20 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
             signed_value = force_str(urlsafe_base64_decode(token))
             email = signer.unsign(signed_value, max_age=24 * 3600)
             user = User.objects.filter(email=email).first()
-            # TODO: need replace with other password
-            new_password = "Password@123"
-            user.password = new_password
-            user.save()
-            response_data = self.format_data({"password": new_password})
-            return self.ok(response_data)
+            user.password = password
+            user.save(update_fields=["password"])
+            response = BaseSuccessResponseSerializer({"data": {"success": True}})
+            Token.objects.filter(user=user).delete()
+            return self.ok(response.data)
 
-        except (BadSignature, SignatureExpired, User.DoesNotExist, ValueError):
+        except SignatureExpired:
+            return self.bad_request(field="token", message=ErrorMessage.TOKEN_EXPIRED)
+
+        except (BadSignature, ValueError):
             return self.bad_request(field="token", message=ErrorMessage.TOKEN_INVALID)
+
+        except User.DoesNotExist:
+            return self.bad_request(field="user", message=ErrorMessage.USER_NOT_FOUND)
 
 
 class UserViewSet(

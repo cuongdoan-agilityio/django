@@ -182,7 +182,7 @@ def reset_password_url(root_url):
 
 
 @pytest.fixture
-def verify_reset_password_url(root_url):
+def confirm_reset_password_url(root_url):
     """
     Fixture to create verify reset password url.
     """
@@ -210,7 +210,7 @@ def signer():
 
 
 @pytest.fixture
-def verify_reset_password_data(fake_new_user):
+def reset_password_data(fake_new_user):
     """
     Fixture to reset password data.
     """
