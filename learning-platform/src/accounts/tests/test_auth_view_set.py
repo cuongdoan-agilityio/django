@@ -133,7 +133,10 @@ class TestAuthorViewSet:
         """
 
         token = create_token(fake_new_user.id)
-        response = api_client.get(f"{verify_url}?token={token}")
+        response = api_client.post(
+            f"{verify_url}",
+            data={"token": token},
+        )
         assert response.status_code == status.HTTP_200_OK
 
         fake_new_user.refresh_from_db()
@@ -152,7 +155,7 @@ class TestAuthorViewSet:
         Test verifying email with an invalid token.
         """
 
-        response = api_client.get(f"{verify_url}?token=invalid_token")
+        response = api_client.post(f"{verify_url}", data={"token": "invalid_token"})
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "errors" in response.data
@@ -171,7 +174,7 @@ class TestAuthorViewSet:
 
         with patch("django.core.signing.TimestampSigner.unsign") as mock_unsign:
             mock_unsign.side_effect = SignatureExpired("Token has expired")
-            response = api_client.get(f"{verify_url}?token={token}")
+            response = api_client.post(f"{verify_url}", data={"token": token})
 
             assert response.status_code == status.HTTP_400_BAD_REQUEST
             assert "errors" in response.data
@@ -190,7 +193,7 @@ class TestAuthorViewSet:
         signed_value = signer.sign(value)
         token = urlsafe_base64_encode(force_bytes(signed_value))
 
-        response = api_client.get(f"{verify_url}?token={token}")
+        response = api_client.post(f"{verify_url}", data={"token": token})
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "errors" in response.data
@@ -211,7 +214,10 @@ class TestAuthorViewSet:
         fake_new_user.save()
         token = create_token(fake_new_user.id)
 
-        response = api_client.get(f"{verify_url}?token={token}")
+        response = api_client.post(
+            f"{verify_url}",
+            data={"token": token},
+        )
 
         fake_new_user.refresh_from_db()
         assert response.status_code == status.HTTP_200_OK

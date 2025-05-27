@@ -59,4 +59,4 @@ CACHES = {
 
 
 # Domain
-API_DOMAIN = env("API_DOMAIN", default="http://localhost:8000")
+APP_DOMAIN = env("APP_DOMAIN", default="http://localhost:8000")

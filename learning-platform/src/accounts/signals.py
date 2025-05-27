@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 
 from core.helpers import send_email, create_token
+from core.constants import URL
 from courses.models import Course
 
 
@@ -21,7 +22,7 @@ def send_verify_email(sender, instance, created, **kwargs):
             "user_name": instance.username,
             "sender_name": settings.SENDER_NAME,
             "subject": "Verification Email",
-            "activation_link": f"{settings.API_DOMAIN}/api/v1/auth/confirm-signup-email/?token={create_token(instance.id)}",
+            "activation_link": f"{settings.APP_DOMAIN}/{URL['VERIFY_SIGNUP']}/?token={create_token(instance.id)}",
         }
         send_email(
             instance.email, dynamic_template_data, settings.VERIFY_SIGNUP_TEMPLATE_ID

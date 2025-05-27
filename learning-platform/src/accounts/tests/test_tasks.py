@@ -73,7 +73,7 @@ class TestSendPasswordResetEmail:
                 "user_name": reset_email_data["username"],
                 "sender_name": settings.SENDER_NAME,
                 "subject": "Verify Password Change",
-                "activation_link": f"{settings.API_DOMAIN}/api/v1/auth/reset-password/?token={reset_email_data['token']}",
+                "activation_link": f"{settings.APP_DOMAIN}/api/v1/auth/reset-password/?token={reset_email_data['token']}",
             },
             settings.VERIFY_RESET_PASSWORD_TEMPLATE_ID,
         )

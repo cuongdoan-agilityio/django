@@ -181,21 +181,21 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         response = BaseSuccessResponseSerializer({"data": {"success": True}})
         return self.ok(response.data)
 
-    @action(detail=False, methods=["get"], url_path="confirm-signup-email")
+    @action(detail=False, methods=["post"], url_path="confirm-signup-email")
     def confirm_signup_email(self, request):
         """
         Confirm the email of a user using a token.
         """
 
-        token = request.query_params.get("token", "")
-        serializer = TokenSerializer(data={"token": token})
+        serializer = TokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        token = serializer.validated_data["token"]
         signer = TimestampSigner()
 
         try:
             signed_value = force_str(urlsafe_base64_decode(token))
-            user_id = signer.unsign(signed_value, max_age=24 * 3600)
+            user_id = signer.unsign(signed_value, max_age=60)
             user = User.objects.get(id=user_id)
             if not user.is_active:
                 serializer = UserActivateSerializer(
@@ -208,8 +208,14 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
             response = BaseSuccessResponseSerializer({"data": {"success": True}})
             return self.ok(response.data)
 
-        except (BadSignature, SignatureExpired, User.DoesNotExist, ValueError):
+        except SignatureExpired:
+            return self.bad_request(field="token", message=ErrorMessage.TOKEN_EXPIRED)
+
+        except (BadSignature, ValueError):
             return self.bad_request(field="token", message=ErrorMessage.TOKEN_INVALID)
+
+        except User.DoesNotExist:
+            return self.bad_request(field="user", message=ErrorMessage.USER_NOT_FOUND)
 
     @action(detail=False, methods=["post"], url_path="confirm-reset-password")
     def confirm_reset_password(self, request):
