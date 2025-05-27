@@ -1,5 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
+from rest_framework import status
 
 
 def process_exception(exception, context) -> Response:
@@ -24,5 +25,14 @@ def process_exception(exception, context) -> Response:
             customized_response["errors"].append(error)
 
         response.data = customized_response
+    else:
+        return Response(
+            data={
+                "errors": {
+                    "message": str(exception),
+                }
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
     return response
