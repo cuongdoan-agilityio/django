@@ -276,7 +276,7 @@ class CourseViewSet(
         cache_keys = self.get_cache_key_by_regex("course_list:.*")
         self.delete_cache(cache_keys)
 
-        response_data = self.format_data(course)
+        response_data = self.serialize_data(course)
         return self.created(response_data)
 
     def partial_update(self, request, *args, **kwargs):
@@ -308,7 +308,7 @@ class CourseViewSet(
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         course = serializer.save()
-        response_data = self.format_data(course)
+        response_data = self.serialize_data(course)
 
         # Remove cache, include top course
         cache_keys = self.get_cache_key_by_regex("course_list:.*")

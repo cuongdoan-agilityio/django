@@ -136,7 +136,7 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
 
         if user is not None:
             token, _ = Token.objects.get_or_create(user=user)
-            response_data = self.format_data({"token": token.key})
+            response_data = self.serialize_data({"token": token.key})
 
             return self.ok(response_data)
         else:
@@ -307,7 +307,7 @@ class UserViewSet(
 
         self.check_object_permissions(request, user)
 
-        response_data = self.format_data(user)
+        response_data = self.serialize_data(user)
         return self.ok(response_data)
 
     @extend_schema(
@@ -343,7 +343,7 @@ class UserViewSet(
         serializer = UserProfileUpdateSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         updated_user = serializer.save()
-        response_data = self.format_data(updated_user)
+        response_data = self.serialize_data(updated_user)
         return self.ok(response_data)
 
 
