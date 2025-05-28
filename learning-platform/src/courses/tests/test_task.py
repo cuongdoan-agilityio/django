@@ -154,21 +154,11 @@ class TestReportToInstructorTask:
         Test that the report_to_instructor task generates the CSV file and sends the email successfully.
         """
 
-        instructor_data = {
-            "id": fake_instructor.id,
-            "email": fake_instructor.email,
-            "username": fake_instructor.username,
-        }
-        courses_data = [
-            {"title": math_enrollment.course.title, "enrollment_count": 10},
-            {"title": music_enrollment.course.title, "enrollment_count": 15},
-        ]
-
-        report_to_instructor(instructor_data, courses_data)
+        report_to_instructor(fake_instructor.id)
         mock_send_report_email.assert_called_once()
 
         _, kwargs = mock_send_report_email.call_args
-        assert kwargs["instructor"] == instructor_data
+        assert kwargs["instructor"] == fake_instructor
         assert "csv_file" in kwargs
 
     @patch("courses.tasks.send_report_email")
@@ -181,18 +171,8 @@ class TestReportToInstructorTask:
         Test that the report_to_instructor task handles no courses gracefully.
         """
 
-        instructor_data = {
-            "id": fake_instructor.id,
-            "email": fake_instructor.email,
-            "username": fake_instructor.username,
-        }
-        courses_data = []
-        report_to_instructor(instructor_data, courses_data)
-        mock_send_report_email.assert_called_once()
-
-        _, kwargs = mock_send_report_email.call_args
-        assert kwargs["instructor"] == instructor_data
-        assert "csv_file" in kwargs
+        report_to_instructor(fake_instructor.id)
+        mock_send_report_email.assert_not_called()
 
     @patch("courses.tasks.send_report_email")
     def test_report_to_instructor_email_failure(
@@ -202,19 +182,9 @@ class TestReportToInstructorTask:
         Test that the report_to_instructor task handles email sending failure gracefully.
         """
 
-        instructor_data = {
-            "id": fake_instructor.id,
-            "email": fake_instructor.email,
-            "username": fake_instructor.username,
-        }
-        courses_data = [
-            {"title": math_enrollment.course.title, "enrollment_count": 10},
-            {"title": music_enrollment.course.title, "enrollment_count": 15},
-        ]
-
         mock_send_report_email.side_effect = Exception("Email sending failed")
 
         with pytest.raises(Exception, match="Email sending failed"):
-            report_to_instructor(instructor_data, courses_data)
+            report_to_instructor(fake_instructor.id)
 
         mock_send_report_email.assert_called_once()

@@ -1,5 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
+from core.helpers import send_capture_message
 from rest_framework import status
 
 
@@ -26,6 +27,7 @@ def process_exception(exception, context) -> Response:
 
         response.data = customized_response
     else:
+        send_capture_message(f"[error]{str(exception)}")
         return Response(
             data={
                 "errors": {

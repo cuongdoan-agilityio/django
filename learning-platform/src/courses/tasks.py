@@ -5,8 +5,9 @@ from io import StringIO
 from datetime import datetime
 
 from django.contrib.auth import get_user_model
-from dateutil.relativedelta import relativedelta
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
+from dateutil.relativedelta import relativedelta
 from celery import shared_task, group
 
 from core.constants import Role, Status
@@ -32,18 +33,32 @@ def clean_up_inactive_courses():
 
 
 @shared_task(bind=True, max_retries=2, default_retry_delay=60)
-def report_to_instructor(self, instructor, courses):
+def report_to_instructor(self, instructor_id):
     """
     Sends a monthly report (a CSV file sent via email) to the instructor.
     """
 
     try:
+        instructor = User.objects.filter(id=instructor_id).first()
+
+        if not instructor:
+            logging.error("No instructor found")
+            raise ObjectDoesNotExist(
+                f"Instructor with ID {instructor_id} does not exist."
+            )
+
+        courses = instructor.courses.prefetch_related("enrollments").annotate(
+            enrollment_count=Count("enrollments")
+        )
+        if not courses:
+            return
+
         # TODO: should move logic create CSV to service.
         csv_file = StringIO()
         csv_writer = csv.writer(csv_file)
         csv_writer.writerow(["Course Title", "Number of Enrolled"])
         for course in courses:
-            csv_writer.writerow([course.get("title"), course.get("enrollment_count")])
+            csv_writer.writerow([course.title, course.enrollment_count])
 
         csv_file.seek(0)
         encoded_csv = base64.b64encode(csv_file.getvalue().encode()).decode()
@@ -52,47 +67,31 @@ def report_to_instructor(self, instructor, courses):
 
     except Exception as exc:
         logger.error(
-            f"Failed to process email for instructor {instructor.get('id')}: {str(exc)}"
+            f"Failed to process email for instructor {instructor.id}: {str(exc)}"
         )
         raise self.retry(exc=exc)
 
 
-@shared_task(bind=True, max_retries=2, default_retry_delay=60)
-def send_monthly_report(self):
+@shared_task
+def send_monthly_report():
     """
     Sends a monthly report (a CSV file sent via email) to the instructor
     about statistical number of enrolled students per their course.
     """
 
-    instructors = User.objects.filter(role=Role.INSTRUCTOR.value).prefetch_related(
-        "courses__enrollments"
-    )
     tasks = []
+    instructors = User.objects.filter(role=Role.INSTRUCTOR.value)
+    if instructors.exists() is False:
+        return
+
     try:
         for instructor in instructors:
-            courses = instructor.courses.annotate(enrollment_count=Count("enrollments"))
-            if not courses:
-                continue
-
-            instructor_data = {
-                "id": instructor.id,
-                "email": instructor.email,
-                "username": instructor.username,
-            }
-            courses_data = [
-                {"title": course.title, "enrollment_count": course.enrollment_count}
-                for course in courses
-            ]
-            tasks.append(
-                report_to_instructor.s(
-                    instructor=instructor_data,
-                    courses=courses_data,
-                )
-            )
+            tasks.append(report_to_instructor.s(instructor.id))
 
         if tasks:
             job = group(tasks)
             job.apply_async()
 
     except Exception as exc:
-        raise self.retry(exc=exc)
+        logger.error(f"Unexpected error in send_monthly_report: {str(exc)}")
+        raise
