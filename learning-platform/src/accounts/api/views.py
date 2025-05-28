@@ -232,7 +232,7 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
             response = BaseSuccessResponseSerializer({"data": {"success": True}})
             return self.ok(response.data)
         except Exception as e:
-            return self.bad_request(message=str(e))
+            return self.internal_server_error(message=str(e))
 
     @action(detail=False, methods=["POST"], url_path="confirm-reset-password")
     def confirm_reset_password(self, request):
