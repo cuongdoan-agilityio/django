@@ -1,16 +1,21 @@
 import pytest
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from django.contrib.auth import get_user_model
 
 from core.constants import Role, Status
 from courses.models import Course
-from courses.tasks import clean_up_inactive_courses, send_monthly_report
+from courses.tasks import (
+    clean_up_inactive_courses,
+    send_monthly_report,
+    report_to_instructor,
+)
 from courses.factories import CourseFactory
 
 
 User = get_user_model()
+
 
 @pytest.mark.django_db
 class TestCleanUpInactiveCoursesTask:
@@ -87,16 +92,26 @@ class TestSendMonthlyReportTask:
     Unit tests for the send_monthly_report Celery task.
     """
 
-    def test_send_monthly_report_success(self, fake_instructor, math_enrollment, math_enrollment_other, music_enrollment):
+    @patch("courses.tasks.report_to_instructor.s")
+    @patch("courses.tasks.group")
+    def test_send_monthly_report_success(
+        self,
+        mock_group,
+        mock_report_to_instructor,
+        fake_instructor,
+        math_enrollment,
+        math_enrollment_other,
+        music_enrollment,
+    ):
         """
         Test that the monthly report is sent successfully to instructors.
         """
 
-        with patch("courses.tasks.send_report_email", return_value=None) as mock_send_report_email:
-            send_monthly_report()
-            mock_send_report_email.assert_called_once()
-            _, kwargs = mock_send_report_email.call_args
-            assert kwargs["instructor"] == fake_instructor
+        mock_group.return_value.apply_async = MagicMock()
+
+        send_monthly_report()
+        assert mock_report_to_instructor.called
+        assert mock_report_to_instructor.call_count == 1
 
     def test_no_courses_for_instructor(self):
         """
@@ -105,7 +120,9 @@ class TestSendMonthlyReportTask:
 
         Course.objects.all().delete()
 
-        with patch("courses.tasks.send_report_email", return_value=None) as mock_send_report_email:
+        with patch(
+            "courses.tasks.send_report_email", return_value=None
+        ) as mock_send_report_email:
             send_monthly_report()
             mock_send_report_email.assert_not_called()
 
@@ -116,16 +133,88 @@ class TestSendMonthlyReportTask:
 
         User.objects.filter(role=Role.INSTRUCTOR.value).delete()
 
-        with patch("courses.tasks.send_report_email", return_value=None) as mock_send_report_email:
+        with patch(
+            "courses.tasks.send_report_email", return_value=None
+        ) as mock_send_report_email:
             send_monthly_report()
             mock_send_report_email.assert_not_called()
 
-    def test_email_sending_failure(self, fake_instructor, math_course):
+
+@pytest.mark.django_db
+class TestReportToInstructorTask:
+    """
+    Unit tests for the report_to_instructor Celery task.
+    """
+
+    @patch("courses.tasks.send_report_email")
+    def test_report_to_instructor_success(
+        self, mock_send_report_email, fake_instructor, math_enrollment, music_enrollment
+    ):
         """
-        Test that the task handles email sending failure gracefully.
+        Test that the report_to_instructor task generates the CSV file and sends the email successfully.
         """
 
-        with patch("courses.tasks.send_report_email", side_effect=Exception("Email sending failed")) as mock_send_report_email:
-            with pytest.raises(Exception, match="Email sending failed"):
-                send_monthly_report()
-            mock_send_report_email.assert_called_once()
+        instructor_data = {
+            "id": fake_instructor.id,
+            "email": fake_instructor.email,
+            "username": fake_instructor.username,
+        }
+        courses_data = [
+            {"title": math_enrollment.course.title, "enrollment_count": 10},
+            {"title": music_enrollment.course.title, "enrollment_count": 15},
+        ]
+
+        report_to_instructor(instructor_data, courses_data)
+        mock_send_report_email.assert_called_once()
+
+        _, kwargs = mock_send_report_email.call_args
+        assert kwargs["instructor"] == instructor_data
+        assert "csv_file" in kwargs
+
+    @patch("courses.tasks.send_report_email")
+    def test_report_to_instructor_no_courses(
+        self,
+        mock_send_report_email,
+        fake_instructor,
+    ):
+        """
+        Test that the report_to_instructor task handles no courses gracefully.
+        """
+
+        instructor_data = {
+            "id": fake_instructor.id,
+            "email": fake_instructor.email,
+            "username": fake_instructor.username,
+        }
+        courses_data = []
+        report_to_instructor(instructor_data, courses_data)
+        mock_send_report_email.assert_called_once()
+
+        _, kwargs = mock_send_report_email.call_args
+        assert kwargs["instructor"] == instructor_data
+        assert "csv_file" in kwargs
+
+    @patch("courses.tasks.send_report_email")
+    def test_report_to_instructor_email_failure(
+        self, mock_send_report_email, fake_instructor, math_enrollment, music_enrollment
+    ):
+        """
+        Test that the report_to_instructor task handles email sending failure gracefully.
+        """
+
+        instructor_data = {
+            "id": fake_instructor.id,
+            "email": fake_instructor.email,
+            "username": fake_instructor.username,
+        }
+        courses_data = [
+            {"title": math_enrollment.course.title, "enrollment_count": 10},
+            {"title": music_enrollment.course.title, "enrollment_count": 15},
+        ]
+
+        mock_send_report_email.side_effect = Exception("Email sending failed")
+
+        with pytest.raises(Exception, match="Email sending failed"):
+            report_to_instructor(instructor_data, courses_data)
+
+        mock_send_report_email.assert_called_once()
