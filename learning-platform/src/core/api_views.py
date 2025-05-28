@@ -102,6 +102,26 @@ class CommonViewSet:
 
         return super().finalize_response(request, response, *args, **kwargs)
 
+    def internal_server_error(
+        self,
+        field=None,
+        message="An unexpected error occurred. Please try again later.",
+    ):
+        """
+        Return internal server error response with message content.
+        """
+
+        response_data = {
+            "errors": {
+                "field": field,
+                "message": message,
+            },
+        }
+
+        return Response(
+            data=response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 
 class BaseViewSet(CommonViewSet, ViewSet):
     """
