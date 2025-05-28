@@ -84,14 +84,29 @@ def send_report_email(instructor, csv_file):
     try:
         message = Mail(
             from_email=settings.DEFAULT_FROM_EMAIL,
-            to_emails=instructor.email,
+            to_emails=instructor.get("email"),
             subject="Monthly Enrollment Report",
-            html_content="Please find attached the monthly enrollment report.",
+            html_content=f"""
+            <html>
+                <body>
+                    <p>Dear {instructor.get('username')},</p>
+                    <p>
+                        Please find attached the monthly enrollment report for your courses.
+                        This report contains detailed information about the number of students enrolled in each course.
+                    </p>
+                    <p>
+                        If you have any questions or need further assistance, feel free to contact us.
+                    </p>
+                    <p style="margin-top: 20px;">Best regards,</p>
+                    <p><strong>The Student Course Management Team</strong></p>
+                </body>
+            </html>
+            """,
         )
 
         attachment = Attachment(
             FileContent(csv_file),
-            FileName(f"{instructor.username}_report.csv"),
+            FileName(f"{instructor.get('username')}_report.csv"),
             FileType("text/csv"),
             Disposition("attachment"),
         )
