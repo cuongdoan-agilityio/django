@@ -179,3 +179,62 @@ class TestCourseServices:
         with pytest.raises(EnrollmentException) as exc_info:
             CourseServices().handle_enrollment(user=fake_student, course=math_course)
         assert exc_info.value.code == "STUDENT_ALREADY_ENROLLED"
+
+    def test_handle_leave_course_success(
+        self,
+        fake_student,
+        fake_course,
+        fake_enrollment,
+    ):
+        """
+        Test that a student successfully leaves a course.
+        """
+
+        CourseServices().handle_leave_course(user=fake_student, course=fake_course)
+
+        assert not fake_course.students.filter(id=fake_student.id).exists()
+
+    def test_handle_leave_course_invalid_student(
+        self,
+        fake_admin,
+        fake_course,
+    ):
+        """
+        Test that leaving a course fails for invalid student data.
+        """
+
+        with pytest.raises(UserException) as exc_info:
+            CourseServices().handle_leave_course(
+                user=fake_admin, course=fake_course, data={"student": str(uuid4())}
+            )
+        assert exc_info.value.code == "INVALID_USER_ID"
+
+    def test_handle_leave_course_student_not_enrolled(
+        self,
+        fake_student,
+        fake_course,
+    ):
+        """
+        Test that leaving a course fails if the student is not enrolled.
+        """
+
+        with pytest.raises(EnrollmentException) as exc_info:
+            CourseServices().handle_leave_course(user=fake_student, course=fake_course)
+        assert exc_info.value.code == "STUDENT_NOT_ENROLLED"
+
+    def test_handle_leave_course_with_admin(
+        self,
+        fake_student,
+        fake_admin,
+        math_course,
+        math_enrollment,
+    ):
+        """
+        Test that a superuser can remove a student from a course.
+        """
+
+        CourseServices().handle_leave_course(
+            user=fake_admin, course=math_course, data={"student": str(fake_student.id)}
+        )
+
+        assert not math_course.students.filter(id=fake_student.id).exists()
