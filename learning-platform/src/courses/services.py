@@ -68,7 +68,7 @@ class CourseServices:
 
         return course
 
-    def handle_enrollment(self, request, course):
+    def handle_enrollment(self, user, course, data=None):
         """
         Handles the enrollment of a student in a course.
 
@@ -89,13 +89,13 @@ class CourseServices:
         if course.is_full:
             raise CourseException(code="COURSE_IS_FULL")
 
-        if request.user.is_superuser:
+        if user.is_superuser:
             try:
-                student = User.objects.get(id=request.data["student"])
+                student = User.objects.get(id=data["student"])
             except User.DoesNotExist:
                 raise UserException(code="INVALID_USER_ID")
         else:
-            student = request.user
+            student = user
 
         # Validate if the student is already enrolled
         if course.students.filter(id=student.id).exists():

@@ -324,7 +324,9 @@ class CourseViewSet(
         course = self.get_object()
 
         try:
-            CourseServices().handle_enrollment(request=request, course=course)
+            CourseServices().handle_enrollment(
+                user=request.user, course=course, data=serializer.validated_data
+            )
         except CourseException as exc:
             return self.bad_request(field="course", message=str(exc.developer_message))
         except UserException as exc:
