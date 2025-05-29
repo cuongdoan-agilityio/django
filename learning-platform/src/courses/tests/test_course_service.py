@@ -1,8 +1,10 @@
 import pytest
+from uuid import uuid4
 from courses.services import CourseServices
 from courses.models import Course
 from core.constants import Status
 from core.error_messages import ErrorMessage
+from core.exceptions import CourseException, UserException, EnrollmentException
 
 
 @pytest.mark.django_db
@@ -120,3 +122,119 @@ class TestCourseServices:
         updated_course = CourseServices().handle_partial_update(fake_course, data)
 
         assert updated_course.title == fake_course.title
+
+    def test_handle_enrollment_success(self, fake_student, fake_course):
+        """
+        Test that a student is successfully enrolled in a course.
+        """
+
+        CourseServices().handle_enrollment(user=fake_student, course=fake_course)
+
+        assert fake_course.students.filter(id=fake_student.id).exists()
+
+    def test_handle_enrollment_inactive_course(self, fake_student, fake_course):
+        """
+        Test that enrollment fails for inactive courses.
+        """
+
+        fake_course.status = Status.INACTIVE.value
+        fake_course.save()
+
+        with pytest.raises(CourseException) as exc_info:
+            CourseServices().handle_enrollment(user=fake_student, course=fake_course)
+
+        assert exc_info.value.code == "INACTIVE_COURSE"
+
+    def test_handle_enrollment_course_full(
+        self, fake_student, math_enrollment, math_enrollment_other, math_course
+    ):
+        """
+        Test that enrollment fails when the course is full.
+        """
+
+        with pytest.raises(CourseException) as exc_info:
+            CourseServices().handle_enrollment(user=fake_student, course=math_course)
+        assert exc_info.value.code == "COURSE_IS_FULL"
+
+    def test_handle_enrollment_invalid_student(
+        self, fake_admin, authenticated_fake_admin, fake_course, fake_student
+    ):
+        """
+        Test that enrollment fails for invalid student data.
+        """
+
+        with pytest.raises(UserException) as exc_info:
+            CourseServices().handle_enrollment(
+                user=fake_admin, course=fake_course, data={"student": str(uuid4())}
+            )
+        assert exc_info.value.code == "INVALID_USER_ID"
+
+    def test_handle_enrollment_student_already_enrolled(
+        self, math_course, math_enrollment, fake_student
+    ):
+        """
+        Test that enrollment fails if the student is already enrolled.
+        """
+
+        with pytest.raises(EnrollmentException) as exc_info:
+            CourseServices().handle_enrollment(user=fake_student, course=math_course)
+        assert exc_info.value.code == "STUDENT_ALREADY_ENROLLED"
+
+    def test_handle_leave_course_success(
+        self,
+        fake_student,
+        fake_course,
+        fake_enrollment,
+    ):
+        """
+        Test that a student successfully leaves a course.
+        """
+
+        CourseServices().handle_leave_course(user=fake_student, course=fake_course)
+
+        assert not fake_course.students.filter(id=fake_student.id).exists()
+
+    def test_handle_leave_course_invalid_student(
+        self,
+        fake_admin,
+        fake_course,
+    ):
+        """
+        Test that leaving a course fails for invalid student data.
+        """
+
+        with pytest.raises(UserException) as exc_info:
+            CourseServices().handle_leave_course(
+                user=fake_admin, course=fake_course, data={"student": str(uuid4())}
+            )
+        assert exc_info.value.code == "INVALID_USER_ID"
+
+    def test_handle_leave_course_student_not_enrolled(
+        self,
+        fake_student,
+        fake_course,
+    ):
+        """
+        Test that leaving a course fails if the student is not enrolled.
+        """
+
+        with pytest.raises(EnrollmentException) as exc_info:
+            CourseServices().handle_leave_course(user=fake_student, course=fake_course)
+        assert exc_info.value.code == "STUDENT_NOT_ENROLLED"
+
+    def test_handle_leave_course_with_admin(
+        self,
+        fake_student,
+        fake_admin,
+        math_course,
+        math_enrollment,
+    ):
+        """
+        Test that a superuser can remove a student from a course.
+        """
+
+        CourseServices().handle_leave_course(
+            user=fake_admin, course=math_course, data={"student": str(fake_student.id)}
+        )
+
+        assert not math_course.students.filter(id=fake_student.id).exists()
