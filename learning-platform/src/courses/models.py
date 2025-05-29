@@ -74,6 +74,20 @@ class Course(AbstractBaseModel):
     def __str__(self):
         return self.title
 
+    def clean(self, *args, **kwargs):
+        """
+        Override the clear.
+        Prevent updating the course's status if there are students enrolled.
+        """
+
+        if not self._state.adding:
+            if (
+                self.status
+                and self.status == Status.INACTIVE.value
+                and self.enrollments.exists()
+            ):
+                raise ValidationError(ErrorMessage.COURSE_HAS_STUDENTS)
+
 
 class Enrollment(AbstractBaseModel):
     """
