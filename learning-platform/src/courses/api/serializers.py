@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from core.constants import Status
 from core.error_messages import ErrorMessage
-from courses.models import Course, Category, Enrollment
+from courses.models import Course, Category
 
 from accounts.api.serializers import UserBaseSerializer
 
@@ -91,6 +91,25 @@ class EnrollmentCreateOrEditSerializer(serializers.Serializer):
         required=False, help_text="The UUID of the student."
     )
 
+    def validate(self, data):
+        """
+        Validates the instructor value.
+        """
+
+        request = self.context.get("request")
+
+        if (
+            request
+            and request.user
+            and request.user.is_superuser
+            and not data.get("student")
+        ):
+            raise serializers.ValidationError(
+                {"student": ErrorMessage.STUDENT_DATA_REQUIRED}
+            )
+
+        return data
+
 
 class CourseUpdateSerializer(serializers.Serializer):
     """
@@ -111,50 +130,3 @@ class CourseUpdateSerializer(serializers.Serializer):
             raise serializers.ValidationError(ErrorMessage.CATEGORY_NOT_EXIST)
 
         return value
-
-
-class EnrollmentSerializer(serializers.ModelSerializer):
-    """
-    Enrollment serializer
-    """
-
-    class Meta:
-        model = Enrollment
-        fields = [
-            "course",
-            "student",
-        ]
-
-    def validate_course(self, instance):
-        """
-        Validates the course field.
-        """
-
-        if instance.status != "activate":
-            raise serializers.ValidationError(ErrorMessage.INACTIVE_COURSE)
-
-        return instance
-
-    def validate(self, data):
-        """
-        Validates the data before creating an enrollment.
-
-        Args:
-            data (dict): The data to validate.
-
-        Returns:
-            dict: The validated data.
-        """
-
-        course = data.get("course")
-        student = data.get("student")
-
-        if student and student.enrollments.filter(course=course).exists():
-            raise serializers.ValidationError(
-                {"student": ErrorMessage.ALREADY_ENROLLED}
-            )
-
-        if course.is_full:
-            raise serializers.ValidationError({"course": ErrorMessage.COURSE_IS_FULL})
-
-        return data

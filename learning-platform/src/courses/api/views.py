@@ -26,6 +26,7 @@ from core.serializers import (
     BaseNotFoundResponseSerializer,
 )
 from core.error_messages import ErrorMessage
+from core.exceptions import CourseException, UserException
 from core.mixins import FormatDataMixin
 from courses.permissions import CoursePermission
 from courses.services import CourseServices
@@ -41,7 +42,6 @@ from .serializers import (
     CourseUpdateSerializer,
     CategorySerializer,
     EnrollmentCreateOrEditSerializer,
-    EnrollmentSerializer,
     TopCoursesSerializer,
 )
 from django.conf import settings
@@ -316,41 +316,19 @@ class CourseViewSet(
         Args:
             request (HttpRequest): The current request object.
         """
-        serializer = EnrollmentCreateOrEditSerializer(data=request.data)
+        serializer = EnrollmentCreateOrEditSerializer(
+            data=request.data, context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
 
         course = self.get_object()
 
-        if request.user.is_superuser:
-            if "student" not in request.data:
-                return self.bad_request(
-                    field="student", message=ErrorMessage.STUDENT_DATA_REQUIRED
-                )
-            try:
-                student = User.objects.get(id=request.data["student"])
-            except User.DoesNotExist:
-                return self.bad_request(
-                    field="student", message=ErrorMessage.INVALID_USER_ID
-                )
-        else:
-            student = request.user
-
-        enrollment_serializer = EnrollmentSerializer(
-            data={
-                "course": str(course.id),
-                "student": str(student.id),
-            }
-        )
-        enrollment_serializer.is_valid(raise_exception=True)
-        course.students.add(student)
-
-        # Create notification.
-        Notification.objects.create(
-            user=course.instructor,
-            message=NotificationMessage.STUDENT_ENROLLED.format(
-                user_name=student.username, course_name=course.title
-            ),
-        )
+        try:
+            CourseServices().handle_enrollment(request=request, course=course)
+        except CourseException as exc:
+            return self.bad_request(field="course", message=str(exc.developer_message))
+        except UserException as exc:
+            return self.bad_request(field="student", message=str(exc.developer_message))
 
         enrollment_serializer = BaseSuccessResponseSerializer(
             {"data": {"success": True}}
