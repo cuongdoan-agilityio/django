@@ -1,5 +1,6 @@
 from courses.models import Course
 from core.constants import Status
+from core.error_messages import ErrorMessage
 
 
 class CourseServices:
@@ -32,5 +33,30 @@ class CourseServices:
         }
 
         course = Course.objects.create(**course_data)
+
+        return course
+
+    def handle_partial_update(self, course, data):
+        """
+        Handles partial updates to a course.
+
+        Args:
+            course (Course): The course instance to update.
+            data (dict): The validated data for updating the course.
+
+        Returns:
+            Course: The updated course instance.
+
+        Raises:
+            ValueError: If the course cannot be updated due to business rules.
+        """
+
+        if "status" in data and data["status"] == "inactive":
+            if course.enrollments.exists():
+                raise ValueError(ErrorMessage.COURSE_HAS_STUDENTS)
+
+        for field, value in data.items():
+            setattr(course, field, value)
+        course.save()
 
         return course
