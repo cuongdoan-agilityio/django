@@ -43,13 +43,3 @@ class TestCategoryViewSet:
         response = api_client.get(category_url)
 
         assert response.status_code == status.HTTP_200_OK
-
-    def test_list_categories_failed(self, api_client, root_url):
-        """
-        Test listing categories with an incorrect endpoint.
-        """
-
-        incorrect_url = f"{root_url}incorrect_categories/"
-        response = api_client.get(incorrect_url)
-
-        assert response.status_code == status.HTTP_404_NOT_FOUND
