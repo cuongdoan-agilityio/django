@@ -17,7 +17,15 @@ class UserErrorMessage:
     """
 
     INVALID_USER_ID = ErrorMessage.INVALID_USER_ID
+
+
+class EnrollmentErrorMessage:
+    """
+    Enrollment error message.
+    """
+
     STUDENT_ALREADY_ENROLLED = ErrorMessage.STUDENT_ALREADY_ENROLLED
+    STUDENT_NOT_ENROLLED = ErrorMessage.STUDENT_NOT_ENROLLED
 
 
 class CustomBaseException(Exception):
@@ -55,4 +63,13 @@ class UserException(CustomBaseException):
     """
 
     error = UserErrorMessage
+    status_code = status.HTTP_400_BAD_REQUEST
+
+
+class EnrollmentException(CustomBaseException):
+    """
+    Enrollment exception.
+    """
+
+    error = EnrollmentErrorMessage
     status_code = status.HTTP_400_BAD_REQUEST

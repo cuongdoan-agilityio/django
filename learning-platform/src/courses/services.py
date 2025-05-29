@@ -1,10 +1,10 @@
+from django.contrib.auth import get_user_model
 from courses.models import Course
 from core.constants import Status
 from core.error_messages import ErrorMessage
-from django.contrib.auth import get_user_model
+from core.exceptions import CourseException, UserException, EnrollmentException
 from notifications.models import Notification
 from notifications.constants import NotificationMessage
-from core.exceptions import CourseException, UserException
 
 
 User = get_user_model()
@@ -99,7 +99,7 @@ class CourseServices:
 
         # Validate if the student is already enrolled
         if course.students.filter(id=student.id).exists():
-            raise UserException(code="STUDENT_ALREADY_ENROLLED")
+            raise EnrollmentException(code="STUDENT_ALREADY_ENROLLED")
 
         # Add the student to the course
         course.students.add(student)
@@ -110,5 +110,47 @@ class CourseServices:
             user=course.instructor,
             message=NotificationMessage.STUDENT_ENROLLED.format(
                 user_name=student.username, course_name=course.title
+            ),
+        )
+
+    def handle_leave_course(self, user, course, data=None):
+        """
+        Handles the logic for a student leaving a course.
+
+        Args:
+            user (User): The user attempting to leave the course.
+            course (Course): The course instance.
+            data (dict, optional): Additional data for leaving the course.
+
+        Raises:
+            UserException: If the student data is invalid or the user is not enrolled.
+            CourseException: If the course is invalid or other business rules are violated.
+        """
+
+        # Determine the student based on the request
+        if user.is_superuser:
+            try:
+                student = User.objects.get(id=data["student"])
+            except User.DoesNotExist:
+                raise UserException(code="INVALID_USER_ID")
+        else:
+            student = user
+
+        # Validate if the student is enrolled in the course
+        enrollment = student.enrollments.filter(course=course).first()
+        if not enrollment:
+            raise EnrollmentException(
+                code="STUDENT_NOT_ENROLLED",
+            )
+
+        # Delete the enrollment
+        enrollment.delete()
+
+        # Create notification for the student
+        # TODO: Need refactor after implement Notification service
+        Notification.objects.create(
+            user=student,
+            message=NotificationMessage.STUDENT_UNENROLLED.format(
+                course_name=course.title
             ),
         )

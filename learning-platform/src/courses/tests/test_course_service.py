@@ -4,7 +4,7 @@ from courses.services import CourseServices
 from courses.models import Course
 from core.constants import Status
 from core.error_messages import ErrorMessage
-from core.exceptions import CourseException, UserException
+from core.exceptions import CourseException, UserException, EnrollmentException
 
 
 @pytest.mark.django_db
@@ -176,6 +176,6 @@ class TestCourseServices:
         Test that enrollment fails if the student is already enrolled.
         """
 
-        with pytest.raises(UserException) as exc_info:
+        with pytest.raises(EnrollmentException) as exc_info:
             CourseServices().handle_enrollment(user=fake_student, course=math_course)
         assert exc_info.value.code == "STUDENT_ALREADY_ENROLLED"
