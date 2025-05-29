@@ -62,19 +62,24 @@ class CourseCreateSerializer(serializers.ModelSerializer):
             "instructor",
         ]
 
-    def create(self, validated_data):
+    def validate(self, data):
         """
-        Creates a new course.
-
-        Args:
-            validated_data (dict): The validated data for creating the course.
-
-        Returns:
-            Course: The created course instance.
+        Validates the instructor value.
         """
 
-        course = Course.objects.create(**validated_data)
-        return course
+        request = self.context.get("request")
+
+        if (
+            request
+            and request.user
+            and request.user.is_superuser
+            and not data.get("instructor")
+        ):
+            raise serializers.ValidationError(
+                {"instructor": ErrorMessage.INSTRUCTOR_DATA_REQUIRED}
+            )
+
+        return data
 
 
 class EnrollmentCreateOrEditSerializer(serializers.Serializer):

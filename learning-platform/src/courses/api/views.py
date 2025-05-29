@@ -28,6 +28,7 @@ from core.serializers import (
 from core.error_messages import ErrorMessage
 from core.mixins import FormatDataMixin
 from courses.permissions import CoursePermission
+from courses.services import CourseServices
 from notifications.models import Notification
 from notifications.constants import NotificationMessage
 
@@ -257,20 +258,16 @@ class CourseViewSet(
             Response: The created course data.
         """
 
-        serializer = CourseCreateSerializer(data=request.data)
+        serializer = CourseCreateSerializer(
+            data=request.data, context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
 
-        if request.user.is_superuser:
-            if "instructor" not in serializer.validated_data:
-                return self.bad_request(
-                    field="instructor", message=ErrorMessage.INSTRUCTOR_DATA_REQUIRED
-                )
-
-            course = serializer.save()
-        else:
-            course = serializer.save(
-                instructor=request.user,
-            )
+        data = serializer.validated_data
+        data["instructor"] = (
+            request.user if not request.user.is_superuser else data["instructor"]
+        )
+        course = CourseServices().handle_create_course(data=data)
 
         # Remove cache
         cache_keys = self.get_cache_key_by_regex("course_list:.*")
