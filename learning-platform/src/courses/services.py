@@ -154,3 +154,12 @@ class CourseServices:
                 course_name=course.title
             ),
         )
+
+    def handle_get_students_of_course(self, course):
+        """
+        Handles the logic for retrieving students enrolled in a course.
+        """
+
+        students = User.objects.filter(enrollments__course=course).distinct()
+
+        return students
