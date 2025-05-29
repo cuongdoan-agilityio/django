@@ -238,3 +238,33 @@ class TestCourseServices:
         )
 
         assert not math_course.students.filter(id=fake_student.id).exists()
+
+    def test_handle_get_students_of_course_success(
+        self,
+        math_course,
+        math_enrollment,
+        math_enrollment_other,
+        other_student_user,
+        fake_student,
+    ):
+        """
+        Test that students enrolled in a course are successfully retrieved.
+        """
+
+        students = CourseServices().handle_get_students_of_course(course=math_course)
+
+        assert len(students) == 2
+        assert other_student_user in students
+        assert fake_student in students
+
+    def test_handle_get_students_of_course_no_students(
+        self,
+        fake_course,
+    ):
+        """
+        Test that an empty list is returned when no students are enrolled in the course.
+        """
+
+        students = CourseServices().handle_get_students_of_course(course=fake_course)
+
+        assert len(students) == 0

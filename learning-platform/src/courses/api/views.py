@@ -375,7 +375,7 @@ class CourseViewSet(
 
         course = self.get_object()
 
-        users = User.objects.filter(enrollments__course=course).distinct()
+        users = CourseServices().handle_get_students_of_course(course=course)
 
         paginator = self.paginator
         page = paginator.paginate_queryset(users, request)
