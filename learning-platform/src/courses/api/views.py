@@ -295,16 +295,11 @@ class CourseViewSet(
         serializer.is_valid(raise_exception=True)
         serializer_data = serializer.validated_data
 
-        # Check if the course is in progress and has students enrolled
-        if "status" in serializer_data and serializer_data["status"] == "inactive":
-            if instance.enrollments.exists():
-                return self.bad_request(
-                    field="status", message=ErrorMessage.COURSE_HAS_STUDENTS
-                )
+        try:
+            course = CourseServices().handle_partial_update(instance, serializer_data)
+        except ValueError as e:
+            return self.bad_request(field="status", message=str(e))
 
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        course = serializer.save()
         response_data = self.serialize_data(course)
 
         # Remove cache, include top course
