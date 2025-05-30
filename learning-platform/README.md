@@ -4,9 +4,9 @@
 Develop a functional “Student Course Management System” by building, testing, and documenting REST APIs using Django Rest Framework (DRF). This phase will focus on RESTful API design and providing endpoints for the system’s mobile application (e.g., a React Native app).
 
 ## Timeline
-- Estimate: 12.5 days
-- Actual: 15.5 days
-- Refactor: 5 days
+- Estimate: 3 weeks
+- Actual: almost 4 weeks
+- Refactor and fix comments: almost 2 weeks
 
 ## Technical Stack
 - Python: 3.11.5
@@ -17,6 +17,9 @@ Develop a functional “Student Course Management System” by building, testing
 - UV: 0.5.29
 - Drf-spectacular: 0.28.0
 - Faker: 36.1.1
+- Redis: 6.0.0
+- Celery: 5.5.2
+- Sentry: 2.26.1
 
 ## Description of Requirements
 - Admin Dashboard:
@@ -207,14 +210,6 @@ Setup environments: create `.env` follow `.env.example` with your own settings
 - Init instructors and courses data: `uv run ./src/manage.py init_courses`
 - Init students data: `uv run ./src/manage.py init_students`
 - Init enrollments data: `uv run ./src/manage.py init_enrollments`
-
-1. Flow create data with admin page
-- Login to [admin page](http://127.0.0.1:8000/admin-dashboard/) with admin info.
-- Create course specializations.
-- Create students.
-- Create instructors.
-- Create courses with specialization and instructor.
-- Create Enrollments.
 
 ## Unit Testing
 - pytest --cov=src --cov-report html
