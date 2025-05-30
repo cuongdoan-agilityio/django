@@ -88,6 +88,7 @@ User = get_user_model()
             400: BaseBadRequestResponseSerializer,
         },
     ),
+    # Huy Chau , Trung  :Need use serializer to generate schema
     reset_password=extend_schema(
         description="Reset user password using a token.",
         request=ResetUserPasswordSerializer,
@@ -194,6 +195,8 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
                 user_data = model_to_dict(user, fields=["username", "email"])
+                # Trung: (option)control dublicate task
+                # Trung: (option) manage sentry
                 send_welcome_email.delay(user_data)
             response = BaseSuccessResponseSerializer({"data": {"success": True}})
             return self.ok(response.data)
@@ -249,7 +252,9 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
 
         try:
             signed_value = force_str(urlsafe_base64_decode(token))
-            email = signer.unsign(signed_value, max_age=24 * 3600)
+            email = signer.unsign(
+                signed_value, max_age=24 * 3600
+            )  # Thanh Nguyen: set time to 3 -5 minutes
             user = User.objects.filter(email=email).first()
             user.password = password
             user.save(update_fields=["password"])

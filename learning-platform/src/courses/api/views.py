@@ -273,6 +273,7 @@ class CourseViewSet(
         response_data = self.serialize_data(course)
         return self.created(response_data)
 
+    # Trung: check DRF serializer support for API
     def partial_update(self, request, *args, **kwargs):
         """
         Partially update a course by an instructor.
@@ -305,6 +306,7 @@ class CourseViewSet(
 
         return self.ok(response_data)
 
+    # Minh Tran: can check user permission on API.
     @action(detail=True, methods=["post"])
     def enroll(self, request, **kwargs):
         """

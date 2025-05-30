@@ -88,6 +88,7 @@ def send_monthly_report():
         for instructor in instructors:
             tasks.append(report_to_instructor.s(instructor.id))
 
+        # Minh tran: check task finish/ false
         if tasks:
             job = group(tasks)
             job.apply_async()

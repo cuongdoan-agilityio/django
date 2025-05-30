@@ -84,6 +84,10 @@ class CourseServices:
         """
 
         if course.status != Status.ACTIVATE.value:
+            # Minh Tran: Must raise error at CourseException
+            # Minh Tran: use is_staff
+            # Khanh Nguyen: users/me/ should remove /me/
+            # Khanh Nguyen: notification should user service such Use service to support notification to user device, such as Firebase Cloud Messaging
             raise CourseException(code="INACTIVE_COURSE")
 
         if course.is_full:

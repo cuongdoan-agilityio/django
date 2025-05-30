@@ -10,7 +10,7 @@ class CoursePermission(BasePermission):
         """
         Check if the user has permission to perform the action.
         """
-
+        # Minh Tran: DRF support check admin
         if request.user.is_superuser or view.action in [
             "list",
             "retrieve",
