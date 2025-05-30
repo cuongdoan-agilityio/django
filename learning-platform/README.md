@@ -190,8 +190,10 @@ cd learning-platform/
 Setup environments: create `.env` follow `.env.example` with your own settings
 
 3. Create env: `uv sync` and activate it: `source .venv/bin/activate`
-4. Check Redis server:
-`redis-cli ping`: if result is not `PONG` we need run redis server
+
+4. Redis server:
+  1. Follow [link](https://redis.io/docs/latest/operate/oss_and_stack/install/archive/install-redis/) to install and start Redis.
+  2. Run `redis-cli ping`: if result is not `PONG` we need run redis server.
 
 5. Install hook scripts: `pre-commit install`
 
