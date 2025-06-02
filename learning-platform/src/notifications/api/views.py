@@ -59,16 +59,6 @@ class NotificationFilter(filters.FilterSet):
             404: BaseNotFoundResponseSerializer,
         },
     ),
-    partial_update=extend_schema(
-        description="Update a user notification.",
-        request=NotificationSerializer,
-        responses={
-            200: NotificationDetailSerializer,
-            400: BaseBadRequestResponseSerializer,
-            401: BaseForbiddenResponseSerializer,
-            404: BaseNotFoundResponseSerializer,
-        },
-    ),
 )
 class NotificationViewSet(
     BaseGenericViewSet, CustomListModelMixin, CustomRetrieveModelMixin, UpdateModelMixin
@@ -100,6 +90,16 @@ class NotificationViewSet(
             return NotificationListSerializer
         return NotificationDetailSerializer
 
+    @extend_schema(
+        description="Update a user notification.",
+        request=NotificationSerializer,
+        responses={
+            200: NotificationDetailSerializer,
+            400: BaseBadRequestResponseSerializer,
+            401: BaseForbiddenResponseSerializer,
+            404: BaseNotFoundResponseSerializer,
+        },
+    )
     def partial_update(self, request, *args, **kwargs):
         """
         Partially update a user notification.
