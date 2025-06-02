@@ -14,8 +14,12 @@ from core.serializers import (
     BaseNotFoundResponseSerializer,
 )
 from notifications.models import Notification
-from notifications.api.response_schema import notification_detail_response_schema
-from .serializers import NotificationListSerializer, NotificationDetailSerializer
+from .serializers import (
+    NotificationSerializer,
+    NotificationListSerializer,
+    NotificationDetailSerializer,
+)
+from notifications.services import NotificationServices
 
 
 class NotificationFilter(filters.FilterSet):
@@ -57,8 +61,9 @@ class NotificationFilter(filters.FilterSet):
     ),
     partial_update=extend_schema(
         description="Update a user notification.",
+        request=NotificationSerializer,
         responses={
-            200: notification_detail_response_schema,
+            200: NotificationDetailSerializer,
             400: BaseBadRequestResponseSerializer,
             401: BaseForbiddenResponseSerializer,
             404: BaseNotFoundResponseSerializer,
@@ -94,6 +99,25 @@ class NotificationViewSet(
         if self.action == "list":
             return NotificationListSerializer
         return NotificationDetailSerializer
+
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Partially update a user notification.
+
+        This method allows the user to update specific fields of a notification, such as the `is_read` status.
+        The update logic is delegated to the `NotificationServices` class for better separation of concerns.
+        """
+
+        serializer = NotificationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = self.get_object()
+
+        notification = NotificationServices().handle_partial_update(
+            instance, serializer.validated_data
+        )
+
+        serializer = NotificationDetailSerializer({"data": notification})
+        return self.ok(serializer.data)
 
 
 apps = [NotificationViewSet]
