@@ -54,3 +54,14 @@ class CustomListModelMixin:
 
         serializer = self.get_serializer({"data": queryset})
         return Response(serializer.data)
+
+
+class CustomRetrieveModelMixin:
+    """
+    Custom retrieve a model instance.
+    """
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer({"data": instance})
+        return Response(serializer.data)

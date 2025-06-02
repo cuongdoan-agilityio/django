@@ -5,9 +5,9 @@ from django_filters import rest_framework as filters
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 
 from core.api_views import BaseGenericViewSet
-from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin
+from rest_framework.mixins import UpdateModelMixin
 from core.permissions import IsOwner
-from core.mixins import CustomListModelMixin
+from core.mixins import CustomListModelMixin, CustomRetrieveModelMixin
 from core.serializers import (
     BaseBadRequestResponseSerializer,
     BaseForbiddenResponseSerializer,
@@ -15,7 +15,7 @@ from core.serializers import (
 )
 from notifications.models import Notification
 from notifications.api.response_schema import notification_detail_response_schema
-from .serializers import NotificationSerializer, NotificationListSerializer
+from .serializers import NotificationListSerializer, NotificationDetailSerializer
 
 
 class NotificationFilter(filters.FilterSet):
@@ -50,7 +50,7 @@ class NotificationFilter(filters.FilterSet):
     retrieve=extend_schema(
         description="Retrieve a user notification.",
         responses={
-            200: notification_detail_response_schema,
+            200: NotificationDetailSerializer,
             401: BaseForbiddenResponseSerializer,
             404: BaseNotFoundResponseSerializer,
         },
@@ -66,7 +66,7 @@ class NotificationFilter(filters.FilterSet):
     ),
 )
 class NotificationViewSet(
-    BaseGenericViewSet, CustomListModelMixin, RetrieveModelMixin, UpdateModelMixin
+    BaseGenericViewSet, CustomListModelMixin, CustomRetrieveModelMixin, UpdateModelMixin
 ):
     """
     A viewset for handling notifications.
@@ -93,7 +93,7 @@ class NotificationViewSet(
 
         if self.action == "list":
             return NotificationListSerializer
-        return NotificationSerializer
+        return NotificationDetailSerializer
 
 
 apps = [NotificationViewSet]
