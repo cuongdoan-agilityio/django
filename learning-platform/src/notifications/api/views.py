@@ -5,8 +5,9 @@ from django_filters import rest_framework as filters
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 
 from core.api_views import BaseGenericViewSet
-from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin, ListModelMixin
+from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin
 from core.permissions import IsOwner
+from core.mixins import CustomListModelMixin
 from core.serializers import (
     BaseBadRequestResponseSerializer,
     BaseForbiddenResponseSerializer,
@@ -14,7 +15,7 @@ from core.serializers import (
 )
 from notifications.models import Notification
 from notifications.api.response_schema import notification_detail_response_schema
-from .serializers import NotificationSerializer
+from .serializers import NotificationSerializer, NotificationListSerializer
 
 
 class NotificationFilter(filters.FilterSet):
@@ -41,6 +42,10 @@ class NotificationFilter(filters.FilterSet):
                 location=OpenApiParameter.QUERY,
             ),
         ],
+        responses={
+            200: NotificationListSerializer,
+            400: BaseBadRequestResponseSerializer,
+        },
     ),
     retrieve=extend_schema(
         description="Retrieve a user notification.",
@@ -61,7 +66,7 @@ class NotificationFilter(filters.FilterSet):
     ),
 )
 class NotificationViewSet(
-    BaseGenericViewSet, ListModelMixin, RetrieveModelMixin, UpdateModelMixin
+    BaseGenericViewSet, CustomListModelMixin, RetrieveModelMixin, UpdateModelMixin
 ):
     """
     A viewset for handling notifications.
@@ -69,7 +74,6 @@ class NotificationViewSet(
     """
 
     permission_classes = [IsAuthenticated, IsOwner]
-    serializer_class = NotificationSerializer
     http_method_names = ["get", "patch"]
     resource_name = "notifications"
     filter_backends = [DjangoFilterBackend]
@@ -80,7 +84,16 @@ class NotificationViewSet(
         Returns the queryset for the user notification.
         """
 
-        return self.request.user.notifications.all()
+        return self.request.user.notifications.all().order_by("-modified")
+
+    def get_serializer_class(self):
+        """
+        Returns the serializer class based on the action.
+        """
+
+        if self.action == "list":
+            return NotificationListSerializer
+        return NotificationSerializer
 
 
 apps = [NotificationViewSet]

@@ -84,23 +84,24 @@ class CommonViewSet:
 
         return Response(data=response_data, status=status.HTTP_404_NOT_FOUND)
 
-    def finalize_response(self, request, response, *args, **kwargs):
-        """
-        Finalize the response structure for API responses.
-        """
+    # TODO: Need remove code.
+    # def finalize_response(self, request, response, *args, **kwargs):
+    #     """
+    #     Finalize the response structure for API responses.
+    #     """
 
-        data = response.data
-        if (
-            isinstance(response, Response)
-            and ("data" not in data)
-            and ("errors" not in data)
-        ):
-            if isinstance(response.data, dict):
-                response.data = {
-                    "data": response.data,
-                }
+    #     data = response.data
+    #     if (
+    #         isinstance(response, Response)
+    #         and ("data" not in data)
+    #         and ("errors" not in data)
+    #     ):
+    #         if isinstance(response.data, dict):
+    #             response.data = {
+    #                 "data": response.data,
+    #             }
 
-        return super().finalize_response(request, response, *args, **kwargs)
+    #     return super().finalize_response(request, response, *args, **kwargs)
 
     def internal_server_error(
         self,
