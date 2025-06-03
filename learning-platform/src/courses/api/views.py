@@ -152,12 +152,6 @@ class CustomFilter(django_filters.FilterSet):
             404: BaseNotFoundResponseSerializer,
         },
     ),
-    get_top_courses=extend_schema(
-        description="Get top courses based on the number of students enrolled.",
-        responses={
-            200: TopCoursesSerializer,
-        },
-    ),
 )
 class CourseViewSet(
     FormatDataMixin,
@@ -384,24 +378,36 @@ class CourseViewSet(
 
         return self.ok(response_data)
 
-    @action(detail=False, methods=["get"], url_path="top")
+    @extend_schema(
+        description="Get top courses based on the number of students enrolled.",
+        responses={
+            200: TopCoursesSerializer,
+        },
+    )
+    @action(
+        detail=False, methods=["get"], url_path="top", permission_classes=[AllowAny]
+    )
     def get_top_courses(self, request):
         """
         Get top courses based on the number of students enrolled.
         """
 
         cache_key = "top_courses"
-        cached_data = cache.get(cache_key)
-        if cached_data is not None:
-            return self.ok(cached_data)
+        try:
+            cached_data = cache.get(cache_key)
+            if cached_data is not None:
+                return self.ok(cached_data)
 
-        queryset = self.get_queryset()
-        queryset = queryset.annotate(num_students=Count("enrollments"))
-        queryset = queryset.order_by("-num_students")[: settings.TOP_COURSES_LIMIT]
+            queryset = self.get_queryset()
+            queryset = queryset.annotate(num_students=Count("enrollments"))
+            queryset = queryset.order_by("-num_students")[: settings.TOP_COURSES_LIMIT]
 
-        response_data = self.format_list_data(queryset)
-        cache.set(cache_key, response_data)
-        return self.ok(response_data)
+            serializer = TopCoursesSerializer({"data": queryset})
+            cache.set(cache_key, serializer.data)
+            return self.ok(serializer.data)
+
+        except Exception as exc:
+            return self.internal_server_error(message=f"{str(exc)}")
 
     def get_cache_key_by_regex(self, pattern):
         """
