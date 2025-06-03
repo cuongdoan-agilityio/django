@@ -19,7 +19,7 @@ class TestCategoryViewSet(BaseCourseModuleTestCase):
         response = self.get_json(self.fragment)
         assert response.status_code == status.HTTP_200_OK
 
-        categories = Category.objects.all()
+        categories = Category.objects.all().order_by("-modified")
         serializer = CategorySerializer(categories, many=True)
 
         assert response.data["data"] == serializer.data

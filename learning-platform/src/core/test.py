@@ -295,6 +295,7 @@ class BaseAPITestCase:
         self.authenticated_fake_admin = authenticated_fake_admin
         self.authenticated_token = self.fake_student_token
         self.auth = "token"
+        post_save.disconnect(receiver=send_verify_email, sender=User)
 
     def build_api_url(self, fragment: str = None) -> str:
         """
