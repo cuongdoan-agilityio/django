@@ -330,8 +330,6 @@ class BaseAPITestCase:
         elif self.auth == "invalid_auth_token":
             invalid_token = str(uuid4())
             headers["HTTP_AUTHORIZATION"] = f"Token {invalid_token}"
-        else:
-            headers["HTTP_AUTHORIZATION"] = None
 
         self.api_client.credentials(**headers)
 
@@ -363,8 +361,6 @@ class BaseAPITestCase:
         elif self.auth == "invalid_auth_token":
             invalid_token = str(uuid4())
             headers["HTTP_AUTHORIZATION"] = f"Token {invalid_token}"
-        else:
-            headers["HTTP_AUTHORIZATION"] = None
 
         self.api_client.credentials(**headers)
 
@@ -388,8 +384,6 @@ class BaseAPITestCase:
         elif self.auth == "invalid_auth_token":
             invalid_token = str(uuid4())
             headers["HTTP_AUTHORIZATION"] = f"Token {invalid_token}"
-        else:
-            headers["HTTP_AUTHORIZATION"] = None
 
         self.api_client.credentials(**headers)
 
@@ -419,8 +413,6 @@ class BaseAPITestCase:
         elif self.auth == "invalid_auth_token":
             invalid_token = str(uuid4())
             headers["HTTP_AUTHORIZATION"] = f"Token {invalid_token}"
-        else:
-            headers["HTTP_AUTHORIZATION"] = None
 
         self.api_client.credentials(**headers)
 
