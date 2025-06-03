@@ -55,3 +55,9 @@ class BaseCourseModuleTestCase(BaseAPITestCase):
             enrollment_limit=2,
             instructor=self.fake_instructor,
         )
+
+        self.music_course = CourseFactory(
+            title="Music Course",
+            status=Status.ACTIVATE.value,
+            instructor=self.fake_instructor,
+        )

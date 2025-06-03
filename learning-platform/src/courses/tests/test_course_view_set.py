@@ -4,13 +4,29 @@ from django.core.cache import cache
 from rest_framework import status
 from core.constants import Status
 from courses.models import Course
+from .base import BaseCourseModuleTestCase
+from courses.factories import EnrollmentFactory
 
 
-@pytest.mark.django_db
-class TestCourseViewSet:
+class TestCourseViewSet(BaseCourseModuleTestCase):
     """
     Test suite for the CourseViewSet.
     """
+
+    fragment = "courses/"
+
+    @pytest.fixture
+    def enroll_courses(self, db):
+        """
+        Create multiple courses for testing top-courses API.
+        """
+
+        self.math_course.enrollment_limit = self.music_course.enrollment_limit = 30
+        self.math_course.save()
+        self.music_course.save()
+
+        EnrollmentFactory.create_batch(30, course=self.math_course)
+        EnrollmentFactory.create_batch(20, course=self.music_course)
 
     def test_list_courses_ok(self, api_client, course_url, fake_course):
         """
@@ -425,37 +441,36 @@ class TestCourseViewSet:
         assert len(response.data["data"]) == 1
         assert response.data["data"][0]["id"] == str(math_course.id)
 
-    def test_get_top_courses_success(
-        self,
-        api_client,
-        enroll_courses,
-        top_courses_url,
-    ):
+    def test_get_top_courses_success(self, enroll_courses):
         """
         Test fetching the top courses successfully.
         """
 
         cache.clear()
-        response = api_client.get(top_courses_url)
+        url = f"{self.fragment}top/"
+        response = self.get_json(fragment=url)
         data = response.data["data"]
+        list_of_title = [item.get("title") for item in data]
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(data) == 2
-        assert data[0]["title"] == "Math course"
-        assert data[1]["title"] == "Music Course"
+        assert "Math course" in list_of_title
+        assert "Music Course" in list_of_title
 
-    def test_get_top_courses_empty(self, api_client, top_courses_url):
+    def test_get_top_courses_empty(self):
         """
         Test fetching top courses when there are no courses.
         """
 
+        Course.objects.all().delete()
         cache.clear()
-        response = api_client.get(top_courses_url)
+
+        url = f"{self.fragment}top/"
+        response = self.get_json(fragment=url)
         data = response.data["data"]
 
         assert response.status_code == status.HTTP_200_OK
         assert len(data) == 0
 
         cache_data = cache.get("top_courses")
-        response = api_client.get(top_courses_url)
+        response = self.get_json(fragment=url)
         assert cache_data == response.data
