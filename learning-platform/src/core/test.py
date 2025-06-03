@@ -327,7 +327,7 @@ class BaseAPITestCase:
 
         if self.auth == "token":
             headers["HTTP_AUTHORIZATION"] = f"Token {self.authenticated_token.key}"
-        elif self.auth == "invalid_token":
+        elif self.auth == "invalid_auth_token":
             invalid_token = str(uuid4())
             headers["HTTP_AUTHORIZATION"] = f"Token {invalid_token}"
         else:
@@ -360,7 +360,7 @@ class BaseAPITestCase:
 
         if self.auth == "token":
             headers["HTTP_AUTHORIZATION"] = f"Token {self.authenticated_token.key}"
-        elif self.auth == "invalid_token":
+        elif self.auth == "invalid_auth_token":
             invalid_token = str(uuid4())
             headers["HTTP_AUTHORIZATION"] = f"Token {invalid_token}"
         else:
@@ -369,3 +369,59 @@ class BaseAPITestCase:
         self.api_client.credentials(**headers)
 
         return self.api_client.post(url, format="json", data=data)
+
+    def patch_json(self, fragment="", data=None, **params):
+        """
+        Send a PATCH request to the API.
+
+        Args:
+            fragment: The fragment of the URL to be appended to the base URL.
+            data: The data to be sent with the request.
+            params: The parameters to be sent with the request.
+        """
+        url = self.build_api_url(fragment)
+
+        headers = {}
+
+        if self.auth == "token":
+            headers["HTTP_AUTHORIZATION"] = f"Token {self.authenticated_token.key}"
+        elif self.auth == "invalid_auth_token":
+            invalid_token = str(uuid4())
+            headers["HTTP_AUTHORIZATION"] = f"Token {invalid_token}"
+        else:
+            headers["HTTP_AUTHORIZATION"] = None
+
+        self.api_client.credentials(**headers)
+
+        return self.api_client.patch(url, format="json", data=data)
+
+    def put_json(self, fragment="", data=None, **params):
+        """
+        Send a PUT request to the API.
+
+        This is a convenience method for the common case of sending a PUT request.
+        This method is used when the user is authenticated and has the correct permissions.
+
+        Args:
+            fragment (str, optional): The fragment of the URL to be appended to the base URL. Defaults to "".
+            data (dict, optional): The data to be sent with the request. Defaults to None.
+            params (dict, optional): The parameters to be sent with the request.
+
+        Returns:
+            Response: Response data
+        """
+        url = self.build_api_url(fragment)
+
+        headers = {}
+
+        if self.auth == "token":
+            headers["HTTP_AUTHORIZATION"] = f"Token {self.authenticated_token.key}"
+        elif self.auth == "invalid_auth_token":
+            invalid_token = str(uuid4())
+            headers["HTTP_AUTHORIZATION"] = f"Token {invalid_token}"
+        else:
+            headers["HTTP_AUTHORIZATION"] = None
+
+        self.api_client.credentials(**headers)
+
+        return self.api_client.put(url, format="json", data=data)
