@@ -2,6 +2,7 @@ from rest_framework.response import Response
 from rest_framework.views import exception_handler
 from core.helpers import send_capture_message
 from rest_framework import status
+from core.exceptions import CustomBaseException
 
 
 def process_exception(exception, context) -> Response:
@@ -18,6 +19,17 @@ def process_exception(exception, context) -> Response:
     response = exception_handler(exception, context)
 
     # Update the structure of the response data.
+
+    if isinstance(exception, CustomBaseException):
+        return Response(
+            {
+                "errors": {
+                    "code": exception.code,
+                    "message": exception.developer_message,
+                }
+            }
+        )
+
     if response is not None:
         customized_response = {"errors": []}
 

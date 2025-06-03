@@ -115,7 +115,7 @@ class EnrollmentCreateOrEditSerializer(serializers.Serializer):
         if (
             request
             and request.user
-            and request.user.is_superuser
+            and request.user.is_staff
             and not data.get("student")
         ):
             raise serializers.ValidationError(

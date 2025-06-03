@@ -3,7 +3,7 @@ from django.core.cache import cache
 from django_redis import get_redis_connection
 import django_filters
 from rest_framework import filters
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.decorators import action
 from rest_framework.mixins import (
     ListModelMixin,
@@ -26,7 +26,7 @@ from core.serializers import (
 )
 from core.exceptions import CourseException, UserException, EnrollmentException
 from core.mixins import FormatDataMixin, CustomListModelMixin
-from core.permissions import IsInstructor
+from core.permissions import IsInstructor, IsStudent
 from courses.permissions import CoursePermission
 from courses.services import CourseServices
 
@@ -129,15 +129,6 @@ class CustomFilter(django_filters.FilterSet):
     ),
     enroll=extend_schema(
         description="Enroll a student in a course.",
-        request=EnrollmentCreateOrEditSerializer,
-        responses={
-            200: BaseSuccessResponseSerializer,
-            400: BaseBadRequestResponseSerializer,
-            403: BaseForbiddenResponseSerializer,
-        },
-    ),
-    leave=extend_schema(
-        description="Leave a course.",
         request=EnrollmentCreateOrEditSerializer,
         responses={
             200: BaseSuccessResponseSerializer,
@@ -321,7 +312,16 @@ class CourseViewSet(
         )
         return self.ok(enrollment_serializer.data)
 
-    @action(detail=True, methods=["post"])
+    @extend_schema(
+        description="Leave a course.",
+        request=EnrollmentCreateOrEditSerializer,
+        responses={
+            200: BaseSuccessResponseSerializer,
+            400: BaseBadRequestResponseSerializer,
+            403: BaseForbiddenResponseSerializer,
+        },
+    )
+    @action(detail=True, methods=["post"], permission_classes=[IsAdminUser | IsStudent])
     def leave(self, request, **kwargs):
         """
         Allows a student to leave a course.
@@ -329,6 +329,7 @@ class CourseViewSet(
         This method allows a student to leave a course they are enrolled in.
         Instructors are not allowed to leave courses.
         """
+
         serializer = EnrollmentCreateOrEditSerializer(
             data=request.data, context={"request": request}
         )
@@ -336,14 +337,9 @@ class CourseViewSet(
 
         course = self.get_object()
 
-        try:
-            CourseServices().handle_leave_course(
-                request.user, course, serializer.validated_data
-            )
-        except UserException as exc:
-            return self.bad_request(field="student", message=str(exc.developer_message))
-        except EnrollmentException as exc:
-            return self.bad_request(field="course", message=str(exc.developer_message))
+        CourseServices().handle_leave_course(
+            request.user, course, serializer.validated_data
+        )
 
         response_serializer = BaseSuccessResponseSerializer({"data": {"success": True}})
         return self.ok(response_serializer.data)

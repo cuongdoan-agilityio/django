@@ -54,3 +54,19 @@ class IsInstructor(BasePermission):
             return True
 
         return False
+
+
+class IsStudent(BasePermission):
+    """
+    Custom permission to allow only student.
+    """
+
+    def has_permission(self, request, view):
+        """
+        Check if the user has permission to perform the action.
+        """
+
+        if request.user.is_student:
+            return True
+
+        return False

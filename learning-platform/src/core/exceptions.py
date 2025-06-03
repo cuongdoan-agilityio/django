@@ -63,6 +63,7 @@ class UserException(CustomBaseException):
     """
 
     error = UserErrorMessage
+    default_code = "INVALID_USER_ID"
     status_code = status.HTTP_400_BAD_REQUEST
 
 
