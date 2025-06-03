@@ -1,5 +1,6 @@
 import pytest
 import random
+from uuid import uuid4
 from faker import Faker
 from django.db.models.signals import post_save
 from django.contrib.auth import get_user_model
@@ -12,20 +13,6 @@ from accounts.factories import UserFactory
 
 
 User = get_user_model()
-
-
-@pytest.fixture(scope="session")
-def faker():
-    """
-    Fixture to provide an isolated Faker instance for generating fake data.
-    """
-
-    return Faker()
-
-
-@pytest.fixture(scope="session")
-def root_url():
-    return "/api/v1/"
 
 
 @pytest.fixture(autouse=True)
@@ -45,33 +32,6 @@ def random_gender():
 
     genders = [gender.value for gender in Gender]
     return random.choice(genders)
-
-
-@pytest.fixture
-def student_role():
-    """
-    Fixture for student role.
-    """
-
-    return Role.STUDENT.value
-
-
-@pytest.fixture
-def instructor_role():
-    """
-    Fixture for instructor role.
-    """
-
-    return Role.INSTRUCTOR.value
-
-
-@pytest.fixture
-def admin_role():
-    """
-    Fixture for admin role.
-    """
-
-    return Role.ADMIN.value
 
 
 @pytest.fixture
@@ -116,15 +76,6 @@ def enroll_intro_course_signal():
     post_save.connect(receiver=enroll_intro_course, sender=User)
     yield
     post_save.disconnect(receiver=enroll_intro_course, sender=User)
-
-
-@pytest.fixture(scope="session")
-def api_client():
-    """
-    Fixture to provide an API client for making requests.
-    """
-
-    return APIClient()
 
 
 @pytest.fixture()
@@ -301,18 +252,12 @@ class BaseAPITestCase:
     @pytest.fixture(autouse=True)
     def setup_fixtures(
         self,
-        faker,
-        root_url,
         disconnect_send_verify_email_signal,
         random_gender,
-        student_role,
-        instructor_role,
-        admin_role,
         random_scholarship,
         random_degree,
         send_verify_email_signal,
         enroll_intro_course_signal,
-        api_client,
         share_user_data,
         fake_student,
         fake_student_token,
@@ -325,18 +270,18 @@ class BaseAPITestCase:
         authenticated_fake_instructor,
         authenticated_fake_admin,
     ):
-        self.faker = faker
-        self.root_url = root_url
+        self.faker = Faker()
+        self.root_url = "/api/v1/"
         self.disconnect_send_verify_email_signal = disconnect_send_verify_email_signal
         self.random_gender = random_gender
-        self.student_role = student_role
-        self.instructor_role = instructor_role
-        self.admin_role = admin_role
+        self.student_role = Role.STUDENT.value
+        self.instructor_role = Role.INSTRUCTOR.value
+        self.admin_role = Role.ADMIN.value
         self.random_scholarship = random_scholarship
         self.random_degree = random_degree
         self.send_verify_email_signal = send_verify_email_signal
         self.enroll_intro_course_signal = enroll_intro_course_signal
-        self.api_client = api_client
+        self.api_client = APIClient()
         self.share_user_data = share_user_data
         self.fake_student = fake_student
         self.fake_student_token = fake_student_token
@@ -348,3 +293,79 @@ class BaseAPITestCase:
         self.authenticated_fake_student = authenticated_fake_student
         self.authenticated_fake_instructor = authenticated_fake_instructor
         self.authenticated_fake_admin = authenticated_fake_admin
+        self.authenticated_token = self.fake_student_token
+        self.auth = "token"
+
+    def build_api_url(self, fragment: str = None) -> str:
+        """
+        Build the API URL.
+        """
+
+        uri = self.root_url
+
+        if fragment:
+            uri = f"{uri}{fragment}"
+
+        return uri
+
+    def get_json(self, fragment=None, data_format="json", **params):
+        """
+        Send a GET request to the API and return the response.
+
+        Args:
+            fragment (str, optional): The fragment of the URL to be appended to the base URL. Defaults to "".
+            data_format (str, optional): The format of the data to be sent with the request.
+            params (dict, optional): The parameters to be sent with the request.
+
+        Returns:
+            Response: Response data
+        """
+
+        url = self.build_api_url(fragment)
+
+        headers = {}
+
+        if self.auth == "token":
+            headers["HTTP_AUTHORIZATION"] = f"Token {self.authenticated_token.key}"
+        elif self.auth == "invalid_token":
+            invalid_token = str(uuid4())
+            headers["HTTP_AUTHORIZATION"] = f"Token {invalid_token}"
+        else:
+            headers["HTTP_AUTHORIZATION"] = None
+
+        self.api_client.credentials(**headers)
+
+        return (
+            self.api_client.get(url, format=data_format)
+            if data_format
+            else self.api_client.get(url)
+        )
+
+    def post_json(self, fragment, data, **params):
+        """
+        Send a POST request to the API.
+
+        Args:
+            fragment (str, optional): The fragment of the URL to be appended to the base URL. Defaults to "".
+            data (dict, optional): The data to be sent with the request. Defaults to None.
+            params (dict, optional): The parameters to be sent with the request.
+
+        Returns:
+            Response: Response data
+        """
+
+        url = self.build_api_url(fragment)
+
+        headers = {}
+
+        if self.auth == "token":
+            headers["HTTP_AUTHORIZATION"] = f"Token {self.authenticated_token.key}"
+        elif self.auth == "invalid_token":
+            invalid_token = str(uuid4())
+            headers["HTTP_AUTHORIZATION"] = f"Token {invalid_token}"
+        else:
+            headers["HTTP_AUTHORIZATION"] = None
+
+        self.api_client.credentials(**headers)
+
+        return self.api_client.post(url, format="json", data=data)
