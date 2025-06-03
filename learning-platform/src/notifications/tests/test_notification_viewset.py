@@ -1,27 +1,23 @@
-import pytest
 from uuid import uuid4
 from rest_framework import status
 
 from notifications.models import Notification
+from core.test import BaseAPITestCase
 
 
-@pytest.mark.django_db
-class TestNotificationViewSet:
+class TestNotificationViewSet(BaseAPITestCase):
     """
     Test suite for the NotificationViewSet.
     """
 
-    def test_list_notifications(
-        self,
-        api_client,
-        authenticated_fake_student,
-        notification_url,
-        fake_student_notifications,
-    ):
+    fragment = "notifications/"
+
+    def test_list_notifications(self, fake_student_notifications):
         """
         Test that the list of notifications is returned correctly.
         """
-        response = api_client.get(notification_url)
+
+        response = self.get_json(fragment=self.fragment)
         assert response.status_code == status.HTTP_200_OK
 
         response_data = response.data.get("data")
@@ -34,18 +30,13 @@ class TestNotificationViewSet:
         assert str(fake_student_notifications[0].id) in [n["id"] for n in response_data]
         assert str(fake_student_notifications[1].id) in [n["id"] for n in response_data]
 
-    def test_get_empty_notifications(
-        self,
-        api_client,
-        authenticated_fake_student,
-        notification_url,
-    ):
+    def test_get_empty_notifications(self):
         """
         Test that an empty list is returned when there are no notifications.
         """
         Notification.objects.all().delete()
 
-        response = api_client.get(notification_url)
+        response = self.get_json(fragment=self.fragment)
         assert response.status_code == status.HTTP_200_OK
 
         response_data = response.data.get("data")
@@ -56,37 +47,28 @@ class TestNotificationViewSet:
         assert response_pagination["limit"] == 20
         assert response_pagination["offset"] == 0
 
-    def test_get_notification_without_authentication(
-        self, api_client, notification_url
-    ):
+    def test_get_notification_without_authentication(self):
         """
         Test that an authentication error is returned when trying to get notifications without authentication.
         """
-        response = api_client.get(notification_url)
+        self.auth = None
+        response = self.get_json(fragment=self.fragment)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_get_notification_with_invalid_http_method(
-        self, api_client, authenticated_fake_student, notification_url
-    ):
+    def test_get_notification_with_invalid_http_method(self):
         """
         Test that an error is returned when using an invalid HTTP method.
         """
 
-        response = api_client.post(notification_url, data=None)
+        response = self.post_json(fragment=self.fragment, data=None)
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_get_other_user_notifications(
-        self,
-        api_client,
-        notification_url,
-        authenticated_fake_student,
-        fake_instructor_notifications,
-    ):
+    def test_get_other_user_notifications(self, fake_instructor_notifications):
         """
         Test that a user cannot access notifications belonging to another user.
         """
 
-        response = api_client.get(notification_url)
+        response = self.get_json(fragment=self.fragment)
         assert str(fake_instructor_notifications[0].id) not in [
             n["id"] for n in response.data.get("data")
         ]
@@ -176,7 +158,6 @@ class TestNotificationViewSet:
         authenticated_fake_student,
         notification_url,
         fake_student_notifications,
-        faker,
     ):
         """
         Test that a notification is partially updated correctly.
@@ -191,7 +172,6 @@ class TestNotificationViewSet:
 
         notification.refresh_from_db()
         assert notification.is_read is True
-        # assert notification.message == payload["message"]
 
     def test_partial_update_notification_without_authentication(
         self, api_client, notification_url, fake_instructor_notifications
