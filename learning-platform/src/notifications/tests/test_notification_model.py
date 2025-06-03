@@ -3,10 +3,10 @@ from django.core.exceptions import ValidationError
 
 from notifications.factories import NotificationFactory
 from notifications.models import Notification
+from core.test import BaseAPITestCase
 
 
-@pytest.mark.django_db
-class TestNotificationModel:
+class TestNotificationModel(BaseAPITestCase):
     """
     Test case for the Notification model.
     """

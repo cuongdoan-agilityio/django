@@ -21,32 +21,33 @@ class CustomPagination(LimitOffsetPagination):
             }
         )
 
-    def get_paginated_response_schema(self, schema):
-        return {
-            "type": "object",
-            "properties": {
-                "data": schema,
-                "meta": {
-                    "type": "object",
-                    "properties": {
-                        "pagination": {
-                            "type": "object",
-                            "properties": {
-                                "total": {
-                                    "type": "integer",
-                                    "example": 1,
-                                },
-                                "limit": {
-                                    "type": "integer",
-                                    "example": 20,
-                                },
-                                "offset": {
-                                    "type": "integer",
-                                    "example": 0,
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-        }
+    # TODO: Need refactor
+    # def get_paginated_response_schema(self, schema):
+    #     return {
+    #         "type": "object",
+    #         "properties": {
+    #             "data": schema.data,
+    #             "meta": {
+    #                 "type": "object",
+    #                 "properties": {
+    #                     "pagination": {
+    #                         "type": "object",
+    #                         "properties": {
+    #                             "total": {
+    #                                 "type": "integer",
+    #                                 "example": 1,
+    #                             },
+    #                             "limit": {
+    #                                 "type": "integer",
+    #                                 "example": 20,
+    #                             },
+    #                             "offset": {
+    #                                 "type": "integer",
+    #                                 "example": 0,
+    #                             },
+    #                         },
+    #                     },
+    #                 },
+    #             },
+    #         },
+    #     }
