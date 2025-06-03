@@ -26,7 +26,7 @@ from core.serializers import (
     BaseNotFoundResponseSerializer,
 )
 from core.exceptions import CourseException, UserException, EnrollmentException
-from core.mixins import FormatDataMixin
+from core.mixins import FormatDataMixin, CustomListModelMixin
 from courses.permissions import CoursePermission
 from courses.services import CourseServices
 
@@ -37,7 +37,7 @@ from .serializers import (
     CourseCreateSerializer,
     CourseDataSerializer,
     CourseUpdateSerializer,
-    CategorySerializer,
+    CategoryListSerializer,
     EnrollmentCreateOrEditSerializer,
     TopCoursesSerializer,
 )
@@ -434,15 +434,15 @@ class CourseViewSet(
             redis_client.delete(*cache_keys)
 
 
-class CategoryViewSet(BaseGenericViewSet, ListModelMixin):
+class CategoryViewSet(BaseGenericViewSet, CustomListModelMixin):
     """
     Category view set
     """
 
     permission_classes = [AllowAny]
-    serializer_class = CategorySerializer
+    serializer_class = CategoryListSerializer
     resource_name = "categories"
-    queryset = Category.objects.all()
+    queryset = Category.objects.all().order_by("-modified")
 
 
 apps = [CourseViewSet, CategoryViewSet]

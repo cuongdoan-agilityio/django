@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from core.constants import Status
 from core.error_messages import ErrorMessage
+from core.serializers import MetaSerializer
 from courses.models import Course, Category
 
 from accounts.api.serializers import UserBaseSerializer
@@ -14,7 +15,12 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ["id", "name", "description"]
+        fields = ["id", "name", "description", "modified"]
+
+
+class CategoryListSerializer(serializers.Serializer):
+    data = CategorySerializer(many=True)
+    meta = MetaSerializer()
 
 
 class CourseDataSerializer(serializers.ModelSerializer):
