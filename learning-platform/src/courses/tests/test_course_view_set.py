@@ -327,36 +327,28 @@ class TestCourseViewSet(BaseCourseModuleTestCase):
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_list_students_in_course(
-        self,
-        api_client,
-        fake_student,
-        authenticated_fake_instructor,
-        disconnect_send_verify_email_signal,
-        music_course,
-        course_url,
-    ):
+    def test_list_students_in_course(self):
         """
         Test listing students in a course as an instructor.
         """
 
-        music_course.students.add(fake_student)
-        response = api_client.get(f"{course_url}{str(music_course.id)}/students/")
+        self.authenticated_token = self.fake_instructor_token
+        self.music_course.students.add(self.fake_student)
+        response = self.get_json(
+            fragment=f"{self.fragment}{str(self.music_course.id)}/students/"
+        )
+
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data["data"]) == 1
 
-    def test_list_students_in_course_unauthorized(
-        self,
-        api_client,
-        authenticated_fake_student,
-        music_course,
-        course_url,
-    ):
+    def test_list_students_in_course_unauthorized(self):
         """
         Test listing students in a course without logging in.
         """
 
-        response = api_client.get(f"{course_url}{str(music_course.id)}/students/")
+        response = self.get_json(
+            fragment=f"{self.fragment}{str(self.music_course.id)}/students/"
+        )
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_filter_courses_by_status_ok(
