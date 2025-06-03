@@ -142,15 +142,6 @@ def math_enrollment_other(math_course, other_student_user):
 
 
 @pytest.fixture
-def music_enrollment(music_course, fake_student):
-    """
-    Fixture to create an Enrollment instance for the Music course and a student.
-    """
-
-    return EnrollmentFactory(course=music_course, student=fake_student)
-
-
-@pytest.fixture
 def connect_send_email_to_instructor_signal():
     """
     Fixture to connect the signal, and disconnect after the test
@@ -163,71 +154,3 @@ def connect_send_email_to_instructor_signal():
     m2m_changed.disconnect(
         receiver=send_email_to_instructor, sender=Course.students.through
     )
-
-
-@pytest.fixture
-def category_url(root_url):
-    """
-    Fixture to provide the base URL for categories.
-    """
-
-    return f"{root_url}categories/"
-
-
-@pytest.fixture
-def fake_categories(db):
-    """
-    Fixture to create sample categories.
-    """
-
-    return [CategoryFactory(name="Programming"), CategoryFactory(name="Design")]
-
-
-@pytest.fixture
-def course_url(root_url):
-    """
-    Fixture to provide the base URL for courses.
-    """
-
-    return f"{root_url}courses/"
-
-
-@pytest.fixture
-def top_courses_url(root_url):
-    """
-    Fixture to provide the URL for fetching top courses.
-    """
-
-    return f"{root_url}courses/top/"
-
-
-@pytest.fixture
-def top_courses(db):
-    """
-    Fixture to create sample top courses.
-    """
-
-    return [
-        CourseFactory(
-            title="Python Programming",
-            enrollment_count=50,
-            status=Status.ACTIVATE.value,
-        ),
-        CourseFactory(
-            title="Web Development", enrollment_count=30, status=Status.ACTIVATE.value
-        ),
-    ]
-
-
-@pytest.fixture
-def enroll_courses(math_course, music_course, db):
-    """
-    Create multiple courses for testing top-courses API.
-    """
-
-    math_course.enrollment_limit = music_course.enrollment_limit = 30
-    math_course.save()
-    music_course.save()
-
-    EnrollmentFactory.create_batch(30, course=math_course)
-    EnrollmentFactory.create_batch(20, course=music_course)
