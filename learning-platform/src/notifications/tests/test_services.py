@@ -1,10 +1,9 @@
-import pytest
 from notifications.services import NotificationServices
 from notifications.models import Notification
+from core.test import BaseAPITestCase
 
 
-@pytest.mark.django_db
-class TestHandlePartialUpdate:
+class TestHandlePartialUpdate(BaseAPITestCase):
     """
     Unit tests for the handle_partial_update method in NotificationServices.
     """
