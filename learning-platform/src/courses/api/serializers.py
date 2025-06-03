@@ -144,3 +144,12 @@ class CourseUpdateSerializer(serializers.Serializer):
             raise serializers.ValidationError(ErrorMessage.CATEGORY_NOT_EXIST)
 
         return value
+
+
+class CourseStudentResponseSerializer(serializers.Serializer):
+    """
+    Serializer for course student response.
+    """
+
+    data = UserBaseSerializer(many=True)
+    meta = MetaSerializer()

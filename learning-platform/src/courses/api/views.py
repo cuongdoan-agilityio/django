@@ -3,6 +3,7 @@ from django.core.cache import cache
 from django_redis import get_redis_connection
 import django_filters
 from rest_framework import filters
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.mixins import (
     ListModelMixin,
@@ -14,10 +15,8 @@ from django.db.models import Count
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
-from rest_framework.permissions import AllowAny
 from urllib.parse import urlencode
 
-from accounts.api.serializers import UserBaseSerializer
 from core.api_views import BaseGenericViewSet
 from core.serializers import (
     BaseSuccessResponseSerializer,
@@ -27,10 +26,11 @@ from core.serializers import (
 )
 from core.exceptions import CourseException, UserException, EnrollmentException
 from core.mixins import FormatDataMixin, CustomListModelMixin
+from core.permissions import IsInstructor
 from courses.permissions import CoursePermission
 from courses.services import CourseServices
 
-from .response_schema import course_response_schema, student_list_response_schema
+from .response_schema import course_response_schema
 
 from ..models import Course, Category
 from .serializers import (
@@ -40,6 +40,7 @@ from .serializers import (
     CategoryListSerializer,
     EnrollmentCreateOrEditSerializer,
     TopCoursesSerializer,
+    CourseStudentResponseSerializer,
 )
 from django.conf import settings
 
@@ -144,14 +145,6 @@ class CustomFilter(django_filters.FilterSet):
             403: BaseForbiddenResponseSerializer,
         },
     ),
-    get_students=extend_schema(
-        description="View all students enrolled in a course.",
-        responses={
-            200: student_list_response_schema,
-            403: BaseForbiddenResponseSerializer,
-            404: BaseNotFoundResponseSerializer,
-        },
-    ),
 )
 class CourseViewSet(
     FormatDataMixin,
@@ -188,7 +181,7 @@ class CourseViewSet(
 
     def get_serializer_class(self):
         if self.action == "get_students":
-            return UserBaseSerializer
+            return CourseStudentResponseSerializer
         return CourseDataSerializer
 
     def get_queryset(self):
@@ -355,7 +348,20 @@ class CourseViewSet(
         response_serializer = BaseSuccessResponseSerializer({"data": {"success": True}})
         return self.ok(response_serializer.data)
 
-    @action(detail=True, methods=["get"], url_path="students")
+    @extend_schema(
+        description="View all students enrolled in a course.",
+        responses={
+            200: CourseStudentResponseSerializer,
+            403: BaseForbiddenResponseSerializer,
+            404: BaseNotFoundResponseSerializer,
+        },
+    )
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="students",
+        permission_classes=[IsAuthenticated, IsInstructor],
+    )
     def get_students(self, request, **kwargs):
         """
         View all students enrolled in a course.
@@ -366,17 +372,21 @@ class CourseViewSet(
         Returns:
             Response: A list of students enrolled in the course.
         """
+        try:
+            course = self.get_object()
 
-        course = self.get_object()
+            users = CourseServices().handle_get_students_of_course(course=course)
 
-        users = CourseServices().handle_get_students_of_course(course=course)
+            paginator = self.paginator
+            page = paginator.paginate_queryset(users, request)
+            response_data = paginator.get_paginated_response(page).data
+            serializer = self.get_serializer(
+                {"data": response_data.get("data"), "meta": response_data.get("meta")}
+            )
+            return self.ok(serializer.data)
 
-        paginator = self.paginator
-        page = paginator.paginate_queryset(users, request)
-        serializer = self.get_serializer(page, many=True)
-        response_data = paginator.get_paginated_response(serializer.data).data
-
-        return self.ok(response_data)
+        except Exception as exc:
+            return self.internal_server_error(message=f"{str(exc)}")
 
     @extend_schema(
         description="Get top courses based on the number of students enrolled.",

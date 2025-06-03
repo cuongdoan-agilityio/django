@@ -1,6 +1,6 @@
 from drf_spectacular.utils import OpenApiResponse, OpenApiExample
 
-from core.serializers import BaseDetailSerializer, BaseListSerializer
+from core.serializers import BaseDetailSerializer
 
 
 course_response_schema = OpenApiResponse(
@@ -29,28 +29,6 @@ course_response_schema = OpenApiResponse(
                 }
             },
             response_only=True,
-        )
-    ],
-)
-
-student_list_response_schema = OpenApiResponse(
-    response=BaseListSerializer,
-    examples=[
-        OpenApiExample(
-            "Example response",
-            summary="Example response",
-            value={
-                "data": [
-                    {
-                        "id": "f8fb076c-2622-431f-a414-b7f3216a7e15",
-                        "username": "String",
-                        "first_name": "String",
-                        "last_name": "String",
-                        "email": "student@example.com",
-                    }
-                ],
-                "meta": {"pagination": {"total": 1, "limit": 20, "offset": 0}},
-            },
         )
     ],
 )

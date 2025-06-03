@@ -160,6 +160,10 @@ class CourseServices:
         Handles the logic for retrieving students enrolled in a course.
         """
 
-        students = User.objects.filter(enrollments__course=course).distinct()
+        students = (
+            User.objects.filter(enrollments__course=course)
+            .order_by("-modified")
+            .distinct()
+        )
 
         return students
