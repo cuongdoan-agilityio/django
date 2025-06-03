@@ -27,7 +27,8 @@ def process_exception(exception, context) -> Response:
                     "code": exception.code,
                     "message": exception.developer_message,
                 }
-            }
+            },
+            status=exception.status_code,
         )
 
     if response is not None:

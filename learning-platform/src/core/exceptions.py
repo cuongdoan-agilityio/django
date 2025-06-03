@@ -73,4 +73,5 @@ class EnrollmentException(CustomBaseException):
     """
 
     error = EnrollmentErrorMessage
+    default_code = "STUDENT_ALREADY_ENROLLED"
     status_code = status.HTTP_400_BAD_REQUEST

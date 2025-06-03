@@ -249,81 +249,61 @@ class TestCourseViewSet(BaseCourseModuleTestCase):
         )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_leave_course(
-        self,
-        api_client,
-        fake_student,
-        authenticated_fake_student,
-        course_url,
-        math_course,
-    ):
+    def test_leave_course(self):
         """
         Test leaving a course as a student.
         """
 
-        math_course.students.add(fake_student)
-        response = api_client.post(
-            f"{course_url}{str(math_course.id)}/leave/", data=None, format="json"
+        self.math_course.students.add(self.fake_student)
+        response = self.post_json(
+            fragment=f"{self.fragment}{str(self.math_course.id)}/leave/", data=None
         )
         assert response.status_code == status.HTTP_200_OK
-        assert not math_course.students.filter(id=str(fake_student.id)).exists()
+        assert not self.math_course.students.filter(
+            id=str(self.fake_student.id)
+        ).exists()
 
-    def test_instructor_leave_course(
-        self, api_client, course_url, authenticated_fake_instructor, math_course
-    ):
+    def test_instructor_leave_course(self):
         """
         Test leaving a course without logging in.
         """
-
-        response = api_client.post(
-            f"{course_url}{str(math_course.id)}/leave/", data=None, format="json"
+        self.authenticated_token = self.fake_instructor_token
+        response = self.patch_json(
+            fragment=f"{self.fragment}{str(self.math_course.id)}/leave/", data=None
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_leave_course_unauthorized(self, api_client, course_url, math_course):
+    def test_leave_course_unauthorized(self):
         """
         Test leaving a course without logging in.
         """
-
-        response = api_client.post(
-            f"{course_url}{str(math_course.id)}/leave/", data=None, format="json"
+        self.auth = "invalid_auth_token"
+        response = self.post_json(
+            fragment=f"{self.fragment}{str(self.math_course.id)}/leave/", data=None
         )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_admin_leave_student_of_course(
-        self,
-        api_client,
-        authenticated_fake_admin,
-        fake_student,
-        course_url,
-        math_course,
-    ):
+    def test_admin_leave_student_of_course(self):
         """
         Test enrolling a student in a course.
         """
+        self.authenticated_token = self.fake_admin_token
+        self.math_course.students.add(self.fake_student)
 
-        math_course.students.add(fake_student)
-
-        response = api_client.post(
-            f"{course_url}{str(math_course.id)}/leave/",
-            data={"student": str(fake_student.id)},
-            format="json",
+        response = self.post_json(
+            fragment=f"{self.fragment}{str(self.math_course.id)}/leave/",
+            data={"student": str(self.fake_student.id)},
         )
         assert response.status_code == status.HTTP_200_OK
 
-    def test_student_leave_unenrolled_course(
-        self,
-        api_client,
-        authenticated_fake_student,
-        course_url,
-        math_course,
-    ):
+    def test_student_leave_unenrolled_course(self):
         """
         Test leave course, which not enrolled.
         """
-
-        response = api_client.post(
-            f"{course_url}{str(math_course.id)}/leave/", data=None, format="json"
+        self.math_course.students.remove(self.fake_student)
+        response = self.post_json(
+            fragment=f"{self.fragment}{str(self.math_course.id)}/leave/",
+            data=None,
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
