@@ -5,7 +5,7 @@ from django.db.models.signals import m2m_changed, post_save
 from accounts.signals import send_verify_email
 from courses.models import Course
 from courses.signals import send_email_to_instructor
-from courses.factories import CourseFactory, CategoryFactory
+from courses.factories import CourseFactory, CategoryFactory, EnrollmentFactory
 from core.test import BaseAPITestCase
 from core.constants import Status
 
@@ -53,4 +53,8 @@ class BaseCourseModuleTestCase(BaseAPITestCase):
             title="Music Course",
             status=Status.ACTIVATE.value,
             instructor=self.fake_instructor,
+        )
+
+        self.math_enrollment = EnrollmentFactory(
+            course=self.math_course, student=self.fake_student
         )
