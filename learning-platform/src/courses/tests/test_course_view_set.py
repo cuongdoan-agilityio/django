@@ -56,21 +56,21 @@ class TestCourseViewSet(BaseCourseModuleTestCase):
         assert response.status_code == status.HTTP_200_OK
         assert response.data["data"] == []
 
-    def test_retrieve_course_ok(self, api_client, course_url, fake_course):
+    def test_retrieve_course_ok(self):
         """
         Test retrieving a single course.
         """
 
-        response = api_client.get(f"{course_url}{str(fake_course.id)}/")
+        response = self.get_json(fragment=f"{self.fragment}{str(self.fake_course.id)}/")
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["data"]["title"] == fake_course.title
+        assert response.data["data"]["title"] == self.fake_course.title
 
-    def test_retrieve_not_exists_course(self, api_client, course_url):
+    def test_retrieve_not_exists_course(self):
         """
         Test retrieving a single course.
         """
 
-        response = api_client.get(f"{course_url}{str(uuid4())}/")
+        response = self.get_json(fragment=f"{self.fragment}{str(uuid4())}/")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_create_course(self):
