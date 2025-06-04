@@ -181,71 +181,49 @@ class TestCourseViewSet(BaseCourseModuleTestCase):
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_admin_enroll_student_into_course(
-        self,
-        api_client,
-        authenticated_fake_admin,
-        fake_student,
-        course_url,
-        math_course,
-    ):
+    def test_admin_enroll_student_into_course(self):
         """
         Test enrolling a student in a course.
         """
 
-        response = api_client.post(
-            f"{course_url}{str(math_course.id)}/enroll/",
+        self.authenticated_token = self.fake_admin_token
+        response = self.post_json(
+            fragment=f"{self.fragment}{str(self.math_course.id)}/enroll/",
             data={
-                "student": str(fake_student.id),
+                "student": str(self.fake_student.id),
             },
-            format="json",
         )
         assert response.status_code == status.HTTP_200_OK
 
-    def test_instructor_enroll_course(
-        self,
-        api_client,
-        authenticated_fake_instructor,
-        course_url,
-        math_course,
-    ):
+    def test_instructor_enroll_course(self):
         """
         Test enrolling a student in a course.
         """
 
-        response = api_client.post(
-            f"{course_url}{str(math_course.id)}/enroll/", data=None, format="json"
+        self.authenticated_token = self.fake_instructor_token
+        response = self.post_json(
+            fragment=f"{self.fragment}{str(self.math_course.id)}/enroll/", data=None
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_student_enroll_course(
-        self,
-        api_client,
-        authenticated_fake_student,
-        course_url,
-        math_course,
-    ):
+    def test_student_enroll_course(self):
         """
         Test enrolling a student in a course.
         """
 
-        response = api_client.post(
-            f"{course_url}{str(math_course.id)}/enroll/", data=None, format="json"
+        response = self.post_json(
+            fragment=f"{self.fragment}{str(self.math_course.id)}/enroll/", data=None
         )
         assert response.status_code == status.HTTP_200_OK
 
-    def test_enroll_student_in_course_unauthorized(
-        self,
-        api_client,
-        course_url,
-        math_course,
-    ):
+    def test_enroll_student_in_course_unauthorized(self):
         """
         Test enrolling a student in a course without logging in.
         """
 
-        response = api_client.post(
-            f"{course_url}{str(math_course.id)}/enroll/", data=None, format="json"
+        self.auth = "invalid_auth_token"
+        response = self.post_json(
+            fragment=f"{self.fragment}{str(self.math_course.id)}/enroll/", data=None
         )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
