@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from courses.models import Course
 from core.constants import Status
-from core.error_messages import ErrorMessage
 from core.exceptions import (
     CourseException,
     UserException,
@@ -65,11 +64,14 @@ class CourseServices:
 
         if "status" in data and data["status"] == Status.INACTIVE.value:
             if course.enrollments.exists():
-                raise ValueError(ErrorMessage.COURSE_HAS_STUDENTS)
+                raise CourseException(code="COURSE_HAS_STUDENTS")
 
-        for field, value in data.items():
-            setattr(course, field, value)
-        course.save()
+        try:
+            for field, value in data.items():
+                setattr(course, field, value)
+            course.save()
+        except Exception:
+            raise CourseException(code="UPDATE_COURSE_FAILED")
 
         return course
 

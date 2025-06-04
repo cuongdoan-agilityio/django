@@ -50,3 +50,5 @@ class ErrorMessage:
     CREATE_NOTIFICATION = "Failed to create notification."
     ENROLLMENT_FAILED = "Enrollment failed, please try again later."
     LEAVE_COURSE_FAILED = "Failed to leave the course, please try again later."
+    UPDATE_COURSE_FAILED = "Failed to update the course, please try again later."
+    CACHE_CONNECTION_ERROR = "Failed to connect to the cache."

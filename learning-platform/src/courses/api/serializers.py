@@ -153,3 +153,11 @@ class CourseStudentResponseSerializer(serializers.Serializer):
 
     data = UserBaseSerializer(many=True)
     meta = MetaSerializer()
+
+
+class CourseDetailSerializer(serializers.Serializer):
+    """
+    Serializer for course detail response.
+    """
+
+    data = CourseDataSerializer()

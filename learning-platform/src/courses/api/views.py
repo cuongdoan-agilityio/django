@@ -1,5 +1,6 @@
 import re
 from django.core.cache import cache
+from django.conf import settings
 from django_redis import get_redis_connection
 import django_filters
 from rest_framework import filters
@@ -26,6 +27,7 @@ from core.serializers import (
 )
 from core.mixins import FormatDataMixin, CustomListModelMixin
 from core.permissions import IsInstructor, IsStudent
+from core.error_messages import ErrorMessage
 from courses.permissions import CoursePermission
 from courses.services import CourseServices
 
@@ -40,8 +42,8 @@ from .serializers import (
     EnrollmentCreateOrEditSerializer,
     TopCoursesSerializer,
     CourseStudentResponseSerializer,
+    CourseDetailSerializer,
 )
-from django.conf import settings
 
 User = get_user_model()
 
@@ -117,15 +119,6 @@ class CustomFilter(django_filters.FilterSet):
             404: BaseBadRequestResponseSerializer,
         },
     ),
-    partial_update=extend_schema(
-        description="Update course.",
-        request=CourseUpdateSerializer,
-        responses={
-            200: course_response_schema,
-            400: BaseBadRequestResponseSerializer,
-            403: BaseForbiddenResponseSerializer,
-        },
-    ),
 )
 class CourseViewSet(
     FormatDataMixin,
@@ -163,6 +156,10 @@ class CourseViewSet(
     def get_serializer_class(self):
         if self.action == "get_students":
             return CourseStudentResponseSerializer
+
+        if self.action in ["create", "partial_update"]:
+            return CourseDetailSerializer
+
         return CourseDataSerializer
 
     def get_queryset(self):
@@ -241,6 +238,15 @@ class CourseViewSet(
         response_data = self.serialize_data(course)
         return self.created(response_data)
 
+    @extend_schema(
+        description="Update course.",
+        request=CourseUpdateSerializer,
+        responses={
+            200: CourseDetailSerializer,
+            400: BaseBadRequestResponseSerializer,
+            403: BaseForbiddenResponseSerializer,
+        },
+    )
     def partial_update(self, request, *args, **kwargs):
         """
         Partially update a course by an instructor.
@@ -260,16 +266,17 @@ class CourseViewSet(
         serializer.is_valid(raise_exception=True)
         serializer_data = serializer.validated_data
 
+        course = CourseServices().handle_partial_update(instance, serializer_data)
+        response_data = self.serialize_data({"data": course})
+
         try:
-            course = CourseServices().handle_partial_update(instance, serializer_data)
-        except ValueError as e:
-            return self.bad_request(field="status", message=str(e))
-
-        response_data = self.serialize_data(course)
-
-        # Remove cache, include top course
-        cache_keys = self.get_cache_key_by_regex("course_list:.*")
-        self.delete_cache(cache_keys=cache_keys + ["top_courses"])
+            # Remove cache, include top course
+            cache_keys = self.get_cache_key_by_regex("course_list:.*")
+            self.delete_cache(cache_keys=cache_keys + ["top_courses"])
+        except ConnectionError:
+            return self.internal_server_error(
+                message=ErrorMessage.CACHE_CONNECTION_ERROR
+            )
 
         return self.ok(response_data)
 
