@@ -102,8 +102,6 @@ def send_verify_email_signal():
     """
 
     post_save.connect(receiver=send_verify_email, sender=User)
-    yield
-    post_save.disconnect(receiver=send_verify_email, sender=User)
 
 
 @pytest.fixture
@@ -114,8 +112,6 @@ def enroll_intro_course_signal():
     """
 
     post_save.connect(receiver=enroll_intro_course, sender=User)
-    yield
-    post_save.disconnect(receiver=enroll_intro_course, sender=User)
 
 
 @pytest.fixture(scope="session")
@@ -255,42 +251,3 @@ def fake_admin_token(fake_admin):
     """
 
     return Token.objects.create(user=fake_admin)
-
-
-@pytest.fixture()
-def authenticated_fake_student(api_client, fake_student_token):
-    """
-    Fixture to authenticate student user.
-    """
-
-    api_client.credentials(HTTP_AUTHORIZATION=f"Token {fake_student_token.key}")
-
-    yield api_client
-
-    api_client.logout()
-
-
-@pytest.fixture()
-def authenticated_fake_instructor(api_client, fake_instructor_token):
-    """
-    Fixture to authenticate instructor user.
-    """
-
-    api_client.credentials(HTTP_AUTHORIZATION=f"Token {fake_instructor_token.key}")
-
-    yield api_client
-
-    api_client.logout()
-
-
-@pytest.fixture()
-def authenticated_fake_admin(api_client, fake_admin_token):
-    """
-    Fixture to authenticate instructor user.
-    """
-
-    api_client.credentials(HTTP_AUTHORIZATION=f"Token {fake_admin_token.key}")
-
-    yield api_client
-
-    api_client.logout()

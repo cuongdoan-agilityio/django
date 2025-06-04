@@ -208,45 +208,6 @@ def fake_admin_token(fake_admin):
     return Token.objects.create(user=fake_admin)
 
 
-@pytest.fixture()
-def authenticated_fake_student(api_client, fake_student_token):
-    """
-    Fixture to authenticate student user.
-    """
-
-    api_client.credentials(HTTP_AUTHORIZATION=f"Token {fake_student_token.key}")
-
-    yield api_client
-
-    api_client.logout()
-
-
-@pytest.fixture()
-def authenticated_fake_instructor(api_client, fake_instructor_token):
-    """
-    Fixture to authenticate instructor user.
-    """
-
-    api_client.credentials(HTTP_AUTHORIZATION=f"Token {fake_instructor_token.key}")
-
-    yield api_client
-
-    api_client.logout()
-
-
-@pytest.fixture()
-def authenticated_fake_admin(api_client, fake_admin_token):
-    """
-    Fixture to authenticate instructor user.
-    """
-
-    api_client.credentials(HTTP_AUTHORIZATION=f"Token {fake_admin_token.key}")
-
-    yield api_client
-
-    api_client.logout()
-
-
 @pytest.mark.django_db
 class BaseAPITestCase:
     @pytest.fixture(autouse=True)
@@ -266,9 +227,6 @@ class BaseAPITestCase:
         fake_admin,
         fake_instructor_token,
         fake_admin_token,
-        authenticated_fake_student,
-        authenticated_fake_instructor,
-        authenticated_fake_admin,
     ):
         self.faker = Faker()
         self.root_url = "/api/v1/"
@@ -290,11 +248,9 @@ class BaseAPITestCase:
         self.fake_admin = fake_admin
         self.fake_instructor_token = fake_instructor_token
         self.fake_admin_token = fake_admin_token
-        self.authenticated_fake_student = authenticated_fake_student
-        self.authenticated_fake_instructor = authenticated_fake_instructor
-        self.authenticated_fake_admin = authenticated_fake_admin
         self.authenticated_token = self.fake_student_token
         self.auth = "token"
+        post_save.disconnect(receiver=send_verify_email, sender=User)
 
     def build_api_url(self, fragment: str = None) -> str:
         """
@@ -330,8 +286,6 @@ class BaseAPITestCase:
         elif self.auth == "invalid_auth_token":
             invalid_token = str(uuid4())
             headers["HTTP_AUTHORIZATION"] = f"Token {invalid_token}"
-        else:
-            headers["HTTP_AUTHORIZATION"] = None
 
         self.api_client.credentials(**headers)
 
@@ -363,8 +317,6 @@ class BaseAPITestCase:
         elif self.auth == "invalid_auth_token":
             invalid_token = str(uuid4())
             headers["HTTP_AUTHORIZATION"] = f"Token {invalid_token}"
-        else:
-            headers["HTTP_AUTHORIZATION"] = None
 
         self.api_client.credentials(**headers)
 
@@ -388,8 +340,6 @@ class BaseAPITestCase:
         elif self.auth == "invalid_auth_token":
             invalid_token = str(uuid4())
             headers["HTTP_AUTHORIZATION"] = f"Token {invalid_token}"
-        else:
-            headers["HTTP_AUTHORIZATION"] = None
 
         self.api_client.credentials(**headers)
 
@@ -419,8 +369,6 @@ class BaseAPITestCase:
         elif self.auth == "invalid_auth_token":
             invalid_token = str(uuid4())
             headers["HTTP_AUTHORIZATION"] = f"Token {invalid_token}"
-        else:
-            headers["HTTP_AUTHORIZATION"] = None
 
         self.api_client.credentials(**headers)
 

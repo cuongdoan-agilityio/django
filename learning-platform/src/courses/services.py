@@ -1,8 +1,12 @@
 from django.contrib.auth import get_user_model
 from courses.models import Course
 from core.constants import Status
-from core.error_messages import ErrorMessage
-from core.exceptions import CourseException, UserException, EnrollmentException
+from core.exceptions import (
+    CourseException,
+    UserException,
+    EnrollmentException,
+    NotificationException,
+)
 from notifications.models import Notification
 from notifications.constants import NotificationMessage
 
@@ -31,15 +35,18 @@ class CourseServices:
             Course: The created course instance.
         """
 
-        course_data = {
-            "title": data.get("title"),
-            "category": data.get("category"),
-            "description": data.get("description"),
-            "status": data.get("status", Status.ACTIVATE.value),
-            "instructor": data.get("instructor"),
-        }
+        try:
+            course_data = {
+                "title": data.get("title"),
+                "category": data.get("category"),
+                "description": data.get("description"),
+                "status": data.get("status", Status.ACTIVATE.value),
+                "instructor": data.get("instructor"),
+            }
 
-        course = Course.objects.create(**course_data)
+            course = Course.objects.create(**course_data)
+        except Exception:
+            raise CourseException(code="CREATE_COURSE_FAILED")
 
         return course
 
@@ -60,11 +67,14 @@ class CourseServices:
 
         if "status" in data and data["status"] == Status.INACTIVE.value:
             if course.enrollments.exists():
-                raise ValueError(ErrorMessage.COURSE_HAS_STUDENTS)
+                raise CourseException(code="COURSE_HAS_STUDENTS")
 
-        for field, value in data.items():
-            setattr(course, field, value)
-        course.save()
+        try:
+            for field, value in data.items():
+                setattr(course, field, value)
+            course.save()
+        except Exception:
+            raise CourseException(code="UPDATE_COURSE_FAILED")
 
         return course
 
@@ -101,17 +111,22 @@ class CourseServices:
         if course.students.filter(id=student.id).exists():
             raise EnrollmentException(code="STUDENT_ALREADY_ENROLLED")
 
-        # Add the student to the course
-        course.students.add(student)
+        try:
+            course.students.add(student)
+        except Exception:
+            raise EnrollmentException(code="ENROLLMENT_FAILED")
 
         # Create notification
         # TODO: Need refactor after implement Notification service
-        Notification.objects.create(
-            user=course.instructor,
-            message=NotificationMessage.STUDENT_ENROLLED.format(
-                user_name=student.username, course_name=course.title
-            ),
-        )
+        try:
+            Notification.objects.create(
+                user=course.instructor,
+                message=NotificationMessage.STUDENT_ENROLLED.format(
+                    user_name=student.username, course_name=course.title
+                ),
+            )
+        except Exception:
+            raise NotificationException(code="CREATE_NOTIFICATION")
 
     def handle_leave_course(self, user, course, data=None):
         """
@@ -144,22 +159,32 @@ class CourseServices:
             )
 
         # Delete the enrollment
-        enrollment.delete()
+        try:
+            enrollment.delete()
+        except Exception:
+            raise EnrollmentException(code="LEAVE_COURSE_FAILED")
 
         # Create notification for the student
         # TODO: Need refactor after implement Notification service
-        Notification.objects.create(
-            user=student,
-            message=NotificationMessage.STUDENT_UNENROLLED.format(
-                course_name=course.title
-            ),
-        )
+        try:
+            Notification.objects.create(
+                user=student,
+                message=NotificationMessage.STUDENT_UNENROLLED.format(
+                    course_name=course.title
+                ),
+            )
+        except Exception:
+            raise NotificationException(code="CREATE_NOTIFICATION")
 
     def handle_get_students_of_course(self, course):
         """
         Handles the logic for retrieving students enrolled in a course.
         """
 
-        students = User.objects.filter(enrollments__course=course).distinct()
+        students = (
+            User.objects.filter(enrollments__course=course)
+            .order_by("-modified")
+            .distinct()
+        )
 
         return students

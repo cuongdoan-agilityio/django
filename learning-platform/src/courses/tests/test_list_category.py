@@ -1,45 +1,46 @@
-import pytest
 from rest_framework import status
 from courses.models import Category
 from courses.api.serializers import CategorySerializer
+from .base import BaseCourseModuleTestCase
 
 
-@pytest.mark.django_db
-class TestCategoryViewSet:
+class TestCategoryViewSet(BaseCourseModuleTestCase):
     """
     Test suite for the CategoryViewSet.
     """
 
-    def test_list_categories_success(self, api_client, category_url, fake_categories):
+    fragment = "categories/"
+
+    def test_list_categories_success(self):
         """
         Test listing all categories.
         """
 
-        response = api_client.get(category_url)
+        response = self.get_json(self.fragment)
         assert response.status_code == status.HTTP_200_OK
 
-        categories = Category.objects.all()
+        categories = Category.objects.all().order_by("-modified")
         serializer = CategorySerializer(categories, many=True)
 
         assert response.data["data"] == serializer.data
 
-    def test_list_categories_empty_success(self, api_client, category_url):
+    def test_list_categories_empty_success(self):
         """
         Test listing categories when there are no categories.
         """
 
         Category.objects.all().delete()
-        response = api_client.get(category_url)
+        response = self.get_json(self.fragment)
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data["data"] == []
 
-    def test_category_viewset_permissions(self, api_client, category_url):
+    def test_category_viewset_permissions(self):
         """
         Test that the CategoryViewSet allows any user to access the list of categories.
         """
 
-        api_client.logout()
-        response = api_client.get(category_url)
+        self.auth = None
+        response = self.get_json(self.fragment)
 
         assert response.status_code == status.HTTP_200_OK

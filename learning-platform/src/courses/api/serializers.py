@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from core.constants import Status
 from core.error_messages import ErrorMessage
+from core.serializers import MetaSerializer
 from courses.models import Course, Category
 
 from accounts.api.serializers import UserBaseSerializer
@@ -14,7 +15,12 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ["id", "name", "description"]
+        fields = ["id", "name", "description", "modified"]
+
+
+class CategoryListSerializer(serializers.Serializer):
+    data = CategorySerializer(many=True)
+    meta = MetaSerializer()
 
 
 class CourseDataSerializer(serializers.ModelSerializer):
@@ -35,7 +41,15 @@ class CourseDataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ["id", "title", "description", "category", "instructor", "status"]
+        fields = [
+            "id",
+            "title",
+            "description",
+            "category",
+            "instructor",
+            "status",
+            "modified",
+        ]
         read_only_fields = ["instructor"]
 
 
@@ -101,7 +115,7 @@ class EnrollmentCreateOrEditSerializer(serializers.Serializer):
         if (
             request
             and request.user
-            and request.user.is_superuser
+            and request.user.is_staff
             and not data.get("student")
         ):
             raise serializers.ValidationError(
@@ -130,3 +144,29 @@ class CourseUpdateSerializer(serializers.Serializer):
             raise serializers.ValidationError(ErrorMessage.CATEGORY_NOT_EXIST)
 
         return value
+
+
+class CourseStudentResponseSerializer(serializers.Serializer):
+    """
+    Serializer for course student response.
+    """
+
+    data = UserBaseSerializer(many=True)
+    meta = MetaSerializer()
+
+
+class CourseDetailSerializer(serializers.Serializer):
+    """
+    Serializer for course detail response.
+    """
+
+    data = CourseDataSerializer()
+
+
+class CourseListSerializer(serializers.Serializer):
+    """
+    Serializer for course list response.
+    """
+
+    data = CourseDataSerializer(many=True)
+    meta = MetaSerializer()
