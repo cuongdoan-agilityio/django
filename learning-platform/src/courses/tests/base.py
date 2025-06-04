@@ -13,6 +13,10 @@ User = get_user_model()
 
 
 class BaseCourseModuleTestCase(BaseAPITestCase):
+    """
+    Base test case for the courses module, providing common setup and fixtures.
+    """
+
     @pytest.fixture(autouse=True)
     def setup(self, setup_fixtures, db):
         """
