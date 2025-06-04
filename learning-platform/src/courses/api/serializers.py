@@ -161,3 +161,12 @@ class CourseDetailSerializer(serializers.Serializer):
     """
 
     data = CourseDataSerializer()
+
+
+class CourseListSerializer(serializers.Serializer):
+    """
+    Serializer for course list response.
+    """
+
+    data = CourseDataSerializer(many=True)
+    meta = MetaSerializer()

@@ -6,7 +6,6 @@ import django_filters
 from rest_framework import filters
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.decorators import action
-from rest_framework.mixins import ListModelMixin
 from django.db.models import Count
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
@@ -20,7 +19,7 @@ from core.serializers import (
     BaseForbiddenResponseSerializer,
     BaseNotFoundResponseSerializer,
 )
-from core.mixins import FormatDataMixin, CustomListModelMixin, CustomRetrieveModelMixin
+from core.mixins import CustomListModelMixin, CustomRetrieveModelMixin
 from core.permissions import IsInstructor, IsStudent
 from core.error_messages import ErrorMessage
 from courses.permissions import CoursePermission
@@ -38,6 +37,7 @@ from .serializers import (
     TopCoursesSerializer,
     CourseStudentResponseSerializer,
     CourseDetailSerializer,
+    CourseListSerializer,
 )
 
 User = get_user_model()
@@ -57,7 +57,85 @@ class CustomFilter(django_filters.FilterSet):
 
 
 @extend_schema_view(
-    list=extend_schema(
+    retrieve=extend_schema(
+        description="Retrieve a single course",
+        responses={
+            200: course_response_schema,
+            404: BaseBadRequestResponseSerializer,
+        },
+    ),
+)
+class CourseViewSet(
+    BaseGenericViewSet,
+    CustomListModelMixin,
+    CustomRetrieveModelMixin,
+):
+    """
+    Course view set
+
+    - People who do not need to log in can still see.
+    - Students can see the courses they are enrolled in.
+    - Can filter courses with category, status, and instructor.
+
+    Filters:
+        - category: Filter courses by category.
+        - status: Filter courses by status.
+        - instructor: Filter courses by enrollment status (students only).
+
+    Returns:
+        Response: A paginated list of courses with metadata.
+    """
+
+    resource_name = "courses"
+    serializer_class = CourseDataSerializer
+    queryset = Course.objects.all()
+    permission_classes = [CoursePermission]
+    http_method_names = ["get", "post", "patch"]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = CustomFilter
+    search_fields = ["title", "description"]
+
+    def get_serializer_class(self):
+        if self.action == "get_students":
+            return CourseStudentResponseSerializer
+
+        if self.action in ["create", "retrieve", "partial_update"]:
+            return CourseDetailSerializer
+
+        return CourseListSerializer
+
+    def get_queryset(self):
+        """
+        Optionally restricts the returned courses to those enrolled by the student,
+        by filtering against a `enrolled` query parameter in the URL.
+        """
+
+        queryset = super().get_queryset()
+        queryset = queryset.select_related("category", "instructor")
+        enrolled = self.request.query_params.get("enrolled", None)
+
+        if (
+            enrolled
+            and self.request.user.is_authenticated
+            and self.request.user.is_student
+        ):
+            queryset = queryset.filter(enrollments__student=self.request.user)
+
+        return queryset
+
+    def get_course_list_cache_key(self, request):
+        """
+        Generate a unique cache key for the course list API.
+
+        The cache key is based on the query parameters and the user's authentication status.
+        This ensures that different users or query parameter combinations have separate cache entries.
+        """
+
+        query_string = urlencode(request.GET, doseq=True)
+        user_id = str(request.user.id) if request.user.is_authenticated else "anonymous"
+        return f"course_list:{user_id}:{query_string}"
+
+    @extend_schema(
         description="List all courses with pagination and custom response format.",
         parameters=[
             OpenApiParameter(
@@ -98,86 +176,12 @@ class CustomFilter(django_filters.FilterSet):
                 type=bool,
             ),
         ],
-    ),
-    retrieve=extend_schema(
-        description="Retrieve a single course",
         responses={
-            200: course_response_schema,
-            404: BaseBadRequestResponseSerializer,
+            200: CourseListSerializer,
+            400: BaseBadRequestResponseSerializer,
+            403: BaseForbiddenResponseSerializer,
         },
-    ),
-)
-class CourseViewSet(
-    FormatDataMixin,
-    BaseGenericViewSet,
-    ListModelMixin,
-    CustomRetrieveModelMixin,
-):
-    """
-    Course view set
-
-    - People who do not need to log in can still see.
-    - Students can see the courses they are enrolled in.
-    - Can filter courses with category, status, and instructor.
-
-    Filters:
-        - category: Filter courses by category.
-        - status: Filter courses by status.
-        - instructor: Filter courses by enrollment status (students only).
-
-    Returns:
-        Response: A paginated list of courses with metadata.
-    """
-
-    resource_name = "courses"
-    serializer_class = CourseDataSerializer
-    queryset = Course.objects.all()
-    permission_classes = [CoursePermission]
-    http_method_names = ["get", "post", "patch"]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_class = CustomFilter
-    search_fields = ["title", "description"]
-
-    def get_serializer_class(self):
-        if self.action == "get_students":
-            return CourseStudentResponseSerializer
-
-        if self.action in ["create", "partial_update"]:
-            return CourseDetailSerializer
-
-        return CourseDataSerializer
-
-    def get_queryset(self):
-        """
-        Optionally restricts the returned courses to those enrolled by the student,
-        by filtering against a `enrolled` query parameter in the URL.
-        """
-
-        queryset = super().get_queryset()
-        queryset = queryset.select_related("category", "instructor")
-        enrolled = self.request.query_params.get("enrolled", None)
-
-        if (
-            enrolled
-            and self.request.user.is_authenticated
-            and self.request.user.is_student
-        ):
-            queryset = queryset.filter(enrollments__student=self.request.user)
-
-        return queryset
-
-    def get_course_list_cache_key(self, request):
-        """
-        Generate a unique cache key for the course list API.
-
-        The cache key is based on the query parameters and the user's authentication status.
-        This ensures that different users or query parameter combinations have separate cache entries.
-        """
-
-        query_string = urlencode(request.GET, doseq=True)
-        user_id = str(request.user.id) if request.user.is_authenticated else "anonymous"
-        return f"course_list:{user_id}:{query_string}"
-
+    )
     def list(self, request, *args, **kwargs):
         """
         List all courses with caching and pagination.
@@ -233,8 +237,8 @@ class CourseViewSet(
                 message=ErrorMessage.CACHE_CONNECTION_ERROR
             )
 
-        response_data = self.serialize_data({"data": course})
-        return self.created(response_data)
+        response_data = self.get_serializer({"data": course})
+        return self.created(response_data.data)
 
     @extend_schema(
         description="Update course.",
@@ -265,7 +269,7 @@ class CourseViewSet(
         serializer_data = serializer.validated_data
 
         course = CourseServices().handle_partial_update(instance, serializer_data)
-        response_data = self.serialize_data({"data": course})
+        response_data = self.get_serializer({"data": course})
 
         try:
             # Remove cache, include top course
@@ -276,7 +280,7 @@ class CourseViewSet(
                 message=ErrorMessage.CACHE_CONNECTION_ERROR
             )
 
-        return self.ok(response_data)
+        return self.ok(response_data.data)
 
     @extend_schema(
         description="Enroll a student in a course.",
