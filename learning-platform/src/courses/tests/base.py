@@ -49,13 +49,6 @@ class BaseCourseModuleTestCase(BaseAPITestCase):
             status=Status.ACTIVATE.value,
         )
 
-        self.math_course = CourseFactory(
-            title="Math course",
-            status=Status.ACTIVATE.value,
-            enrollment_limit=2,
-            instructor=self.fake_instructor,
-        )
-
         self.music_course = CourseFactory(
             title="Music Course",
             status=Status.ACTIVATE.value,

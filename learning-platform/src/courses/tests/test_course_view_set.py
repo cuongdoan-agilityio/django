@@ -28,22 +28,21 @@ class TestCourseViewSet(BaseCourseModuleTestCase):
         EnrollmentFactory.create_batch(30, course=self.math_course)
         EnrollmentFactory.create_batch(20, course=self.music_course)
 
-    def test_list_courses_ok(self, api_client, course_url, fake_course):
+    def test_list_courses_ok(self):
         """
         Test listing all courses.
         """
 
         cache.clear()
-        response = api_client.get(course_url)
+        self.auth = None
+        response = self.get_json(self.fragment)
+        cache_data = cache.get("course_list:anonymous:")
+        response = self.get_json(self.fragment)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data["data"]) == 1
-
-        cache_data = cache.get("course_list:anonymous:")
-        response = api_client.get(course_url)
         assert cache_data == response.data
 
-    def test_empty_list_courses_ok(self, api_client, course_url):
+    def test_empty_list_courses_ok(self):
         """
         Test listing all courses.
         """
@@ -51,10 +50,79 @@ class TestCourseViewSet(BaseCourseModuleTestCase):
         cache.clear()
         Course.objects.all().delete()
 
-        response = api_client.get(course_url)
+        response = self.get_json(self.fragment)
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data["data"] == []
+
+    def test_filter_courses_by_status_ok(self):
+        """
+        Test filtering courses by status.
+        """
+
+        self.math_course.status = Status.ACTIVATE.value
+        self.math_course.save()
+        self.music_course.status = Status.ACTIVATE.value
+        self.music_course.save()
+        self.fake_course.status = Status.INACTIVE.value
+        self.fake_course.save()
+        response = self.get_json(
+            fragment=f"{self.fragment}?status={Status.ACTIVATE.value}"
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["data"]) == 2
+        assert response.data["data"][0]["status"] == Status.ACTIVATE.value
+        assert response.data["data"][1]["status"] == Status.ACTIVATE.value
+        assert str(self.fake_course.id) not in [
+            item.get("id") for item in response.data["data"]
+        ]
+
+    def test_filter_courses_by_search_ok(self):
+        """
+        Test filtering courses by title.
+        """
+
+        self.math_course.title = "Math course"
+        self.math_course.save()
+        self.music_course.title = "Music course"
+        self.music_course.save()
+        self.fake_course.title = "Python course"
+        self.fake_course.save()
+
+        response = self.get_json(f"{self.fragment}?search=Python")
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["data"]) == 1
+        assert "Python" in response.data["data"][0]["title"]
+        assert str(self.fake_course.id) == response.data["data"][0]["id"]
+
+    def test_filter_courses_by_category_ok(self):
+        """
+        Test filtering courses by category.
+        """
+
+        cache.clear()
+        self.math_course.category = self.fake_category
+        self.math_course.save()
+
+        response = self.get_json(
+            f"{self.fragment}?category={str(self.fake_category.id)}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["data"]) == 1
+        assert response.data["data"][0]["category"]["id"] == str(self.fake_category.id)
+
+    def test_filter_courses_by_enrolled_ok(self):
+        """
+        Test filtering courses by enrolled status.
+        """
+
+        self.math_course.students.add(self.fake_student)
+        response = self.get_json(f"{self.fragment}?enrolled=true")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["data"]) == 1
+        assert response.data["data"][0]["id"] == str(self.math_course.id)
 
     def test_retrieve_course_ok(self):
         """
@@ -283,88 +351,6 @@ class TestCourseViewSet(BaseCourseModuleTestCase):
             fragment=f"{self.fragment}{str(self.music_course.id)}/students/"
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
-
-    def test_filter_courses_by_status_ok(
-        self, api_client, math_course, music_course, fake_course, course_url
-    ):
-        """
-        Test filtering courses by status.
-        """
-
-        math_course.status = Status.ACTIVATE.value
-        math_course.save()
-        music_course.status = Status.ACTIVATE.value
-        music_course.save()
-        fake_course.status = Status.INACTIVE.value
-        fake_course.save()
-
-        response = api_client.get(f"{course_url}?status={Status.ACTIVATE.value}")
-        assert response.status_code == status.HTTP_200_OK
-        assert len(response.data["data"]) == 2
-        assert response.data["data"][0]["status"] == Status.ACTIVATE.value
-        assert response.data["data"][1]["status"] == Status.ACTIVATE.value
-        assert str(fake_course.id) not in [
-            item.get("id") for item in response.data["data"]
-        ]
-
-    def test_filter_courses_by_search_ok(
-        self, api_client, math_course, music_course, fake_course, course_url
-    ):
-        """
-        Test filtering courses by title.
-        """
-
-        math_course.title = "Math course"
-        math_course.save()
-        music_course.title = "Music course"
-        music_course.save()
-        fake_course.title = "Python course"
-        fake_course.save()
-
-        response = api_client.get(f"{course_url}?search=Python")
-        assert response.status_code == status.HTTP_200_OK
-        assert len(response.data["data"]) == 1
-        assert "Python" in response.data["data"][0]["title"]
-        assert str(fake_course.id) == response.data["data"][0]["id"]
-
-    def test_filter_courses_by_category_ok(
-        self,
-        api_client,
-        fake_category,
-        math_course,
-        course_url,
-    ):
-        """
-        Test filtering courses by category.
-        """
-
-        cache.clear()
-        math_course.category = fake_category
-        math_course.save()
-
-        response = api_client.get(f"{course_url}?category={str(fake_category.id)}")
-        assert response.status_code == status.HTTP_200_OK
-        assert len(response.data["data"]) == 1
-        assert response.data["data"][0]["category"]["id"] == str(fake_category.id)
-
-    def test_filter_courses_by_enrolled_ok(
-        self,
-        api_client,
-        fake_student,
-        course_url,
-        authenticated_fake_student,
-        math_course,
-    ):
-        """
-        Test filtering courses by enrolled status.
-        """
-
-        math_course.students.add(fake_student)
-        response = api_client.get(f"{course_url}?enrolled=true")
-
-        assert response.status_code == status.HTTP_200_OK
-        assert len(response.data["data"]) == 1
-        assert response.data["data"][0]["id"] == str(math_course.id)
 
     def test_get_top_courses_success(self, enroll_courses):
         """
