@@ -25,8 +25,6 @@ from core.error_messages import ErrorMessage
 from courses.permissions import CoursePermission
 from courses.services import CourseServices
 
-from .response_schema import course_response_schema
-
 from ..models import Course, Category
 from .serializers import (
     CourseCreateSerializer,
@@ -60,7 +58,7 @@ class CustomFilter(django_filters.FilterSet):
     retrieve=extend_schema(
         description="Retrieve a single course",
         responses={
-            200: course_response_schema,
+            200: CourseDetailSerializer,
             404: BaseBadRequestResponseSerializer,
         },
     ),
