@@ -127,57 +127,42 @@ class TestCourseViewSet(BaseCourseModuleTestCase):
         response = api_client.post(course_url, data, format="json")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_partial_update_course_ok(
-        self,
-        api_client,
-        math_course,
-        authenticated_fake_instructor,
-        course_url,
-    ):
+    def test_partial_update_course_ok(self):
         """
         Test partially updating a course.
         """
 
+        self.authenticated_token = self.fake_instructor_token
         data = {"title": "Updated Course Title"}
-        response = api_client.patch(
-            f"{course_url}{str(math_course.id)}/", data, format="json"
+        response = self.patch_json(
+            fragment=f"{self.fragment}{str(self.math_course.id)}/", data=data
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.data["data"]["title"] == data["title"]
 
-    def test_partial_update_course_unauthorized(
-        self,
-        api_client,
-        math_course,
-        authenticated_fake_student,
-        course_url,
-    ):
+    def test_partial_update_course_unauthorized(self):
         """
         Test partially updating a course without logging in.
         """
 
+        self.authenticated_token = self.fake_instructor_token
         data = {"title": "Unauthorized Update"}
-        response = api_client.patch(
-            f"{course_url}{str(math_course.id)}/", data, format="json"
+        response = self.patch_json(
+            fragment=f"{self.fragment}{str(self.math_course.id)}/", data=data
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_partial_update_course_invalid_data(
-        self,
-        api_client,
-        authenticated_fake_instructor,
-        course_url,
-        math_course,
-    ):
+    def test_partial_update_course_invalid_data(self):
         """
         Test creating a new course without logging in.
         """
 
+        self.authenticated_token = self.fake_instructor_token
         data = {
             "category": str(uuid4()),
         }
-        response = api_client.patch(
-            f"{course_url}{str(math_course.id)}/", data, format="json"
+        response = self.patch_json(
+            fragment=f"{self.fragment}{str(self.math_course.id)}/", data=data
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
