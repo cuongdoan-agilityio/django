@@ -1,7 +1,7 @@
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
-from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin, ListModelMixin
+from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin
 from django.contrib.auth import authenticate, get_user_model
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
 from django.utils.http import urlsafe_base64_decode
@@ -27,6 +27,7 @@ from core.serializers import (
 from core.error_messages import ErrorMessage
 from core.helpers import create_token
 from core.permissions import IsAdminOrOwner
+from core.mixins import CustomListModelMixin
 
 from .response_schema import user_profile_response_schema
 from .serializers import (
@@ -34,7 +35,7 @@ from .serializers import (
     LoginResponseSerializer,
     RegisterSerializer,
     UserProfileUpdateSerializer,
-    SpecializationSerializer,
+    SpecializationListResponseSerializer,
     UserProfileDataSerializer,
     UserActivateSerializer,
     ResetUserPasswordSerializer,
@@ -347,16 +348,15 @@ class UserViewSet(
         return self.ok(response_data)
 
 
-class SpecializationViewSet(BaseGenericViewSet, ListModelMixin):
+class SpecializationViewSet(BaseGenericViewSet, CustomListModelMixin):
     """
     Specialization view set.
     """
 
     permission_classes = [AllowAny]
-    serializer_class = SpecializationSerializer
-    http_method_names = ["get"]
+    serializer_class = SpecializationListResponseSerializer
     resource_name = "specializations"
-    queryset = Specialization.objects.all()
+    queryset = Specialization.objects.all().order_by("-modified")
 
 
 apps = [AuthenticationViewSet, UserViewSet, SpecializationViewSet]

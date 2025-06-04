@@ -4,6 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 
 from core.constants import ScholarshipChoices, Degree
 from core.error_messages import ErrorMessage
+from core.serializers import MetaSerializer
 from accounts.models import Specialization
 
 User = get_user_model()
@@ -205,14 +206,23 @@ class UserSerializer(serializers.ModelSerializer):
         ]
 
 
-class SpecializationSerializer(serializers.ModelSerializer):
+class SpecializationDataSerializer(serializers.ModelSerializer):
     """
     Specialization serializer
     """
 
     class Meta:
         model = Specialization
-        fields = ["id", "name", "description"]
+        fields = ["id", "name", "description", "modified"]
+
+
+class SpecializationListResponseSerializer(serializers.Serializer):
+    """
+    Serializer for the response containing a list of specializations.
+    """
+
+    data = SpecializationDataSerializer(many=True, help_text="List of specializations")
+    meta = MetaSerializer(help_text="Meta information about the response")
 
 
 class UserBaseSerializer(serializers.ModelSerializer):
