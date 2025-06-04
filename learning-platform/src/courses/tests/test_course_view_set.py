@@ -21,7 +21,7 @@ class TestCourseViewSet(BaseCourseModuleTestCase):
         Create multiple courses for testing top-courses API.
         """
 
-        self.math_course.enrollment_limit = self.music_course.enrollment_limit = 30
+        self.math_course.enrollment_limit = self.music_course.enrollment_limit = 35
         self.math_course.save()
         self.music_course.save()
 
@@ -231,7 +231,7 @@ class TestCourseViewSet(BaseCourseModuleTestCase):
 
         self.authenticated_token = self.fake_admin_token
         response = self.post_json(
-            fragment=f"{self.fragment}{str(self.math_course.id)}/enroll/",
+            fragment=f"{self.fragment}{str(self.music_course.id)}/enroll/",
             data={
                 "student": str(self.fake_student.id),
             },
@@ -255,7 +255,7 @@ class TestCourseViewSet(BaseCourseModuleTestCase):
         """
 
         response = self.post_json(
-            fragment=f"{self.fragment}{str(self.math_course.id)}/enroll/", data=None
+            fragment=f"{self.fragment}{str(self.music_course.id)}/enroll/", data=None
         )
         assert response.status_code == status.HTTP_200_OK
 
