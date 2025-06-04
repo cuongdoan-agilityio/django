@@ -26,6 +26,16 @@ class EnrollmentErrorMessage:
 
     STUDENT_ALREADY_ENROLLED = ErrorMessage.STUDENT_ALREADY_ENROLLED
     STUDENT_NOT_ENROLLED = ErrorMessage.STUDENT_NOT_ENROLLED
+    ENROLLMENT_FAILED = ErrorMessage.ENROLLMENT_FAILED
+    LEAVE_COURSE_FAILED = ErrorMessage.LEAVE_COURSE_FAILED
+
+
+class NotificationErrorMessage:
+    """
+    Enrollment error message.
+    """
+
+    CREATE_NOTIFICATION = ErrorMessage.CREATE_NOTIFICATION
 
 
 class CustomBaseException(Exception):
@@ -74,4 +84,14 @@ class EnrollmentException(CustomBaseException):
 
     error = EnrollmentErrorMessage
     default_code = "STUDENT_ALREADY_ENROLLED"
+    status_code = status.HTTP_400_BAD_REQUEST
+
+
+class NotificationException(CustomBaseException):
+    """
+    Notification exception.
+    """
+
+    error = NotificationErrorMessage
+    default_code = "CREATE_NOTIFICATION"
     status_code = status.HTTP_400_BAD_REQUEST

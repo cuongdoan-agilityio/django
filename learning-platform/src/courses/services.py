@@ -2,7 +2,12 @@ from django.contrib.auth import get_user_model
 from courses.models import Course
 from core.constants import Status
 from core.error_messages import ErrorMessage
-from core.exceptions import CourseException, UserException, EnrollmentException
+from core.exceptions import (
+    CourseException,
+    UserException,
+    EnrollmentException,
+    NotificationException,
+)
 from notifications.models import Notification
 from notifications.constants import NotificationMessage
 
@@ -101,17 +106,22 @@ class CourseServices:
         if course.students.filter(id=student.id).exists():
             raise EnrollmentException(code="STUDENT_ALREADY_ENROLLED")
 
-        # Add the student to the course
-        course.students.add(student)
+        try:
+            course.students.add(student)
+        except Exception:
+            raise EnrollmentException(code="ENROLLMENT_FAILED")
 
         # Create notification
         # TODO: Need refactor after implement Notification service
-        Notification.objects.create(
-            user=course.instructor,
-            message=NotificationMessage.STUDENT_ENROLLED.format(
-                user_name=student.username, course_name=course.title
-            ),
-        )
+        try:
+            Notification.objects.create(
+                user=course.instructor,
+                message=NotificationMessage.STUDENT_ENROLLED.format(
+                    user_name=student.username, course_name=course.title
+                ),
+            )
+        except Exception:
+            raise NotificationException(code="CREATE_NOTIFICATION")
 
     def handle_leave_course(self, user, course, data=None):
         """
@@ -144,16 +154,22 @@ class CourseServices:
             )
 
         # Delete the enrollment
-        enrollment.delete()
+        try:
+            enrollment.delete()
+        except Exception:
+            raise EnrollmentException(code="LEAVE_COURSE_FAILED")
 
         # Create notification for the student
         # TODO: Need refactor after implement Notification service
-        Notification.objects.create(
-            user=student,
-            message=NotificationMessage.STUDENT_UNENROLLED.format(
-                course_name=course.title
-            ),
-        )
+        try:
+            Notification.objects.create(
+                user=student,
+                message=NotificationMessage.STUDENT_UNENROLLED.format(
+                    course_name=course.title
+                ),
+            )
+        except Exception:
+            raise NotificationException(code="CREATE_NOTIFICATION")
 
     def handle_get_students_of_course(self, course):
         """

@@ -47,3 +47,6 @@ class ErrorMessage:
     USER_NOT_STUDENT = "User is not student."
     COURSE_IS_FULL = "The course is fully booked."
     TOKEN_EXPIRED = "Token has expired, please request a new one."
+    CREATE_NOTIFICATION = "Failed to create notification."
+    ENROLLMENT_FAILED = "Enrollment failed, please try again later."
+    LEAVE_COURSE_FAILED = "Failed to leave the course, please try again later."

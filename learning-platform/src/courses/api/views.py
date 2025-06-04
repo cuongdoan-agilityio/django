@@ -24,7 +24,6 @@ from core.serializers import (
     BaseForbiddenResponseSerializer,
     BaseNotFoundResponseSerializer,
 )
-from core.exceptions import CourseException, UserException, EnrollmentException
 from core.mixins import FormatDataMixin, CustomListModelMixin
 from core.permissions import IsInstructor, IsStudent
 from courses.permissions import CoursePermission
@@ -123,15 +122,6 @@ class CustomFilter(django_filters.FilterSet):
         request=CourseUpdateSerializer,
         responses={
             200: course_response_schema,
-            400: BaseBadRequestResponseSerializer,
-            403: BaseForbiddenResponseSerializer,
-        },
-    ),
-    enroll=extend_schema(
-        description="Enroll a student in a course.",
-        request=EnrollmentCreateOrEditSerializer,
-        responses={
-            200: BaseSuccessResponseSerializer,
             400: BaseBadRequestResponseSerializer,
             403: BaseForbiddenResponseSerializer,
         },
@@ -283,7 +273,16 @@ class CourseViewSet(
 
         return self.ok(response_data)
 
-    @action(detail=True, methods=["post"])
+    @extend_schema(
+        description="Enroll a student in a course.",
+        request=EnrollmentCreateOrEditSerializer,
+        responses={
+            200: BaseSuccessResponseSerializer,
+            400: BaseBadRequestResponseSerializer,
+            403: BaseForbiddenResponseSerializer,
+        },
+    )
+    @action(detail=True, methods=["post"], permission_classes=[IsAdminUser | IsStudent])
     def enroll(self, request, **kwargs):
         """
         Enroll a student in a course.
@@ -298,14 +297,9 @@ class CourseViewSet(
 
         course = self.get_object()
 
-        try:
-            CourseServices().handle_enrollment(
-                user=request.user, course=course, data=serializer.validated_data
-            )
-        except CourseException as exc:
-            return self.bad_request(field="course", message=str(exc.developer_message))
-        except (UserException, EnrollmentException) as exc:
-            return self.bad_request(field="student", message=str(exc.developer_message))
+        CourseServices().handle_enrollment(
+            user=request.user, course=course, data=serializer.validated_data
+        )
 
         enrollment_serializer = BaseSuccessResponseSerializer(
             {"data": {"success": True}}
