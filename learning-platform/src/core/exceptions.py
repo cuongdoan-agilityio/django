@@ -20,6 +20,7 @@ class UserErrorMessage:
     """
 
     INVALID_USER_ID = ErrorMessage.INVALID_USER_ID
+    USER_NOT_FOUND = ErrorMessage.USER_NOT_FOUND
 
 
 class EnrollmentErrorMessage:

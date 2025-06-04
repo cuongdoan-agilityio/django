@@ -1,4 +1,4 @@
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin
@@ -15,8 +15,10 @@ from drf_spectacular.utils import (
 
 from accounts.tasks import send_welcome_email, send_password_reset_email
 from accounts.models import Specialization
+from accounts.services import UserServices
 from core.api_views import BaseViewSet, BaseGenericViewSet
 from core.mixins import FormatDataMixin
+from core.exceptions import UserException
 from core.serializers import (
     BaseUnauthorizedResponseSerializer,
     BaseBadRequestResponseSerializer,
@@ -26,17 +28,16 @@ from core.serializers import (
 )
 from core.error_messages import ErrorMessage
 from core.helpers import create_token
-from core.permissions import IsAdminOrOwner
+from core.permissions import IsOwner
 from core.mixins import CustomListModelMixin
 
-from .response_schema import user_profile_response_schema
 from .serializers import (
     LoginRequestSerializer,
     LoginResponseSerializer,
     RegisterSerializer,
     UserProfileUpdateSerializer,
     SpecializationListResponseSerializer,
-    UserProfileDataSerializer,
+    UserProfileResponseSerializer,
     UserActivateSerializer,
     ResetUserPasswordSerializer,
     ResetUserPasswordResponseSerializer,
@@ -278,8 +279,8 @@ class UserViewSet(
     It includes custom Swagger documentation for the retrieve and partial_update actions.
     """
 
-    permission_classes = [IsAuthenticated, IsAdminOrOwner]
-    serializer_class = UserProfileDataSerializer
+    permission_classes = [IsAuthenticated & IsAdminUser | IsOwner]
+    serializer_class = UserProfileResponseSerializer
     http_method_names = ["get", "patch"]
     resource_name = "users"
     queryset = User.objects.all()
@@ -288,7 +289,7 @@ class UserViewSet(
         description="Retrieve a user profile (Instructor or Student, admin) by id. "
         "Call `/api/v1/users/me` to get the authenticated user's profile.",
         responses={
-            200: user_profile_response_schema,
+            200: UserProfileResponseSerializer,
             401: BaseUnauthorizedResponseSerializer,
             403: BaseForbiddenResponseSerializer,
             404: BaseNotFoundResponseSerializer,
@@ -302,20 +303,21 @@ class UserViewSet(
         user = request.user
         pk = kwargs.get("pk")
 
-        user = user if pk == "me" else self.get_queryset().filter(id=pk).first()
-        if not user:
-            return self.not_found(message=ErrorMessage.USER_NOT_FOUND)
+        try:
+            user = user if pk == "me" else User.objects.get(id=pk)
+        except User.DoesNotExist:
+            raise UserException(code="USER_NOT_FOUND")
 
         self.check_object_permissions(request, user)
 
-        response_data = self.serialize_data(user)
-        return self.ok(response_data)
+        response_data = self.get_serializer({"data": user})
+        return self.ok(response_data.data)
 
     @extend_schema(
         description="Update the student or instructor profile",
         request=UserProfileUpdateSerializer,
         responses={
-            200: user_profile_response_schema,
+            200: UserProfileResponseSerializer,
             403: BaseForbiddenResponseSerializer,
             404: BaseNotFoundResponseSerializer,
         },
@@ -330,22 +332,23 @@ class UserViewSet(
         Returns:
             Response: The response indicating the profile update status or an error message.
         """
-        user = request.user
 
+        user = request.user
         pk = kwargs.get("pk")
 
         try:
             user = user if pk == "me" else User.objects.get(id=pk)
         except User.DoesNotExist:
-            return self.not_found(message=ErrorMessage.USER_NOT_FOUND)
+            raise UserException(code="USER_NOT_FOUND")
 
         self.check_object_permissions(request, user)
 
         serializer = UserProfileUpdateSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        updated_user = serializer.save()
-        response_data = self.serialize_data(updated_user)
-        return self.ok(response_data)
+        user = UserServices.update_user_profile(user, serializer.validated_data)
+        response_data = self.get_serializer({"data": user})
+
+        return self.ok(response_data.data)
 
 
 class SpecializationViewSet(BaseGenericViewSet, CustomListModelMixin):

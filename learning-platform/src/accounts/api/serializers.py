@@ -262,6 +262,32 @@ class UserProfileDataSerializer(UserBaseSerializer):
             "specializations",
         ]
 
+    def to_representation(self, instance):
+        """
+        Customize the serialized output based on the user's role.
+        """
+
+        representation = super().to_representation(instance)
+        fields_to_hide = []
+
+        if instance.is_student:
+            fields_to_hide = ["degree", "specializations"]
+        else:
+            fields_to_hide = ["scholarship"]
+
+        for field in fields_to_hide:
+            representation.pop(field, None)
+
+        return representation
+
+
+class UserProfileResponseSerializer(serializers.Serializer):
+    """
+    Serializer for the user profile response.
+    """
+
+    data = UserProfileDataSerializer(help_text="User profile data")
+
 
 class ResetUserPasswordSerializer(serializers.Serializer):
     """
