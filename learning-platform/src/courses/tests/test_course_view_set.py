@@ -73,58 +73,49 @@ class TestCourseViewSet(BaseCourseModuleTestCase):
         response = api_client.get(f"{course_url}{str(uuid4())}/")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_create_course(
-        self,
-        api_client,
-        authenticated_fake_instructor,
-        fake_category,
-        faker,
-        course_url,
-    ):
+    def test_create_course(self):
         """
         Test creating a new course.
         """
 
+        self.authenticated_token = self.fake_instructor_token
         data = {
-            "title": faker.sentence(nb_words=6),
-            "description": faker.paragraph(nb_sentences=2),
-            "category": fake_category.id,
+            "title": self.faker.sentence(nb_words=6),
+            "description": self.faker.paragraph(nb_sentences=2),
+            "category": self.fake_category.id,
         }
-        response = api_client.post(course_url, data, format="json")
+        response = self.post_json(fragment=self.fragment, data=data)
 
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data["data"]["title"] == data["title"]
         assert response.data["data"]["description"] == data["description"]
         assert response.data["data"]["status"] == Status.ACTIVATE.value
 
-    def test_create_course_unauthorized(
-        self, api_client, fake_category, authenticated_fake_student, faker, course_url
-    ):
+    def test_create_course_unauthorized(self):
         """
         Test creating a new course without logging in.
         """
 
         data = {
-            "title": faker.sentence(nb_words=6),
-            "description": faker.paragraph(nb_sentences=2),
-            "category": fake_category.id,
+            "title": self.faker.sentence(nb_words=6),
+            "description": self.faker.paragraph(nb_sentences=2),
+            "category": self.fake_category.id,
         }
-        response = api_client.post(course_url, data, format="json")
+        response = self.post_json(fragment=self.fragment, data=data)
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_create_course_invalid_data(
-        self, api_client, authenticated_fake_instructor, faker, course_url
-    ):
+    def test_create_course_invalid_data(self):
         """
         Test creating a new course without logging in.
         """
 
+        self.authenticated_token = self.fake_instructor_token
         data = {
-            "title": faker.sentence(nb_words=6),
-            "description": faker.paragraph(nb_sentences=2),
+            "title": self.faker.sentence(nb_words=6),
+            "description": self.faker.paragraph(nb_sentences=2),
             "category": str(uuid4()),
         }
-        response = api_client.post(course_url, data, format="json")
+        response = self.post_json(fragment=self.fragment, data=data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_partial_update_course_ok(self):
@@ -145,7 +136,6 @@ class TestCourseViewSet(BaseCourseModuleTestCase):
         Test partially updating a course without logging in.
         """
 
-        self.authenticated_token = self.fake_instructor_token
         data = {"title": "Unauthorized Update"}
         response = self.patch_json(
             fragment=f"{self.fragment}{str(self.math_course.id)}/", data=data
