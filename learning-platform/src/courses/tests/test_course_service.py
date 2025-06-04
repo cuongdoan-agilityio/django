@@ -1,29 +1,31 @@
 import pytest
 from uuid import uuid4
+
 from courses.services import CourseServices
 from courses.models import Course
 from core.constants import Status
-from core.error_messages import ErrorMessage
 from core.exceptions import CourseException, UserException, EnrollmentException
+from courses.factories import EnrollmentFactory
+
+from .base import BaseCourseModuleTestCase
 
 
-@pytest.mark.django_db
-class TestCourseServices:
+class TestCourseServices(BaseCourseModuleTestCase):
     """
     Unit tests for the CourseServices class.
     """
 
-    def test_handle_create_course_success(self, faker, fake_instructor, fake_category):
+    def test_handle_create_course_success(self):
         """
         Test that a course is successfully created with valid data.
         """
 
         data = {
-            "title": faker.sentence(nb_words=6),
-            "category": fake_category,
-            "description": faker.paragraph(nb_sentences=2),
+            "title": self.faker.sentence(nb_words=6),
+            "category": self.fake_category,
+            "description": self.faker.paragraph(nb_sentences=2),
             "status": Status.INACTIVE.value,
-            "instructor": fake_instructor,
+            "instructor": self.fake_instructor,
         }
         course = CourseServices().handle_create_course(data)
 
@@ -31,42 +33,40 @@ class TestCourseServices:
         assert course.category == data["category"]
         assert course.description == data["description"]
         assert course.status == data["status"]
-        assert course.instructor == fake_instructor
+        assert course.instructor == self.fake_instructor
         assert Course.objects.filter(id=course.id).exists()
 
-    def test_handle_create_course_missing_status(
-        self, faker, fake_instructor, fake_category
-    ):
+    def test_handle_create_course_missing_status(self):
         """
         Test that a course is created with default values when optional fields are missing.
         """
 
         data = {
-            "title": faker.sentence(nb_words=6),
-            "category": fake_category,
-            "description": faker.paragraph(nb_sentences=2),
-            "instructor": fake_instructor,
+            "title": self.faker.sentence(nb_words=6),
+            "category": self.fake_category,
+            "description": self.faker.paragraph(nb_sentences=2),
+            "instructor": self.fake_instructor,
         }
         course = CourseServices().handle_create_course(data)
 
         assert course.title == data["title"]
         assert course.category == data["category"]
         assert course.description == data["description"]
-        assert course.instructor == fake_instructor
+        assert course.instructor == self.fake_instructor
         assert Course.objects.filter(id=course.id).exists()
 
         # Default status
         assert course.status == Status.ACTIVATE.value
 
-    def test_handle_create_course_without_instructor(self, faker, fake_category):
+    def test_handle_create_course_without_instructor(self):
         """
         Test handle create course without instructor.
         """
 
         data = {
-            "title": faker.sentence(nb_words=6),
-            "category": fake_category,
-            "description": faker.paragraph(nb_sentences=2),
+            "title": self.faker.sentence(nb_words=6),
+            "category": self.fake_category,
+            "description": self.faker.paragraph(nb_sentences=2),
             "instructor": None,
         }
 
@@ -78,193 +78,187 @@ class TestCourseServices:
         assert course.status == Status.ACTIVATE.value
         assert course.instructor is None
 
-    def test_handle_partial_update_success(self, faker, fake_course):
+    def test_handle_partial_update_success(self):
         """
         Test that a course is successfully updated with valid data.
         """
 
         data = {
-            "title": faker.sentence(nb_words=6),
-            "description": faker.paragraph(nb_sentences=2),
+            "title": self.faker.sentence(nb_words=6),
+            "description": self.faker.paragraph(nb_sentences=2),
         }
-        updated_course = CourseServices().handle_partial_update(fake_course, data)
+        updated_course = CourseServices().handle_partial_update(self.fake_course, data)
 
         assert updated_course.title == data["title"]
         assert updated_course.description == data["description"]
         assert updated_course.status == Status.ACTIVATE.value
 
-    def test_handle_partial_update_inactive_course_with_students(self, math_enrollment):
+    def test_handle_partial_update_inactive_course_with_students(self):
         """
         Test that an exception is raised when trying to set a course to inactive while students are enrolled.
         """
 
         data = {"status": Status.INACTIVE.value}
 
-        with pytest.raises(ValueError, match=ErrorMessage.COURSE_HAS_STUDENTS):
-            CourseServices().handle_partial_update(math_enrollment.course, data)
+        with pytest.raises(CourseException) as exc_info:
+            CourseServices().handle_partial_update(self.math_enrollment.course, data)
 
-    def test_handle_partial_update_change_status(self, fake_course):
+        assert exc_info.value.code == "COURSE_HAS_STUDENTS"
+
+    def test_handle_partial_update_change_status(self):
         """
         Test that a course's status is successfully updated when no students are enrolled.
         """
 
         data = {"status": Status.INACTIVE.value}
-        updated_course = CourseServices().handle_partial_update(fake_course, data)
+        updated_course = CourseServices().handle_partial_update(self.fake_course, data)
 
         assert updated_course.status == Status.INACTIVE.value
 
-    def test_handle_partial_update_no_changes(self, fake_course):
+    def test_handle_partial_update_no_changes(self):
         """
         Test that the course remains unchanged when no valid fields are provided in the update data.
         """
 
         data = {}
-        updated_course = CourseServices().handle_partial_update(fake_course, data)
+        updated_course = CourseServices().handle_partial_update(self.fake_course, data)
 
-        assert updated_course.title == fake_course.title
+        assert updated_course.title == self.fake_course.title
 
-    def test_handle_enrollment_success(self, fake_student, fake_course):
+    def test_handle_enrollment_success(self):
         """
         Test that a student is successfully enrolled in a course.
         """
 
-        CourseServices().handle_enrollment(user=fake_student, course=fake_course)
+        CourseServices().handle_enrollment(
+            user=self.fake_student, course=self.fake_course
+        )
 
-        assert fake_course.students.filter(id=fake_student.id).exists()
+        assert self.fake_course.students.filter(id=self.fake_student.id).exists()
 
-    def test_handle_enrollment_inactive_course(self, fake_student, fake_course):
+    def test_handle_enrollment_inactive_course(self):
         """
         Test that enrollment fails for inactive courses.
         """
 
-        fake_course.status = Status.INACTIVE.value
-        fake_course.save()
+        self.fake_course.status = Status.INACTIVE.value
+        self.fake_course.save()
 
         with pytest.raises(CourseException) as exc_info:
-            CourseServices().handle_enrollment(user=fake_student, course=fake_course)
+            CourseServices().handle_enrollment(
+                user=self.fake_student, course=self.fake_course
+            )
 
         assert exc_info.value.code == "INACTIVE_COURSE"
 
-    def test_handle_enrollment_course_full(
-        self, fake_student, math_enrollment, math_enrollment_other, math_course
-    ):
+    def test_handle_enrollment_course_full(self):
         """
         Test that enrollment fails when the course is full.
         """
 
+        EnrollmentFactory(course=self.math_course, student=self.fake_other_student)
         with pytest.raises(CourseException) as exc_info:
-            CourseServices().handle_enrollment(user=fake_student, course=math_course)
+            CourseServices().handle_enrollment(
+                user=self.fake_student, course=self.math_course
+            )
         assert exc_info.value.code == "COURSE_IS_FULL"
 
-    def test_handle_enrollment_invalid_student(
-        self, fake_admin, authenticated_fake_admin, fake_course, fake_student
-    ):
+    def test_handle_enrollment_invalid_student(self):
         """
         Test that enrollment fails for invalid student data.
         """
 
         with pytest.raises(UserException) as exc_info:
             CourseServices().handle_enrollment(
-                user=fake_admin, course=fake_course, data={"student": str(uuid4())}
+                user=self.fake_admin,
+                course=self.fake_course,
+                data={"student": str(uuid4())},
             )
         assert exc_info.value.code == "INVALID_USER_ID"
 
-    def test_handle_enrollment_student_already_enrolled(
-        self, math_course, math_enrollment, fake_student
-    ):
+    def test_handle_enrollment_student_already_enrolled(self):
         """
         Test that enrollment fails if the student is already enrolled.
         """
 
+        self.music_course.students.add(self.fake_student)
+
         with pytest.raises(EnrollmentException) as exc_info:
-            CourseServices().handle_enrollment(user=fake_student, course=math_course)
+            CourseServices().handle_enrollment(
+                user=self.fake_student, course=self.music_course
+            )
         assert exc_info.value.code == "STUDENT_ALREADY_ENROLLED"
 
-    def test_handle_leave_course_success(
-        self,
-        fake_student,
-        fake_course,
-        fake_enrollment,
-    ):
+    def test_handle_leave_course_success(self):
         """
         Test that a student successfully leaves a course.
         """
 
-        CourseServices().handle_leave_course(user=fake_student, course=fake_course)
+        self.fake_course.students.add(self.fake_student)
+        CourseServices().handle_leave_course(
+            user=self.fake_student, course=self.fake_course
+        )
 
-        assert not fake_course.students.filter(id=fake_student.id).exists()
+        assert not self.fake_course.students.filter(id=self.fake_student.id).exists()
 
-    def test_handle_leave_course_invalid_student(
-        self,
-        fake_admin,
-        fake_course,
-    ):
+    def test_handle_leave_course_invalid_student(self):
         """
         Test that leaving a course fails for invalid student data.
         """
 
         with pytest.raises(UserException) as exc_info:
             CourseServices().handle_leave_course(
-                user=fake_admin, course=fake_course, data={"student": str(uuid4())}
+                user=self.fake_admin,
+                course=self.fake_course,
+                data={"student": str(uuid4())},
             )
         assert exc_info.value.code == "INVALID_USER_ID"
 
-    def test_handle_leave_course_student_not_enrolled(
-        self,
-        fake_student,
-        fake_course,
-    ):
+    def test_handle_leave_course_student_not_enrolled(self):
         """
         Test that leaving a course fails if the student is not enrolled.
         """
 
         with pytest.raises(EnrollmentException) as exc_info:
-            CourseServices().handle_leave_course(user=fake_student, course=fake_course)
+            CourseServices().handle_leave_course(
+                user=self.fake_student, course=self.fake_course
+            )
         assert exc_info.value.code == "STUDENT_NOT_ENROLLED"
 
-    def test_handle_leave_course_with_admin(
-        self,
-        fake_student,
-        fake_admin,
-        math_course,
-        math_enrollment,
-    ):
+    def test_handle_leave_course_with_admin(self):
         """
         Test that a superuser can remove a student from a course.
         """
 
         CourseServices().handle_leave_course(
-            user=fake_admin, course=math_course, data={"student": str(fake_student.id)}
+            user=self.fake_admin,
+            course=self.math_course,
+            data={"student": str(self.fake_student.id)},
         )
 
-        assert not math_course.students.filter(id=fake_student.id).exists()
+        assert not self.math_course.students.filter(id=self.fake_student.id).exists()
 
-    def test_handle_get_students_of_course_success(
-        self,
-        math_course,
-        math_enrollment,
-        math_enrollment_other,
-        other_student_user,
-        fake_student,
-    ):
+    def test_handle_get_students_of_course_success(self):
         """
         Test that students enrolled in a course are successfully retrieved.
         """
 
-        students = CourseServices().handle_get_students_of_course(course=math_course)
+        EnrollmentFactory(course=self.math_course, student=self.fake_other_student)
+        students = CourseServices().handle_get_students_of_course(
+            course=self.math_course
+        )
 
         assert len(students) == 2
-        assert other_student_user in students
-        assert fake_student in students
+        assert self.fake_other_student in students
+        assert self.fake_student in students
 
-    def test_handle_get_students_of_course_no_students(
-        self,
-        fake_course,
-    ):
+    def test_handle_get_students_of_course_no_students(self):
         """
         Test that an empty list is returned when no students are enrolled in the course.
         """
 
-        students = CourseServices().handle_get_students_of_course(course=fake_course)
+        students = CourseServices().handle_get_students_of_course(
+            course=self.fake_course
+        )
 
         assert len(students) == 0
