@@ -6,12 +6,7 @@ import django_filters
 from rest_framework import filters
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.decorators import action
-from rest_framework.mixins import (
-    ListModelMixin,
-    RetrieveModelMixin,
-    UpdateModelMixin,
-    CreateModelMixin,
-)
+from rest_framework.mixins import ListModelMixin
 from django.db.models import Count
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
@@ -25,7 +20,7 @@ from core.serializers import (
     BaseForbiddenResponseSerializer,
     BaseNotFoundResponseSerializer,
 )
-from core.mixins import FormatDataMixin, CustomListModelMixin
+from core.mixins import FormatDataMixin, CustomListModelMixin, CustomRetrieveModelMixin
 from core.permissions import IsInstructor, IsStudent
 from core.error_messages import ErrorMessage
 from courses.permissions import CoursePermission
@@ -104,14 +99,6 @@ class CustomFilter(django_filters.FilterSet):
             ),
         ],
     ),
-    create=extend_schema(
-        description="Create a course.",
-        request=CourseCreateSerializer,
-        responses={
-            201: course_response_schema,
-            400: BaseBadRequestResponseSerializer,
-        },
-    ),
     retrieve=extend_schema(
         description="Retrieve a single course",
         responses={
@@ -124,9 +111,7 @@ class CourseViewSet(
     FormatDataMixin,
     BaseGenericViewSet,
     ListModelMixin,
-    RetrieveModelMixin,
-    UpdateModelMixin,
-    CreateModelMixin,
+    CustomRetrieveModelMixin,
 ):
     """
     Course view set
@@ -209,6 +194,14 @@ class CourseViewSet(
 
         return self.ok(response_data)
 
+    @extend_schema(
+        description="Create a course.",
+        request=CourseCreateSerializer,
+        responses={
+            201: CourseDetailSerializer,
+            400: BaseBadRequestResponseSerializer,
+        },
+    )
     def create(self, request, *args, **kwargs):
         """
         Create a new course by an instructor.
@@ -231,11 +224,16 @@ class CourseViewSet(
         )
         course = CourseServices().handle_create_course(data=data)
 
-        # Remove cache
-        cache_keys = self.get_cache_key_by_regex("course_list:.*")
-        self.delete_cache(cache_keys)
+        try:
+            # Remove cache
+            cache_keys = self.get_cache_key_by_regex("course_list:.*")
+            self.delete_cache(cache_keys)
+        except ConnectionError:
+            return self.internal_server_error(
+                message=ErrorMessage.CACHE_CONNECTION_ERROR
+            )
 
-        response_data = self.serialize_data(course)
+        response_data = self.serialize_data({"data": course})
         return self.created(response_data)
 
     @extend_schema(

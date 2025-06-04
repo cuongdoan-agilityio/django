@@ -11,6 +11,7 @@ class CourseErrorMessage:
     INACTIVE_COURSE = ErrorMessage.INACTIVE_COURSE
     COURSE_HAS_STUDENTS = ErrorMessage.COURSE_HAS_STUDENTS
     UPDATE_COURSE_FAILED = ErrorMessage.UPDATE_COURSE_FAILED
+    CREATE_COURSE_FAILED = ErrorMessage.CREATE_COURSE_FAILED
 
 
 class UserErrorMessage:

@@ -35,15 +35,18 @@ class CourseServices:
             Course: The created course instance.
         """
 
-        course_data = {
-            "title": data.get("title"),
-            "category": data.get("category"),
-            "description": data.get("description"),
-            "status": data.get("status", Status.ACTIVATE.value),
-            "instructor": data.get("instructor"),
-        }
+        try:
+            course_data = {
+                "title": data.get("title"),
+                "category": data.get("category"),
+                "description": data.get("description"),
+                "status": data.get("status", Status.ACTIVATE.value),
+                "instructor": data.get("instructor"),
+            }
 
-        course = Course.objects.create(**course_data)
+            course = Course.objects.create(**course_data)
+        except Exception:
+            raise CourseException(code="CREATE_COURSE_FAILED")
 
         return course
 
