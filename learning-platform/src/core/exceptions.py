@@ -21,6 +21,7 @@ class UserErrorMessage:
 
     INVALID_USER_ID = ErrorMessage.INVALID_USER_ID
     USER_NOT_FOUND = ErrorMessage.USER_NOT_FOUND
+    USER_CREATION_FAILED = ErrorMessage.USER_CREATION_FAILED
 
 
 class EnrollmentErrorMessage:
@@ -58,7 +59,7 @@ class CustomBaseException(Exception):
 
     default_code = ""
     error = None
-    status_code = None
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
 
     def __init__(self, code=None, developer_message=None):
         self.developer_message = developer_message

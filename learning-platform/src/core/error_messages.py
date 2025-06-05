@@ -53,3 +53,4 @@ class ErrorMessage:
     UPDATE_COURSE_FAILED = "Failed to update the course, please try again later."
     CREATE_COURSE_FAILED = "Failed to create the course, please try again later."
     CACHE_CONNECTION_ERROR = "Failed to connect to the cache."
+    USER_CREATION_FAILED = "Failed to create the user, please try again later."

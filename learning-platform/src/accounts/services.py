@@ -1,11 +1,13 @@
 from django.contrib.auth import get_user_model
-from rest_framework.authtoken.models import Token
+from django.forms.models import model_to_dict
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
+from rest_framework.authtoken.models import Token
 from core.exceptions import UserException, TokenException
+from core.constants import ScholarshipChoices
 from core.helpers import create_token
-from accounts.tasks import send_password_reset_email
+from accounts.tasks import send_password_reset_email, send_welcome_email
 
 
 User = get_user_model()
@@ -15,6 +17,56 @@ class AuthenticationServices:
     """
     A service class for handling authentication-related operations.
     """
+
+    def handle_create_user(validated_data: dict):
+        """
+        Creates a new user and associated student profile.
+
+        Args:
+            validated_data (dict): The validated data for creating the user.
+
+        Returns:
+            User: The created user instance.
+        """
+
+        try:
+            user = User(
+                username=validated_data["username"],
+                email=validated_data["email"],
+                scholarship=ScholarshipChoices.ZERO.value,
+                password=validated_data["password"],
+                is_active=False,
+            )
+            user.full_clean()
+            user.save()
+
+        except Exception:
+            raise UserException(code="USER_CREATION_FAILED")
+
+    def handle_confirm_signup_email(self, token):
+        """
+        Confirm the email of a user using a token.
+        """
+
+        signer = TimestampSigner()
+
+        try:
+            signed_value = force_str(urlsafe_base64_decode(token))
+            user_id = signer.unsign(signed_value, max_age=24 * 3600)
+        except SignatureExpired:
+            raise TokenException(code="TOKEN_EXPIRED")
+        except (BadSignature, ValueError):
+            raise TokenException(code="TOKEN_INVALID")
+
+        try:
+            user = User.objects.get(id=user_id)
+            if not user.is_active:
+                user.is_active = True
+                user.save(update_fields=["is_active"])
+                user_data = model_to_dict(user, fields=["username", "email"])
+                send_welcome_email.delay(user_data)
+        except User.DoesNotExist:
+            raise UserException(code="USER_NOT_FOUND")
 
     def handle_reset_password(self, email: str) -> dict:
         """

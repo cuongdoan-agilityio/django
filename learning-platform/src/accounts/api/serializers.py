@@ -89,33 +89,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
-class UserActivateSerializer(serializers.ModelSerializer):
-    """
-    Serializer for activating a user account.
-    """
-
-    class Meta:
-        model = User
-        fields = ["is_active"]
-
-    def update(self, instance, validated_data):
-        """
-        Updates the user profile with the provided validated data.
-
-        Args:
-            instance (User): The user instance to update.
-            validated_data (dict): The validated data for updating the user profile.
-
-        Returns:
-            User: The updated user instance.
-        """
-
-        instance.is_active = validated_data.get("is_active", True)
-        instance.password = None
-        instance.save(update_fields=["is_active"])
-        return instance
-
-
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
     """
     Serializer for updating user profiles.
