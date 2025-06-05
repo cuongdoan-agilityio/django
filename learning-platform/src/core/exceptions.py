@@ -42,6 +42,15 @@ class NotificationErrorMessage:
     CREATE_NOTIFICATION = ErrorMessage.CREATE_NOTIFICATION
 
 
+class TokenErrorMessage:
+    """
+    Token error message.
+    """
+
+    TOKEN_EXPIRED = ErrorMessage.TOKEN_EXPIRED
+    TOKEN_INVALID = ErrorMessage.TOKEN_INVALID
+
+
 class CustomBaseException(Exception):
     """
     Custom base exception.
@@ -99,4 +108,14 @@ class NotificationException(CustomBaseException):
 
     error = NotificationErrorMessage
     default_code = "CREATE_NOTIFICATION"
+    status_code = status.HTTP_400_BAD_REQUEST
+
+
+class TokenException(CustomBaseException):
+    """
+    Token exception.
+    """
+
+    error = TokenErrorMessage
+    default_code = "TOKEN_EXPIRED"
     status_code = status.HTTP_400_BAD_REQUEST

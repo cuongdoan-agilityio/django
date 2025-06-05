@@ -13,9 +13,9 @@ from drf_spectacular.utils import (
     OpenApiParameter,
 )
 
-from accounts.tasks import send_welcome_email, send_password_reset_email
+from accounts.tasks import send_welcome_email
 from accounts.models import Specialization
-from accounts.services import UserServices
+from accounts.services import UserServices, AuthenticationServices
 from core.api_views import BaseViewSet, BaseGenericViewSet
 from core.mixins import FormatDataMixin
 from core.exceptions import UserException
@@ -27,7 +27,6 @@ from core.serializers import (
     BaseNotFoundResponseSerializer,
 )
 from core.error_messages import ErrorMessage
-from core.helpers import create_token
 from core.permissions import IsOwner
 from core.mixins import CustomListModelMixin
 
@@ -217,24 +216,12 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
 
         serializer = ResetUserPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        email = serializer.validated_data["email"]
 
-        user = User.objects.filter(email=email).first()
-
-        if not user:
-            return self.bad_request(field="email", message=ErrorMessage.USER_NOT_FOUND)
-
-        token = create_token(user.email)
-
-        try:
-            send_password_reset_email.delay(
-                {"username": user.username, "email": user.email},
-                token,
-            )
-            response = BaseSuccessResponseSerializer({"data": {"success": True}})
-            return self.ok(response.data)
-        except Exception as e:
-            return self.internal_server_error(message=str(e))
+        AuthenticationServices().handle_reset_password(
+            serializer.validated_data["email"]
+        )
+        response = BaseSuccessResponseSerializer({"data": {"success": True}})
+        return self.ok(response.data)
 
     @action(detail=False, methods=["POST"], url_path="confirm-reset-password")
     def confirm_reset_password(self, request):
@@ -244,29 +231,13 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
 
         serializer = ConfirmResetPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        token = serializer.validated_data["token"]
-        password = serializer.validated_data["password"]
 
-        signer = TimestampSigner()
-
-        try:
-            signed_value = force_str(urlsafe_base64_decode(token))
-            email = signer.unsign(signed_value, max_age=24 * 3600)
-            user = User.objects.filter(email=email).first()
-            user.password = password
-            user.save(update_fields=["password"])
-            response = BaseSuccessResponseSerializer({"data": {"success": True}})
-            Token.objects.filter(user=user).delete()
-            return self.ok(response.data)
-
-        except SignatureExpired:
-            return self.bad_request(field="token", message=ErrorMessage.TOKEN_EXPIRED)
-
-        except (BadSignature, ValueError):
-            return self.bad_request(field="token", message=ErrorMessage.TOKEN_INVALID)
-
-        except User.DoesNotExist:
-            return self.bad_request(field="user", message=ErrorMessage.USER_NOT_FOUND)
+        AuthenticationServices().handle_confirm_reset_password(
+            token=serializer.validated_data["token"],
+            password=serializer.validated_data["password"],
+        )
+        response = BaseSuccessResponseSerializer({"data": {"success": True}})
+        return self.ok(response.data)
 
 
 class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
@@ -343,7 +314,7 @@ class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
 
         serializer = UserProfileUpdateSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        user = UserServices.update_user_profile(user, serializer.validated_data)
+        user = UserServices().update_user_profile(user, serializer.validated_data)
         response_data = self.get_serializer({"data": user})
 
         return self.ok(response_data.data)

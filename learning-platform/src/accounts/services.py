@@ -1,8 +1,61 @@
 from django.contrib.auth import get_user_model
-from core.exceptions import UserException
+from rest_framework.authtoken.models import Token
+from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
+from core.exceptions import UserException, TokenException
+from core.helpers import create_token
+from accounts.tasks import send_password_reset_email
 
 
 User = get_user_model()
+
+
+class AuthenticationServices:
+    """
+    A service class for handling authentication-related operations.
+    """
+
+    def handle_reset_password(self, email: str) -> dict:
+        """
+        Service to handle password reset request by generating a token and sending an email.
+        Returns a dict with success status or raises ValidationError on failure.
+        """
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise UserException(code="USER_NOT_FOUND")
+
+        token = create_token(user.email)
+        send_password_reset_email.delay(
+            {"username": user.username, "email": user.email},
+            token,
+        )
+
+    def handle_confirm_reset_password(self, token: str, password: str) -> dict:
+        """
+        Service to handle password reset confirmation using a token.
+        Returns a dict with success status or raises ValidationError on failure.
+        """
+        signer = TimestampSigner()
+
+        try:
+            signed_value = force_str(urlsafe_base64_decode(token))
+            email = signer.unsign(signed_value, max_age=180)
+        except SignatureExpired:
+            raise TokenException(code="TOKEN_EXPIRED")
+        except (BadSignature, ValueError):
+            raise TokenException(code="TOKEN_INVALID")
+
+        try:
+            user = User.objects.get(email=email)
+            user.set_password(password)
+            user.save(update_fields=["password"])
+            Token.objects.filter(user=user).delete()
+
+        except User.DoesNotExist:
+            raise UserException(code="USER_NOT_FOUND")
 
 
 class UserServices:
@@ -10,7 +63,7 @@ class UserServices:
     A service class for handling user-related operations.
     """
 
-    def update_user_profile(user, data):
+    def update_user_profile(self, user, data):
         """
         Update the profile of a user.
         """
