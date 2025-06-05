@@ -18,7 +18,7 @@ class AuthenticationServices:
     A service class for handling authentication-related operations.
     """
 
-    def handle_create_user(validated_data: dict):
+    def handle_create_user(self, validated_data: dict):
         """
         Creates a new user and associated student profile.
 

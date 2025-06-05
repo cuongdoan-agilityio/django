@@ -1,21 +1,6 @@
 from rest_framework.response import Response
 
 
-class FormatDataMixin:
-    """
-    Format the response data.
-    """
-
-    def serialize_data(self, instance, *args, **kwargs):
-        """
-        Format the response data.
-        """
-        serializer_class = self.get_serializer_class()
-        serializer = serializer_class(instance, *args, **kwargs)
-        data = serializer.data
-        return data
-
-
 class CustomListModelMixin:
     """
     List a queryset.

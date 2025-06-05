@@ -3,15 +3,11 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin
 from django.contrib.auth import authenticate, get_user_model
-from drf_spectacular.utils import (
-    extend_schema,
-    extend_schema_view,
-)
+from drf_spectacular.utils import extend_schema
 
 from accounts.models import Specialization
 from accounts.services import UserServices, AuthenticationServices
 from core.api_views import BaseViewSet, BaseGenericViewSet
-from core.mixins import FormatDataMixin
 from core.exceptions import UserException
 from core.serializers import (
     BaseUnauthorizedResponseSerializer,
@@ -40,18 +36,7 @@ from .serializers import (
 User = get_user_model()
 
 
-@extend_schema_view(
-    login=extend_schema(
-        description="API to login and get token.",
-        request=LoginRequestSerializer,
-        responses={
-            200: LoginResponseSerializer,
-            400: BaseBadRequestResponseSerializer,
-            401: BaseUnauthorizedResponseSerializer,
-        },
-    ),
-)
-class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
+class AuthenticationViewSet(BaseViewSet):
     """
     A viewset for handling user authentication.
 
@@ -69,6 +54,15 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
                 return ResetUserPasswordResponseSerializer
         return LoginRequestSerializer
 
+    @extend_schema(
+        description="API to login and get token.",
+        request=LoginRequestSerializer,
+        responses={
+            200: LoginResponseSerializer,
+            400: BaseBadRequestResponseSerializer,
+            401: BaseUnauthorizedResponseSerializer,
+        },
+    )
     @action(detail=False, methods=["post"])
     def login(self, request):
         """
@@ -90,9 +84,9 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
 
         if user is not None:
             token, _ = Token.objects.get_or_create(user=user)
-            response_data = self.serialize_data({"token": token.key})
+            response_data = LoginResponseSerializer({"data": {"token": token.key}})
+            return self.ok(response_data.data)
 
-            return self.ok(response_data)
         else:
             inactive_user = User.objects.filter(email=email).first()
 
