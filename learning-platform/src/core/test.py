@@ -15,168 +15,161 @@ from accounts.factories import UserFactory
 User = get_user_model()
 
 
-@pytest.fixture(scope="session")
-def random_gender():
-    """
-    Fixture for random gender data.
-    """
-
-    genders = [gender.value for gender in Gender]
-    return random.choice(genders)
-
-
-@pytest.fixture
-def random_scholarship():
-    """
-    Fixture for random scholarship.
-    """
-
-    scholarships = [choice.value for choice in ScholarshipChoices]
-    return random.choice(scholarships)
-
-
-@pytest.fixture(scope="session")
-def random_degree():
-    """
-    Fixture for random degree.
-    """
-
-    degrees = [choice.value for choice in Degree]
-    return random.choice(degrees)
-
-
-@pytest.fixture()
-def share_user_data(faker, random_degree):
-    """
-    Fixture to provide an user data include student and instructor.
-    """
-
-    password = "Password@123"
-
-    return {
-        "student": {
-            "password": password,
-            "username": faker.user_name(),
-            "first_name": faker.first_name(),
-            "last_name": faker.last_name(),
-            "email": faker.email(),
-        },
-        "other_student": {
-            "password": password,
-            "username": faker.user_name(),
-            "first_name": faker.first_name(),
-            "last_name": faker.last_name(),
-            "email": faker.email(),
-        },
-        "instructor": {
-            "password": password,
-            "username": faker.user_name(),
-            "first_name": faker.first_name(),
-            "last_name": faker.last_name(),
-            "email": faker.email(),
-            "degree": random_degree,
-        },
-    }
-
-
-@pytest.fixture()
-def fake_student(faker, share_user_data):
-    """
-    Fixture to create a sample student user instance.
-    """
-
-    post_save.disconnect(receiver=send_verify_email, sender=User)
-    data = share_user_data.get("student")
-
-    return UserFactory(
-        password=data.get("password"),
-        username=data.get("username"),
-        email=data.get("email"),
-        role=Role.STUDENT.value,
-    )
-
-
-@pytest.fixture()
-def fake_student_token(fake_student):
-    """
-    Fixture to create a authentication token for student user.
-    """
-
-    return Token.objects.create(user=fake_student)
-
-
-@pytest.fixture()
-def fake_instructor(faker, share_user_data):
-    """
-    Fixture to create instructor user.
-    """
-
-    post_save.disconnect(receiver=send_verify_email, sender=User)
-    data = share_user_data.get("instructor")
-
-    return UserFactory(
-        username=data.get("username"),
-        password=data.get("password"),
-        email=data.get("email"),
-        role=Role.INSTRUCTOR.value,
-    )
-
-
-@pytest.fixture
-def fake_other_student(faker, share_user_data):
-    """
-    Fixture to create a sample student user instance.
-    """
-
-    post_save.disconnect(receiver=send_verify_email, sender=User)
-    data = share_user_data.get("other_student")
-
-    return UserFactory(
-        password=data.get("password"),
-        username=data.get("username"),
-        email=data.get("email"),
-        role=Role.STUDENT.value,
-    )
-
-
-@pytest.fixture()
-def fake_admin(faker):
-    """
-    Fixture to create instructor user.
-    """
-
-    post_save.disconnect(receiver=send_verify_email, sender=User)
-
-    return UserFactory(
-        username=faker.user_name(),
-        password="Password@123",
-        email=faker.email(),
-        role=Role.ADMIN.value,
-        is_staff=True,
-        is_superuser=True,
-    )
-
-
-@pytest.fixture
-def fake_instructor_token(fake_instructor):
-    """
-    Fixture to create and return a token for the instructor user.
-    """
-
-    return Token.objects.create(user=fake_instructor)
-
-
-@pytest.fixture
-def fake_admin_token(fake_admin):
-    """
-    Fixture to create and return a token for the instructor user.
-    """
-
-    return Token.objects.create(user=fake_admin)
-
-
 @pytest.mark.django_db
 class BaseAPITestCase:
+    """
+    Base class for API test cases.
+    """
+
+    @pytest.fixture
+    def random_gender(self):
+        """
+        Fixture for random gender data.
+        """
+
+        genders = [gender.value for gender in Gender]
+        return random.choice(genders)
+
+    @pytest.fixture
+    def random_scholarship(self):
+        """
+        Fixture for random scholarship.
+        """
+
+        scholarships = [choice.value for choice in ScholarshipChoices]
+        return random.choice(scholarships)
+
+    @pytest.fixture
+    def random_degree(self):
+        """
+        Fixture for random degree.
+        """
+
+        degrees = [choice.value for choice in Degree]
+        return random.choice(degrees)
+
+    @pytest.fixture
+    def share_user_data(self, faker, random_degree):
+        """
+        Fixture to provide an user data include student and instructor.
+        """
+
+        password = "Password@123"
+
+        return {
+            "student": {
+                "password": password,
+                "username": faker.user_name(),
+                "first_name": faker.first_name(),
+                "last_name": faker.last_name(),
+                "email": faker.email(),
+            },
+            "other_student": {
+                "password": password,
+                "username": faker.user_name(),
+                "first_name": faker.first_name(),
+                "last_name": faker.last_name(),
+                "email": faker.email(),
+            },
+            "instructor": {
+                "password": password,
+                "username": faker.user_name(),
+                "first_name": faker.first_name(),
+                "last_name": faker.last_name(),
+                "email": faker.email(),
+                "degree": random_degree,
+            },
+        }
+
+    @pytest.fixture
+    def fake_student(self, share_user_data):
+        """
+        Fixture to create a sample student user instance.
+        """
+
+        post_save.disconnect(receiver=send_verify_email, sender=User)
+        data = share_user_data.get("student")
+
+        return UserFactory(
+            password=data.get("password"),
+            username=data.get("username"),
+            email=data.get("email"),
+            role=Role.STUDENT.value,
+        )
+
+    @pytest.fixture
+    def fake_student_token(self, fake_student):
+        """
+        Fixture to create a authentication token for student user.
+        """
+
+        return Token.objects.create(user=fake_student)
+
+    @pytest.fixture
+    def fake_instructor(self, share_user_data):
+        """
+        Fixture to create instructor user.
+        """
+
+        post_save.disconnect(receiver=send_verify_email, sender=User)
+        data = share_user_data.get("instructor")
+
+        return UserFactory(
+            username=data.get("username"),
+            password=data.get("password"),
+            email=data.get("email"),
+            role=Role.INSTRUCTOR.value,
+        )
+
+    @pytest.fixture
+    def fake_other_student(self, share_user_data):
+        """
+        Fixture to create a sample student user instance.
+        """
+
+        post_save.disconnect(receiver=send_verify_email, sender=User)
+        data = share_user_data.get("other_student")
+
+        return UserFactory(
+            password=data.get("password"),
+            username=data.get("username"),
+            email=data.get("email"),
+            role=Role.STUDENT.value,
+        )
+
+    @pytest.fixture
+    def fake_admin(self, faker):
+        """
+        Fixture to create instructor user.
+        """
+
+        post_save.disconnect(receiver=send_verify_email, sender=User)
+
+        return UserFactory(
+            username=faker.user_name(),
+            password="Password@123",
+            email=faker.email(),
+            role=Role.ADMIN.value,
+            is_staff=True,
+            is_superuser=True,
+        )
+
+    @pytest.fixture
+    def fake_instructor_token(self, fake_instructor):
+        """
+        Fixture to create and return a token for the instructor user.
+        """
+
+        return Token.objects.create(user=fake_instructor)
+
+    @pytest.fixture
+    def fake_admin_token(self, fake_admin):
+        """
+        Fixture to create and return a token for the instructor user.
+        """
+
+        return Token.objects.create(user=fake_admin)
+
     @pytest.fixture(autouse=True)
     def setup_fixtures(
         self,
