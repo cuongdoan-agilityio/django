@@ -11,7 +11,13 @@ class IsOwner(BasePermission):
         Check if the instance belongs to the authenticated user
         """
 
-        return (obj == request.user) or (obj.user == request.user)
+        if isinstance(obj, request.user.__class__):
+            return obj == request.user
+
+        elif hasattr(obj, "user"):
+            return obj.user == request.user
+
+        return False
 
 
 class IsInstructor(BasePermission):

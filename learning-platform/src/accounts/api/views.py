@@ -269,9 +269,7 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
             return self.bad_request(field="user", message=ErrorMessage.USER_NOT_FOUND)
 
 
-class UserViewSet(
-    BaseGenericViewSet, FormatDataMixin, RetrieveModelMixin, UpdateModelMixin
-):
+class UserViewSet(BaseGenericViewSet, RetrieveModelMixin, UpdateModelMixin):
     """
     A viewset for handling user profiles.
 
