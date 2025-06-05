@@ -81,22 +81,6 @@ User = get_user_model()
             400: BaseBadRequestResponseSerializer,
         },
     ),
-    confirm_reset_password=extend_schema(
-        description="Confirm reset user password using a token.",
-        request=ConfirmResetPasswordSerializer,
-        responses={
-            200: BaseSuccessResponseSerializer,
-            400: BaseBadRequestResponseSerializer,
-        },
-    ),
-    reset_password=extend_schema(
-        description="Reset user password using a token.",
-        request=ResetUserPasswordSerializer,
-        responses={
-            200: BaseSuccessResponseSerializer,
-            400: BaseBadRequestResponseSerializer,
-        },
-    ),
 )
 class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
     """
@@ -208,6 +192,14 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         except User.DoesNotExist:
             return self.bad_request(field="user", message=ErrorMessage.USER_NOT_FOUND)
 
+    @extend_schema(
+        description="Reset user password using a token.",
+        request=ResetUserPasswordSerializer,
+        responses={
+            200: BaseSuccessResponseSerializer,
+            400: BaseBadRequestResponseSerializer,
+        },
+    )
     @action(detail=False, methods=["post"], url_path="reset-password")
     def reset_password(self, request):
         """
@@ -223,6 +215,14 @@ class AuthenticationViewSet(BaseViewSet, FormatDataMixin):
         response = BaseSuccessResponseSerializer({"data": {"success": True}})
         return self.ok(response.data)
 
+    @extend_schema(
+        description="Confirm reset user password using a token.",
+        request=ConfirmResetPasswordSerializer,
+        responses={
+            200: BaseSuccessResponseSerializer,
+            400: BaseBadRequestResponseSerializer,
+        },
+    )
     @action(detail=False, methods=["POST"], url_path="confirm-reset-password")
     def confirm_reset_password(self, request):
         """
