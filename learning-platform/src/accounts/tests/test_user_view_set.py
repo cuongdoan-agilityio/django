@@ -1,179 +1,158 @@
-import pytest
 import uuid
 from rest_framework import status
+from .base import BaseAccountModuleTestCase
 
 
-@pytest.mark.django_db
-class TestUserViewSet:
+class TestUserViewSet(BaseAccountModuleTestCase):
     """
     Test suite for the UserViewSet.
     """
 
-    def test_retrieve_student_profile(
-        self, api_client, authenticated_fake_student, user_retrieve_url
-    ):
+    fragment = "users/"
+
+    def test_retrieve_student_profile(self):
         """
         Test the retrieve action for a student.
         """
 
-        response = api_client.get(user_retrieve_url)
+        response = self.get_json(f"{self.fragment}me/")
+
         assert response.status_code == status.HTTP_200_OK
 
-    def test_retrieve_student_profile_with_id(
-        self, api_client, fake_student, authenticated_fake_student, user_url
-    ):
+    def test_retrieve_student_profile_with_id(self):
         """
         Test the retrieve action for a student.
         """
 
-        response = api_client.get(f"{user_url}{str(fake_student.id)}/")
+        response = self.get_json(f"{self.fragment}{str(self.fake_student.id)}/")
+
         assert response.status_code == status.HTTP_200_OK
 
-    def test_retrieve_instructor_profile(
-        self, api_client, authenticated_fake_instructor, user_retrieve_url
-    ):
+    def test_retrieve_instructor_profile(self):
         """
         Test the retrieve action for an instructor.
         """
 
-        response = api_client.get(user_retrieve_url)
+        self.authenticated_token = self.fake_instructor_token
+        response = self.get_json(f"{self.fragment}me/")
+
         assert response.status_code == status.HTTP_200_OK
 
-    def test_retrieve_instructor_profile_with_id(
-        self, api_client, fake_instructor, authenticated_fake_instructor, user_url
-    ):
+    def test_retrieve_instructor_profile_with_id(self):
         """
         Test the retrieve action for a student.
         """
 
-        response = api_client.get(f"{user_url}{str(fake_instructor.id)}/")
+        self.authenticated_token = self.fake_instructor_token
+        response = self.get_json(f"{self.fragment}{str(self.fake_instructor.id)}/")
+
         assert response.status_code == status.HTTP_200_OK
 
-    def test_retrieve_user_profile_with_invalid_id(
-        self, api_client, fake_student, authenticated_fake_instructor, user_url
-    ):
+    def test_retrieve_user_profile_with_invalid_id(self):
         """
         Test the retrieve action for a student.
         """
 
-        response = api_client.get(f"{user_url}{str(fake_student.id)}/")
+        self.authenticated_token = self.fake_instructor_token
+        response = self.get_json(f"{self.fragment}{str(self.fake_student.id)}/")
+
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_admin_retrieve_user_profile_with_invalid_id(
-        self, api_client, authenticated_fake_admin, user_url
-    ):
+    def test_admin_retrieve_user_profile_with_invalid_id(self):
         """
         Test the retrieve action for a student.
         """
 
-        fake_id = uuid.uuid4()
+        self.authenticated_token = self.fake_admin_token
+        response = self.get_json(f"{self.fragment}{str(uuid.uuid4())}/")
 
-        response = api_client.get(f"{user_url}{str(fake_id)}/")
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_partial_update_student_profile(
-        self,
-        api_client,
-        fake_student,
-        authenticated_fake_student,
-        random_scholarship,
-        user_url,
-    ):
+    def test_partial_update_student_profile(self):
         """
         Test the partial_update action for a student.
         """
 
         data = {
             "phone_number": "1234567890",
-            "scholarship": random_scholarship,
+            "scholarship": self.random_scholarship,
             "date_of_birth": "2000-01-01",
         }
-        response = api_client.patch(f"{user_url}{fake_student.id}/", data)
-        assert response.status_code == status.HTTP_200_OK
+        response = self.patch_json(f"{self.fragment}{self.fake_student.id}/", data)
+        self.fake_student.refresh_from_db()
 
-        fake_student.refresh_from_db()
-        assert fake_student.phone_number == data.get("phone_number")
-        assert fake_student.scholarship == data.get("scholarship")
-        assert fake_student.date_of_birth.strftime("%Y-%m-%d") == data.get(
+        assert response.status_code == status.HTTP_200_OK
+        assert self.fake_student.phone_number == data.get("phone_number")
+        assert self.fake_student.scholarship == data.get("scholarship")
+        assert self.fake_student.date_of_birth.strftime("%Y-%m-%d") == data.get(
             "date_of_birth"
         )
 
-    def test_partial_update_student_profile_with_invalid_data(
-        self, api_client, fake_student, authenticated_fake_student, user_url
-    ):
+    def test_partial_update_student_profile_with_invalid_data(self):
         """
-        Test the partial_update action for a student with invalid email.
+        Test the partial_update action for a student with invalid dob.
         """
 
-        url = f"{user_url}{fake_student.id}/"
+        url = f"{self.fragment}{self.fake_student.id}/"
         data = {
             "phone_number": "1234567890",
             "scholarship": "Full",
             "date_of_birth": "1910-01-01",
         }
-        response = api_client.patch(url, data, format="json")
+        response = self.patch_json(url, data)
+
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_partial_update_instructor_profile(
-        self,
-        api_client,
-        fake_instructor,
-        authenticated_fake_instructor,
-        random_degree,
-        specialization,
-        user_url,
-    ):
+    def test_partial_update_instructor_profile(self):
         """
         Test the partial_update action for an instructor.
         """
 
         data = {
             "phone_number": "0854215785",
-            "degree": random_degree,
+            "degree": self.random_degree,
             "date_of_birth": "1980-01-01",
-            "specializations": [specialization.id],
+            "specializations": [self.fake_specialization.id],
         }
-        response = api_client.patch(f"{user_url}{fake_instructor.id}/", data)
+        self.authenticated_token = self.fake_instructor_token
+        response = self.patch_json(f"{self.fragment}{self.fake_instructor.id}/", data)
+
         assert response.status_code == status.HTTP_200_OK
 
-    def test_partial_update_instructor_profile_with_invalid_specializations(
-        self, api_client, fake_instructor, user_url, authenticated_fake_instructor
-    ):
+    def test_partial_update_instructor_profile_with_invalid_specializations(self):
         """
         Test the partial_update action for an instructor with invalid specialization.
         """
 
+        self.authenticated_token = self.fake_instructor_token
         data = {
             "phone_number": "1234567890",
             "degree": "PhD",
             "date_of_birth": "1980-01-01",
             "specializations": [str(uuid.uuid4())],
         }
-        response = api_client.patch(f"{user_url}{fake_instructor.id}/", data)
+        response = self.patch_json(f"{self.fragment}{self.fake_instructor.id}/", data)
+
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_partial_update_instructor_profile_not_found(
-        self, api_client, user_url, authenticated_fake_instructor
-    ):
+    def test_partial_update_instructor_profile_not_found(self):
         """
         Test the partial_update action for an instructor with a non-existent user.
         """
 
+        self.authenticated_token = self.fake_instructor_token
         data = {"specializations": [str(uuid.uuid4())]}
-        response = api_client.patch(f"{user_url}{str(uuid.uuid4())}/", data)
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        response = self.patch_json(f"{self.fragment}{str(uuid.uuid4())}/", data)
 
-    def test_partial_update_user_profile_with_invalid_id(
-        self,
-        api_client,
-        user_url,
-        authenticated_fake_instructor,
-        fake_student,
-    ):
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_partial_update_user_profile_with_invalid_id(self):
         """
         Test the partial_update action for an instructor with a non-existent user.
         """
 
+        self.authenticated_token = self.fake_instructor_token
         data = {"phone_number": "1234567890"}
-        response = api_client.patch(f"{user_url}{str(fake_student.id)}/", data)
+        response = self.patch_json(f"{self.fragment}{str(self.fake_student.id)}/", data)
+
         assert response.status_code == status.HTTP_403_FORBIDDEN

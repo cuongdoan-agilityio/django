@@ -15,15 +15,6 @@ from accounts.factories import UserFactory
 User = get_user_model()
 
 
-@pytest.fixture(autouse=True)
-def disconnect_send_verify_email_signal():
-    """
-    Fixture to disconnect the signal.
-    """
-
-    post_save.disconnect(receiver=send_verify_email, sender=User)
-
-
 @pytest.fixture(scope="session")
 def random_gender():
     """
@@ -52,30 +43,6 @@ def random_degree():
 
     degrees = [choice.value for choice in Degree]
     return random.choice(degrees)
-
-
-@pytest.fixture
-def send_verify_email_signal():
-    """
-    Fixture to connect the `send_verify_email` signal for the User model.
-    Disconnects the signal after the test to avoid side effects.
-    """
-
-    post_save.connect(receiver=send_verify_email, sender=User)
-    yield
-    post_save.disconnect(receiver=send_verify_email, sender=User)
-
-
-@pytest.fixture
-def enroll_intro_course_signal():
-    """
-    Fixture to connect the `enroll_intro_course` signal for the User model.
-    Disconnects the signal after the test to avoid side effects.
-    """
-
-    post_save.connect(receiver=enroll_intro_course, sender=User)
-    yield
-    post_save.disconnect(receiver=enroll_intro_course, sender=User)
 
 
 @pytest.fixture()
@@ -213,12 +180,9 @@ class BaseAPITestCase:
     @pytest.fixture(autouse=True)
     def setup_fixtures(
         self,
-        disconnect_send_verify_email_signal,
         random_gender,
         random_scholarship,
         random_degree,
-        send_verify_email_signal,
-        enroll_intro_course_signal,
         share_user_data,
         fake_student,
         fake_student_token,
@@ -230,15 +194,12 @@ class BaseAPITestCase:
     ):
         self.faker = Faker()
         self.root_url = "/api/v1/"
-        self.disconnect_send_verify_email_signal = disconnect_send_verify_email_signal
         self.random_gender = random_gender
         self.student_role = Role.STUDENT.value
         self.instructor_role = Role.INSTRUCTOR.value
         self.admin_role = Role.ADMIN.value
         self.random_scholarship = random_scholarship
         self.random_degree = random_degree
-        self.send_verify_email_signal = send_verify_email_signal
-        self.enroll_intro_course_signal = enroll_intro_course_signal
         self.api_client = APIClient()
         self.share_user_data = share_user_data
         self.fake_student = fake_student
@@ -251,6 +212,7 @@ class BaseAPITestCase:
         self.authenticated_token = self.fake_student_token
         self.auth = "token"
         post_save.disconnect(receiver=send_verify_email, sender=User)
+        post_save.disconnect(receiver=enroll_intro_course, sender=User)
 
     def build_api_url(self, fragment: str = None) -> str:
         """

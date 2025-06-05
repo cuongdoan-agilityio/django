@@ -33,3 +33,31 @@ class BaseAccountModuleTestCase(BaseAPITestCase):
         }
 
         self.fake_specialization = SpecializationFactory(**self.specialization_data)
+
+        self.user_data = {
+            "username": self.faker.user_name(),
+            "email": self.faker.email(),
+            "password": "Password@123",
+            "first_name": self.faker.first_name(),
+            "last_name": self.faker.last_name(),
+            "phone_number": "0953625482",
+            "date_of_birth": self.faker.date_between(
+                start_date="-90y", end_date="-18y"
+            ),
+            "gender": self.random_gender,
+        }
+
+        self.student_data = {
+            **self.user_data,
+            "role": self.student_role,
+            "scholarship": str(self.random_scholarship),
+        }
+
+        self.instructor_data = {
+            **self.user_data,
+            "username": self.faker.user_name(),
+            "email": self.faker.email(),
+            "role": self.instructor_role,
+            "specializations": [str(self.fake_specialization.id)],
+            "degree": self.random_degree,
+        }
